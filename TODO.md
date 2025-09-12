@@ -29,7 +29,7 @@
   - **Deliverable**: `zen version` and `zen --help` work
   - **Acceptance**: Professional CLI help output with proper formatting
 
-- [ ] **[ZEN-003] Workspace Detection & Init** *(L)*: Implement `zen init` command with workspace detection, `.zen/` direcory generation (similar to `.git/`), config file generation (`.zen/config.yaml`), directory structure creation
+- [ ] **[ZEN-003] Workspace Detection & Init** *(L)*: Implement `zen init` command with workspace detection, `.zen/` directory generation (similar to `.git/`), config file generation (`.zen/config.yaml`), directory structure creation
   - **Deliverable**: `zen init` creates workspace with config
   - **Acceptance**: Can initialize workspace, generates valid config file
 

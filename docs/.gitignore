@@ -1,5 +1,6 @@
 # Generated documentation
 build/
+!build/stories/
 *.tmp
 *.temp
 
