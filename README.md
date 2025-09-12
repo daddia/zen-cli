@@ -1,10 +1,6 @@
-# Zen: AI-Powered Product Lifecycle Productivity Platform
+# Zen: AI-Powered Product Lifecycle Productivity Suite
 
-**Zen** is a unified CLI that revolutionizes productivity across the entire product lifecycle. By orchestrating intelligent workflows for both **product management** and **engineering**, Zen eliminates context switching, automates repetitive tasks, and ensures consistent quality delivery from ideation to production.
-
-## Vision
-
-To become the definitive platform for AI-assisted product development, enabling teams to build better products faster through intelligent automation and seamless workflow orchestration.
+**Zen** is the definitive platform for AI-assisted product development, enabling teams to build better products faster through intelligent automation and seamless workflow orchestration.
 
 ## Key Features
 
