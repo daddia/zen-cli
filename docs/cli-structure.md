@@ -1,13 +1,11 @@
-I'll develop a comprehensive project structure for the Helix CLI based on the monorepo approach and Go best practices. Let me create a detailed structure that addresses all the requirements we've identified.
+# Zen CLI: Comprehensive Project Structure
 
-[1 tool called]
-
-# Helix CLI: Comprehensive Project Structure
+*AI-Powered Product Lifecycle Productivity Platform*
 
 ## 📁 **Root Directory Structure**
 
 ```
-helix/
+zen/
 ├── .github/                    # GitHub workflows and templates
 ├── .vscode/                    # VS Code workspace configuration
 ├── build/                      # Build artifacts and packaging
@@ -43,7 +41,7 @@ helix/
 
 ```
 cmd/
-├── helix/                     # Main CLI binary
+├── zen/                       # Main CLI binary
 │   ├── main.go               # Entry point
 │   └── version.go            # Version information
 ├── plugins/                   # Plugin binaries (if separate)
@@ -57,7 +55,7 @@ cmd/
 
 **Key Files:**
 ```go
-// cmd/helix/main.go
+// cmd/zen/main.go
 package main
 
 import (
@@ -66,9 +64,9 @@ import (
     "os/signal"
     "syscall"
     
-    "github.com/org/helix/internal/cli"
-    "github.com/org/helix/internal/config"
-    "github.com/org/helix/internal/logging"
+    "github.com/org/zen/internal/cli"
+    "github.com/org/zen/internal/config"
+    "github.com/org/zen/internal/logging"
 )
 
 func main() {
@@ -101,24 +99,33 @@ internal/
 │   │   ├── config.go
 │   │   ├── status.go
 │   │   └── version.go
-│   ├── workflow/             # 12-stage workflow commands
-│   │   ├── discover.go       # Stage 01
-│   │   ├── prioritize.go     # Stage 02
-│   │   ├── design.go         # Stage 03
-│   │   ├── architect.go      # Stage 04
-│   │   ├── plan.go           # Stage 05
-│   │   ├── build.go          # Stage 06
-│   │   ├── review.go         # Stage 07
-│   │   ├── test.go           # Stage 08
-│   │   ├── secure.go         # Stage 09
-│   │   ├── release.go        # Stage 10
-│   │   ├── verify.go         # Stage 11
-│   │   └── feedback.go       # Stage 12
+│   ├── product/              # Product management commands
+│   │   ├── strategy.go       # Product strategy and roadmapping
+│   │   ├── research.go       # Market research and user insights
+│   │   ├── requirements.go   # Requirements and user story management
+│   │   ├── analytics.go      # Product analytics and metrics
+│   │   └── validation.go     # Product validation and testing
+│   ├── workflow/             # 12-stage engineering workflow commands
+│   │   ├── discover.go       # Stage 01: Requirements analysis
+│   │   ├── prioritize.go     # Stage 02: Backlog prioritization
+│   │   ├── design.go         # Stage 03: Technical design
+│   │   ├── architect.go      # Stage 04: Architecture review
+│   │   ├── plan.go           # Stage 05: Implementation planning
+│   │   ├── build.go          # Stage 06: Code generation and development
+│   │   ├── review.go         # Stage 07: Code review and quality
+│   │   ├── test.go           # Stage 08: Testing and QA
+│   │   ├── secure.go         # Stage 09: Security and compliance
+│   │   ├── release.go        # Stage 10: Deployment and release
+│   │   ├── verify.go         # Stage 11: Post-deployment verification
+│   │   └── feedback.go       # Stage 12: Analytics and feedback
 │   ├── integrations/         # External system commands
-│   │   ├── jira.go
-│   │   ├── confluence.go
-│   │   ├── git.go
-│   │   └── ci.go
+│   │   ├── jira.go           # Jira project management
+│   │   ├── confluence.go     # Documentation publishing
+│   │   ├── git.go            # Version control
+│   │   ├── ci.go             # CI/CD systems
+│   │   ├── analytics.go      # Analytics platforms (GA, Mixpanel)
+│   │   ├── design.go         # Design tools (Figma, Sketch)
+│   │   └── communication.go  # Slack, Teams, Discord
 │   └── utilities/            # Utility commands
 │       ├── template.go
 │       ├── agent.go
@@ -148,27 +155,51 @@ internal/
 │   ├── agents.go             # AI agent configuration
 │   └── migration.go          # Configuration migration
 ├── integrations/             # External system clients
-│   ├── jira/                 # Jira integration
-│   │   ├── client.go         # API client
-│   │   ├── types.go          # Data types
-│   │   ├── operations.go     # CRUD operations
-│   │   ├── workflow.go       # Workflow automation
-│   │   └── sync.go           # Synchronization
-│   ├── confluence/           # Confluence integration
-│   │   ├── client.go
-│   │   ├── publisher.go      # Document publishing
-│   │   ├── layout.go         # Layout management
-│   │   └── converter.go      # Markdown conversion
-│   ├── git/                  # Git integration
-│   │   ├── client.go
-│   │   ├── hooks.go          # Git hooks
-│   │   ├── workflow.go       # Git workflow automation
-│   │   └── analysis.go       # Repository analysis
-│   ├── ci/                   # CI/CD integrations
-│   │   ├── github.go         # GitHub Actions
-│   │   ├── gitlab.go         # GitLab CI
-│   │   ├── jenkins.go        # Jenkins
-│   │   └── generic.go        # Generic CI/CD
+│   ├── product/              # Product management integrations
+│   │   ├── analytics/        # Analytics platforms
+│   │   │   ├── google.go     # Google Analytics
+│   │   │   ├── mixpanel.go   # Mixpanel
+│   │   │   ├── amplitude.go  # Amplitude
+│   │   │   └── segment.go    # Segment
+│   │   ├── design/           # Design tool integrations
+│   │   │   ├── figma.go      # Figma API
+│   │   │   ├── sketch.go     # Sketch integration
+│   │   │   └── invision.go   # InVision
+│   │   ├── research/         # User research tools
+│   │   │   ├── surveys.go    # Survey platforms
+│   │   │   ├── feedback.go   # Feedback collection
+│   │   │   └── usertesting.go # User testing platforms
+│   │   └── crm/              # CRM integrations
+│   │       ├── salesforce.go # Salesforce
+│   │       ├── hubspot.go    # HubSpot
+│   │       └── pipedrive.go  # Pipedrive
+│   ├── engineering/          # Engineering platform integrations
+│   │   ├── jira/             # Jira integration
+│   │   │   ├── client.go     # API client
+│   │   │   ├── types.go      # Data types
+│   │   │   ├── operations.go # CRUD operations
+│   │   │   ├── workflow.go   # Workflow automation
+│   │   │   └── sync.go       # Synchronization
+│   │   ├── confluence/       # Confluence integration
+│   │   │   ├── client.go
+│   │   │   ├── publisher.go  # Document publishing
+│   │   │   ├── layout.go     # Layout management
+│   │   │   └── converter.go  # Markdown conversion
+│   │   ├── git/              # Git integration
+│   │   │   ├── client.go
+│   │   │   ├── hooks.go      # Git hooks
+│   │   │   ├── workflow.go   # Git workflow automation
+│   │   │   └── analysis.go   # Repository analysis
+│   │   └── ci/               # CI/CD integrations
+│   │       ├── github.go     # GitHub Actions
+│   │       ├── gitlab.go     # GitLab CI
+│   │       ├── jenkins.go    # Jenkins
+│   │       └── generic.go    # Generic CI/CD
+│   ├── communication/        # Communication platform integrations
+│   │   ├── slack.go          # Slack integration
+│   │   ├── teams.go          # Microsoft Teams
+│   │   ├── discord.go        # Discord
+│   │   └── email.go          # Email notifications
 │   └── common/               # Common integration utilities
 │       ├── auth.go           # Authentication
 │       ├── retry.go          # Retry logic
@@ -193,7 +224,8 @@ internal/
 │   ├── validator.go          # Template validation
 │   ├── functions.go          # Custom template functions
 │   ├── loader.go             # Template loading
-│   └── cache.go              # Template caching
+│   ├── cache.go              # Template caching
+│   └── product.go            # Product-specific template functions
 ├── workflow/                  # Workflow state management
 │   ├── state.go              # Workflow state tracking
 │   ├── orchestrator.go       # Multi-stage orchestration
@@ -333,9 +365,10 @@ templates/
 │   ├── python-api/
 │   └── terraform-module/
 └── configs/                  # Configuration templates
-    ├── helix.yaml.template
+    ├── zen.yaml.template
     ├── agents.yaml.template
-    └── integrations.yaml.template
+    ├── integrations.yaml.template
+    └── product.yaml.template
 ```
 
 ### **6. Configuration (`configs/`)**
@@ -348,9 +381,10 @@ configs/
 │   ├── development.yaml      # Development environment
 │   └── ci-cd.yaml           # CI/CD integration
 ├── schemas/                  # Configuration schemas
-│   ├── helix.schema.json
+│   ├── zen.schema.json
 │   ├── agent.schema.json
-│   └── integration.schema.json
+│   ├── integration.schema.json
+│   └── product.schema.json
 └── migrations/               # Configuration migrations
     ├── v1-to-v2.yaml
     └── v2-to-v3.yaml
@@ -468,7 +502,7 @@ tools/
 
 ### **Makefile**
 ```makefile
-# Helix CLI Makefile
+# Zen CLI Makefile
 .PHONY: help build test clean install
 
 # Go parameters
@@ -480,7 +514,7 @@ GOGET=$(GOCMD) get
 GOMOD=$(GOCMD) mod
 
 # Build parameters
-BINARY_NAME=helix
+BINARY_NAME=zen
 BINARY_UNIX=$(BINARY_NAME)_unix
 BINARY_WINDOWS=$(BINARY_NAME).exe
 
@@ -495,12 +529,12 @@ help: ## Display this help screen
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 build: ## Build the binary
-	$(GOBUILD) $(LDFLAGS) -o bin/$(BINARY_NAME) ./cmd/helix
+	$(GOBUILD) $(LDFLAGS) -o bin/$(BINARY_NAME) ./cmd/zen
 
 build-all: ## Build for all platforms
-	GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o bin/$(BINARY_NAME)-linux-amd64 ./cmd/helix
-	GOOS=darwin GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o bin/$(BINARY_NAME)-darwin-amd64 ./cmd/helix
-	GOOS=windows GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o bin/$(BINARY_NAME)-windows-amd64.exe ./cmd/helix
+	GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o bin/$(BINARY_NAME)-linux-amd64 ./cmd/zen
+	GOOS=darwin GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o bin/$(BINARY_NAME)-darwin-amd64 ./cmd/zen
+	GOOS=windows GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o bin/$(BINARY_NAME)-windows-amd64.exe ./cmd/zen
 
 test: ## Run tests
 	$(GOTEST) -v -race -coverprofile=coverage.out ./...
@@ -530,7 +564,7 @@ install: build ## Install binary
 	cp bin/$(BINARY_NAME) /usr/local/bin/
 
 docker-build: ## Build Docker image
-	docker build -t helix:$(VERSION) .
+	docker build -t zen:$(VERSION) .
 
 release: ## Create release
 	goreleaser release --rm-dist
@@ -538,7 +572,7 @@ release: ## Create release
 
 ### **go.mod**
 ```go
-module github.com/org/helix
+module github.com/org/zen
 
 go 1.21
 
@@ -566,7 +600,7 @@ require (
 
 ### **.golangci.yml**
 ```yaml
-# Helix CLI Linting Configuration
+# Zen CLI Linting Configuration
 run:
   timeout: 5m
   modules-download-mode: readonly
@@ -652,7 +686,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o helix ./cmd/helix
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o zen ./cmd/zen
 
 # Runtime stage
 FROM alpine:latest
@@ -660,29 +694,29 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates git
 WORKDIR /root/
 
-COPY --from=builder /app/helix .
+COPY --from=builder /app/zen .
 COPY --from=builder /app/templates ./templates
 COPY --from=builder /app/configs ./configs
 
-CMD ["./helix"]
+CMD ["./zen"]
 ```
 
 ## 🚀 **Getting Started Commands**
 
 ```bash
-# Initialize new Helix project
-mkdir helix && cd helix
-go mod init github.com/org/helix
+# Initialize new Zen project
+mkdir zen && cd zen
+go mod init github.com/org/zen
 
 # Create basic structure
-mkdir -p cmd/helix internal/{cli,agents,config,workflow} pkg/{client,types} templates
+mkdir -p cmd/zen internal/{cli,agents,config,workflow,product} pkg/{client,types} templates
 
 # Install dependencies
 go get github.com/spf13/cobra
 go get github.com/spf13/viper
 
 # Create basic main.go
-cat > cmd/helix/main.go << 'EOF'
+cat > cmd/zen/main.go << 'EOF'
 package main
 
 import (
@@ -700,15 +734,15 @@ func main() {
 }
 
 var rootCmd = &cobra.Command{
-    Use:   "helix",
-    Short: "Helix - AI-powered engineering workflow platform",
-    Long:  "A unified CLI for orchestrating agentic engineering workflows",
+    Use:   "zen",
+    Short: "Zen - AI-powered product lifecycle productivity platform",
+    Long:  "A unified CLI for orchestrating AI-powered workflows across the entire product lifecycle",
 }
 EOF
 
 # Build and test
 make build
-./bin/helix --help
+./bin/zen --help
 ```
 
 This comprehensive project structure provides:
@@ -720,4 +754,4 @@ This comprehensive project structure provides:
 5. **Production Ready** - Build automation, security, and deployment configs
 6. **Developer Friendly** - Clear documentation and development tools
 
-The structure follows Go best practices while accommodating the specific needs of the Helix agentic engineering workflow platform.
+The structure follows Go best practices while accommodating the specific needs of the Zen AI-powered product lifecycle productivity platform, supporting both product management and engineering workflows.

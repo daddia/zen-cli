@@ -1,14 +1,16 @@
-# Helix CLI: Comprehensive Analysis & Implementation Roadmap
+# Zen CLI: Comprehensive Analysis & Implementation Roadmap
+
+*AI-Powered Product Lifecycle Productivity Platform*
 
 ## Executive Summary
 
-Helix currently consists of **disparate resources** across 12 workflow stages, including 50+ AI prompts, Node.js tools, shell scripts, and templates. The opportunity is to create a **unified Go CLI** that orchestrates the entire agentic engineering workflow, integrating AI agents, external systems (Jira, Confluence, Git), and quality gates into a cohesive developer experience.
+Zen represents a transformational opportunity to create a **unified AI-powered CLI** that orchestrates productivity across the entire **product lifecycle**. Building upon existing engineering workflow foundations with 50+ AI prompts, Node.js tools, shell scripts, and templates, Zen expands to encompass **product management excellence** alongside **engineering automation**. The platform integrates AI agents, external systems (Jira, Confluence, Git, Analytics platforms, Design tools), and intelligent quality gates into a cohesive experience for product teams.
 
 ## Current State Analysis
 
 ### 🔍 **Existing Resources Inventory**
 
-#### **1. AI Workflow Agents (12 Stages)**
+#### **1. AI Workflow Agents (Engineering - 12 Stages)**
 - **01-Discover**: Discovery & overview generation agents
 - **02-Prioritise**: WSJF/RICE/ICE prioritization framework
 - **03-Design**: Technical design & contract specification
@@ -22,28 +24,51 @@ Helix currently consists of **disparate resources** across 12 workflow stages, i
 - **11-Post-Deploy**: Production verification & monitoring
 - **12-Roadmap-Feedback**: Analytics & continuous improvement
 
-#### **2. Integration Tools (Node.js)**
+#### **2. Product Management Capabilities (New Expansion)**
+- **Market Research & Analysis**: AI-powered competitive analysis and market sizing
+- **Product Strategy**: Automated strategy documentation and OKR alignment
+- **User Research Integration**: Synthesis of user feedback and behavioral data
+- **Product Analytics**: Performance monitoring and user behavior analysis
+- **Roadmap Planning**: Intelligent feature prioritization and stakeholder management
+- **Design System Integration**: UX/UI pattern management and design token automation
+
+#### **3. Integration Tools (Node.js - Foundation)**
 - **Jira Integration**: Issue fetching, story creation, bulk operations
 - **Confluence Publishing**: Markdown to Confluence with layout preservation
 - **Cursor Helper**: AI-powered story generation via Cursor Agent CLI
 
-#### **3. Automation Scripts (Bash)**
+#### **4. Expanded Integration Ecosystem (Product Lifecycle)**
+- **Analytics Platforms**: Google Analytics, Mixpanel, Amplitude integration
+- **Design Tools**: Figma, Sketch, Adobe XD API connections
+- **CRM Systems**: Salesforce, HubSpot customer data synchronization
+- **Communication**: Slack, Teams, Discord for cross-functional collaboration
+- **Business Intelligence**: Tableau, Power BI for executive reporting
+
+#### **5. Automation Scripts (Bash - Foundation)**
 - **Story Workflow**: `cursor-generate-story.sh`, `write-story.sh`
 - **Jira Operations**: `jira-fetch-issues.sh`, `jira-get-issue.sh`, `jira-update-story.sh`
 - **Documentation**: `confluence-fetch.sh`, `confluence-publish.sh`
 
-#### **4. Templates & Standards**
+#### **6. Templates & Standards**
 - **Story Definition**: Comprehensive 16-section template with DoR/DoD
 - **Development Rules**: 130+ quality gates with CI/CD enforcement
 - **Prompt Engineering**: XML-structured prompts with role/objective/policies
 
-#### **5. Quality Gates & Enforcement**
+#### **7. Quality Gates & Enforcement**
 - **Merge Blockers**: PR size (≤400 lines), coverage (≥70% baseline), security scans
 - **Risk-Based Approval**: Low/Medium/High risk with different review requirements
 - **Agent Integration**: Code review, testing, security, release validation
 
 ### 🎯 **Current Pain Points**
 
+#### **Product Management Challenges**
+1. **Tool Fragmentation**: Product managers juggle 8-12 different tools daily
+2. **Manual Data Synthesis**: Hours spent aggregating insights from analytics, user research, and market data
+3. **Stakeholder Alignment**: Difficulty maintaining consistent communication across teams
+4. **Decision Latency**: Slow feedback loops between product decisions and engineering execution
+5. **Metrics Inconsistency**: Different teams using different success metrics and definitions
+
+#### **Engineering Workflow Issues**
 1. **Fragmented Toolchain**: Manual orchestration across scripts, tools, and systems
 2. **Context Switching**: Developers must remember multiple commands and workflows
 3. **Inconsistent UX**: Different CLIs (Node.js, Bash) with varying argument patterns
@@ -51,29 +76,46 @@ Helix currently consists of **disparate resources** across 12 workflow stages, i
 5. **Limited Observability**: No centralized logging or workflow state tracking
 6. **Configuration Drift**: Environment variables scattered across multiple `.env` files
 
+#### **Cross-Functional Friction**
+1. **Handoff Delays**: Product-to-engineering handoffs lack automation and clarity
+2. **Requirements Drift**: Product requirements change without engineering visibility
+3. **Quality Misalignment**: Product quality expectations vs. engineering delivery metrics
+4. **Feedback Loops**: Slow product iteration cycles due to manual processes
+
 ## Proposed CLI Architecture
 
 ### 🏗️ **Core Design Principles**
 
-1. **Single Binary**: One Go executable for all workflow operations
-2. **Workflow-Centric**: Commands organized by the 12-stage workflow
-3. **Agent Integration**: Native AI agent orchestration with multiple LLM providers
-4. **System Integration**: Built-in Jira, Confluence, Git, and CI/CD connectors
-5. **Progressive Enhancement**: Works offline, enhances with external integrations
-6. **Extensible Plugin System**: Custom agents and integrations via Go plugins
+1. **Unified Platform**: Single Go executable for entire product lifecycle operations
+2. **Lifecycle-Centric**: Commands organized by product management and engineering workflows
+3. **AI-First Approach**: Native AI agent orchestration with context-aware automation
+4. **Comprehensive Integration**: Built-in connectors for product, engineering, and business systems
+5. **Progressive Enhancement**: Works offline, enhances with cloud integrations
+6. **Extensible Architecture**: Plugin system for custom workflows and integrations
+7. **Cross-Functional Collaboration**: Seamless handoffs between product and engineering teams
+8. **Intelligence Layer**: Predictive insights and automated decision support
 
 ### 🛠️ **CLI Structure**
 
 ```
-helix [global-flags] <command> <subcommand> [flags] [args]
+zen [global-flags] <command> <subcommand> [flags] [args]
 
 Global Commands:
-  init        Initialize Helix workspace and configuration
+  init        Initialize Zen workspace and configuration
   config      Manage configuration and integrations
-  status      Show workflow status and health checks
+  status      Show product and engineering workflow status
   version     Show version and component information
+  dashboard   Interactive dashboard for product lifecycle overview
 
-Workflow Commands:
+Product Management Commands:
+  research    Market research and competitive analysis
+  strategy    Product strategy and OKR management
+  roadmap     Product roadmap planning and prioritization
+  analytics   Product performance and user behavior analysis
+  feedback    User feedback collection and synthesis
+  validation  Product hypothesis testing and validation
+
+Engineering Workflow Commands:
   discover    Stage 01: Requirements analysis and ADR drafting
   prioritize  Stage 02: Backlog ranking with WSJF/RICE/ICE
   design      Stage 03: Technical design and contract specification
@@ -85,18 +127,23 @@ Workflow Commands:
   secure      Stage 09: Security scanning and compliance validation
   release     Stage 10: Deployment management and rollback
   verify      Stage 11: Post-deployment verification and monitoring
-  feedback    Stage 12: Analytics and roadmap optimization
+  insights    Stage 12: Analytics and continuous improvement
 
 Integration Commands:
-  jira        Jira issue management and synchronization
-  confluence  Documentation publishing and management
-  git         Git workflow automation and hooks
+  jira        Project management and issue tracking
+  confluence  Documentation and knowledge management
+  git         Version control and workflow automation
   ci          CI/CD pipeline integration and status
+  analytics   Analytics platform integration (GA, Mixpanel, etc.)
+  design      Design tool integration (Figma, Sketch, etc.)
+  crm         CRM system integration (Salesforce, HubSpot, etc.)
+  communication  Team communication (Slack, Teams, Discord)
 
 Utility Commands:
   template    Template management and generation
   agent       AI agent management and testing
-  workflow    End-to-end workflow orchestration
+  workflow    End-to-end lifecycle orchestration
+  sync        Cross-platform data synchronization
 ```
 
 ### 🧩 **Component Architecture**
@@ -105,187 +152,100 @@ Utility Commands:
 // Core CLI Framework
 cmd/
 ├── root.go                 // Root command and global configuration
-├── workflow/               // 12-stage workflow commands
-│   ├── discover.go
-│   ├── prioritize.go
-│   ├── design.go
-│   └── ...
+├── product/                // Product management commands
+│   ├── research.go         // Market research and analysis
+│   ├── strategy.go         // Product strategy and OKRs
+│   ├── roadmap.go          // Roadmap planning and prioritization
+│   ├── analytics.go        // Product analytics and insights
+│   ├── feedback.go         // User feedback management
+│   └── validation.go       // Product hypothesis testing
+├── workflow/               // 12-stage engineering workflow commands
+│   ├── discover.go         // Requirements analysis
+│   ├── prioritize.go       // Backlog prioritization
+│   ├── design.go           // Technical design
+│   ├── architect.go        // Architecture review
+│   ├── plan.go             // Implementation planning
+│   ├── build.go            // Code generation and development
+│   ├── review.go           // Code review and quality
+│   ├── test.go             // Testing and QA
+│   ├── secure.go           // Security and compliance
+│   ├── release.go          // Deployment and release
+│   ├── verify.go           // Post-deployment verification
+│   └── insights.go         // Analytics and feedback
 ├── integrations/          // External system integrations
-│   ├── jira.go
-│   ├── confluence.go
-│   ├── git.go
-│   └── ci.go
+│   ├── jira.go            // Project management
+│   ├── confluence.go      // Documentation
+│   ├── git.go             // Version control
+│   ├── ci.go              // CI/CD systems
+│   ├── analytics.go       // Analytics platforms
+│   ├── design.go          // Design tools
+│   ├── crm.go             // CRM systems
+│   └── communication.go   // Team communication
 └── utilities/             // Utility commands
-    ├── template.go
-    ├── agent.go
-    └── workflow.go
+    ├── template.go        // Template management
+    ├── agent.go           // AI agent management
+    ├── workflow.go        // Workflow orchestration
+    ├── dashboard.go       // Interactive dashboard
+    └── sync.go            // Data synchronization
 
 // Core Libraries
 internal/
 ├── config/                // Configuration management
 │   ├── workspace.go       // Workspace detection and setup
 │   ├── integrations.go    // External system configuration
-│   └── agents.go          // AI agent configuration
+│   ├── agents.go          // AI agent configuration
+│   └── product.go         // Product-specific configuration
 ├── agents/                // AI agent orchestration
 │   ├── client.go          // Multi-provider LLM client
 │   ├── prompts.go         // Prompt template management
-│   └── workflow.go        // Agent workflow coordination
+│   ├── workflow.go        // Agent workflow coordination
+│   ├── product.go         // Product-focused AI agents
+│   └── context.go         // Cross-functional context management
 ├── integrations/          // External system clients
-│   ├── jira/              // Jira API client and operations
-│   ├── confluence/        // Confluence publishing
-│   ├── git/               // Git operations and hooks
-│   └── ci/                // CI/CD system integrations
+│   ├── product/           // Product management integrations
+│   │   ├── analytics/     // GA, Mixpanel, Amplitude
+│   │   ├── design/        // Figma, Sketch, Adobe XD
+│   │   ├── research/      // User research platforms
+│   │   └── crm/           // Salesforce, HubSpot
+│   ├── engineering/       // Engineering integrations
+│   │   ├── jira/          // Project management
+│   │   ├── confluence/    // Documentation
+│   │   ├── git/           // Version control
+│   │   └── ci/            // CI/CD systems
+│   └── communication/     // Slack, Teams, Discord
+├── product/               // Product management core
+│   ├── research.go        // Market research engine
+│   ├── strategy.go        // Strategy management
+│   ├── roadmap.go         // Roadmap planning
+│   ├── analytics.go       // Product analytics
+│   ├── insights.go        // AI-powered insights
+│   └── validation.go      // Hypothesis testing
 ├── templates/             // Template engine and management
 │   ├── engine.go          // Template rendering engine
 │   ├── registry.go        // Template registry and discovery
-│   └── validation.go      // Template validation
+│   ├── validation.go      // Template validation
+│   ├── product.go         // Product-specific templates
+│   └── engineering.go     // Engineering templates
 ├── workflow/              // Workflow state management
 │   ├── state.go           // Workflow state tracking
 │   ├── orchestrator.go    // Multi-stage orchestration
-│   └── hooks.go           // Pre/post stage hooks
+│   ├── hooks.go           // Pre/post stage hooks
+│   ├── product.go         // Product workflow management
+│   └── handoffs.go        // Product-engineering handoffs
+├── intelligence/          // AI intelligence layer
+│   ├── insights.go        // Predictive insights
+│   ├── recommendations.go // Automated recommendations
+│   ├── learning.go        // Adaptive learning
+│   └── optimization.go    // Process optimization
 └── quality/               // Quality gates and enforcement
     ├── gates.go           // Quality gate definitions
     ├── enforcement.go     // Automated enforcement
-    └── metrics.go         // Quality metrics collection
+    ├── metrics.go         // Quality metrics collection
+    ├── product.go         // Product quality gates
+    └── engineering.go     // Engineering quality gates
 ```
 
-## Implementation Roadmap
 
-### 🚀 **Phase 1: Foundation (Weeks 1-4)**
-
-**Objective**: Establish core CLI framework and basic workflow commands
-
-#### **Week 1: Project Setup & Core Framework**
-- [ ] Initialize Go module with Cobra CLI framework
-- [ ] Implement root command with global configuration
-- [ ] Create workspace detection and initialization (`helix init`)
-- [ ] Implement configuration management system
-- [ ] Setup logging and error handling infrastructure
-
-#### **Week 2: Template System**
-- [ ] Build template engine with Go templates
-- [ ] Migrate existing templates (story definition, ADR, etc.)
-- [ ] Implement template registry and discovery
-- [ ] Create `helix template` command suite
-- [ ] Add template validation and linting
-
-#### **Week 3: Basic Workflow Commands**
-- [ ] Implement `helix discover` with requirements analysis
-- [ ] Implement `helix design` with contract generation
-- [ ] Create workflow state management system
-- [ ] Add basic AI agent integration (single provider)
-- [ ] Implement prompt template loading and rendering
-
-#### **Week 4: Integration Foundation**
-- [ ] Create Jira API client and basic operations
-- [ ] Implement `helix jira` command suite
-- [ ] Add configuration management for integrations
-- [ ] Create Git integration for workflow context
-- [ ] Setup comprehensive testing framework
-
-**Deliverable**: Basic CLI with `init`, `template`, `discover`, `design`, and `jira` commands
-
-### 🔧 **Phase 2: Core Workflow (Weeks 5-8)**
-
-**Objective**: Implement remaining workflow stages and orchestration
-
-#### **Week 5: Quality & Security Stages**
-- [ ] Implement `helix review` with code analysis integration
-- [ ] Implement `helix secure` with security scanning
-- [ ] Add quality gate enforcement system
-- [ ] Create metrics collection and reporting
-- [ ] Integrate with external security tools (SAST, SCA)
-
-#### **Week 6: Testing & Release Stages**
-- [ ] Implement `helix test` with test orchestration
-- [ ] Implement `helix release` with deployment management
-- [ ] Add CI/CD pipeline integration
-- [ ] Create rollback and verification workflows
-- [ ] Implement feature flag management
-
-#### **Week 7: Planning & Build Stages**
-- [ ] Implement `helix plan` with scaffolding generation
-- [ ] Implement `helix build` with code generation
-- [ ] Add project scaffolding templates
-- [ ] Create code generation from contracts
-- [ ] Implement development assistance tools
-
-#### **Week 8: Feedback & Orchestration**
-- [ ] Implement `helix feedback` with analytics
-- [ ] Create `helix workflow` orchestration commands
-- [ ] Add end-to-end workflow automation
-- [ ] Implement workflow state persistence
-- [ ] Create workflow visualization and reporting
-
-**Deliverable**: Complete 12-stage workflow with orchestration capabilities
-
-### 🚀 **Phase 3: Advanced Features (Weeks 9-12)**
-
-**Objective**: Add advanced AI integration, multi-provider support, and extensibility
-
-#### **Week 9: Multi-Provider AI Integration**
-- [ ] Implement multi-provider LLM client (OpenAI, Anthropic, Azure)
-- [ ] Add agent configuration and model selection
-- [ ] Create prompt optimization and caching
-- [ ] Implement conversation context management
-- [ ] Add cost tracking and optimization
-
-#### **Week 10: Advanced Integrations**
-- [ ] Implement `helix confluence` with publishing automation
-- [ ] Add advanced Git workflow integration
-- [ ] Create CI/CD pipeline templates and automation
-- [ ] Implement observability and monitoring integration
-- [ ] Add notification and communication systems
-
-#### **Week 11: Plugin System & Extensibility**
-- [ ] Design and implement Go plugin architecture
-- [ ] Create plugin development SDK
-- [ ] Add custom agent plugin support
-- [ ] Implement integration plugin system
-- [ ] Create plugin registry and marketplace
-
-#### **Week 12: Enterprise Features**
-- [ ] Add multi-tenant configuration support
-- [ ] Implement RBAC and permissions system
-- [ ] Create audit logging and compliance features
-- [ ] Add enterprise integration patterns
-- [ ] Implement advanced workflow customization
-
-**Deliverable**: Production-ready CLI with enterprise features and extensibility
-
-### 🔧 **Phase 4: Production & Optimization (Weeks 13-16)**
-
-**Objective**: Production hardening, performance optimization, and ecosystem integration
-
-#### **Week 13: Performance & Reliability**
-- [ ] Implement comprehensive error handling and recovery
-- [ ] Add performance monitoring and optimization
-- [ ] Create caching and offline capabilities
-- [ ] Implement retry logic and circuit breakers
-- [ ] Add comprehensive logging and diagnostics
-
-#### **Week 14: Documentation & Training**
-- [ ] Create comprehensive CLI documentation
-- [ ] Write integration guides and tutorials
-- [ ] Develop training materials and examples
-- [ ] Create migration guide from existing tools
-- [ ] Add interactive help and guidance system
-
-#### **Week 15: Testing & Validation**
-- [ ] Implement comprehensive integration testing
-- [ ] Create end-to-end workflow testing
-- [ ] Add performance and load testing
-- [ ] Implement security testing and validation
-- [ ] Create user acceptance testing framework
-
-#### **Week 16: Release & Distribution**
-- [ ] Setup CI/CD pipeline for CLI releases
-- [ ] Create binary distribution and packaging
-- [ ] Implement auto-update mechanism
-- [ ] Add telemetry and usage analytics
-- [ ] Create release management process
-
-**Deliverable**: Production-ready, fully-tested CLI with documentation and distribution
 
 ## Technical Specifications
 
@@ -320,7 +280,7 @@ internal/
 
 ```yaml
 # GitHub Actions Pipeline
-name: Helix CLI
+name: Zen CLI
 on: [push, pull_request]
 
 jobs:
@@ -367,7 +327,7 @@ jobs:
 
 ### 📚 **Training & Adoption**
 
-1. **Interactive Onboarding**: `helix init` with guided setup and configuration
+1. **Interactive Onboarding**: `zen init` with guided setup and configuration for product and engineering teams
 2. **Command Discovery**: Built-in help system with examples and tutorials
 3. **Migration Assistant**: Tool to identify and migrate existing workflows
 4. **Documentation**: Comprehensive guides, API reference, and examples
@@ -398,15 +358,25 @@ jobs:
 
 ## Conclusion
 
-The Helix CLI represents a **transformational opportunity** to unify the agentic engineering workflow into a cohesive, powerful developer experience. By building on Go's strengths in CLI development and leveraging the existing rich ecosystem of prompts, templates, and integrations, we can create a **best-in-class engineering workflow platform**.
+The Zen CLI represents a **transformational opportunity** to unify the entire product lifecycle into a cohesive, AI-powered productivity platform. By expanding beyond engineering workflows to encompass **product management excellence**, Zen creates an unprecedented unified experience for modern product teams.
 
-The 16-week roadmap provides a **structured approach** to building production-ready capabilities while maintaining backward compatibility and ensuring smooth migration from existing tools. The focus on **quality gates, security, and extensibility** ensures the CLI can scale from individual developers to enterprise teams.
+Building on Go's strengths in CLI development and leveraging the existing rich ecosystem of prompts, templates, and integrations, Zen evolves into a **best-in-class product lifecycle platform** that bridges the gap between product strategy and engineering execution.
+
+The 16-week roadmap provides a **structured approach** to building production-ready capabilities that serve both product managers and engineers, while maintaining backward compatibility and ensuring smooth migration from existing tools. The focus on **AI-first automation, cross-functional collaboration, and intelligent insights** ensures the CLI can scale from startup product teams to enterprise organizations.
+
+**Key Differentiators**:
+- **Unified Product Lifecycle**: Single platform for product management and engineering
+- **AI-Powered Intelligence**: Context-aware automation and predictive insights
+- **Cross-Functional Collaboration**: Seamless handoffs and shared context
+- **Comprehensive Integration**: Product, engineering, and business system connectivity
+- **Scalable Architecture**: From individual contributors to enterprise deployments
 
 **Next Steps**:
-1. Approve the technical approach and roadmap
-2. Assemble the development team and assign ownership
-3. Begin Phase 1 implementation with project setup and core framework
-4. Establish regular review cycles and stakeholder feedback loops
-5. Plan user testing and validation throughout development
+1. Approve the expanded technical approach and roadmap
+2. Assemble cross-functional development team (product + engineering)
+3. Begin Phase 1 implementation with product management foundation
+4. Establish regular review cycles with product and engineering stakeholders
+5. Plan user testing across product manager and developer personas
+6. Create migration strategy for existing product management tools
 
-This CLI will position Helix as the **definitive platform** for AI-assisted software engineering workflows, providing developers with the tools they need to build high-quality software efficiently and consistently.
+This CLI will position Zen as the **definitive platform** for AI-assisted product development, providing product teams with the intelligence and automation they need to build exceptional products faster and more efficiently than ever before.
