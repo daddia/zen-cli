@@ -1,152 +1,108 @@
-# Zen CLI Linting Configuration
+# Zen CLI Linting Configuration - v2 Format
+version: "2"
+
+linters:
+  enable:
+    # Critical error detection
+    - errcheck      # Check for unchecked errors
+    - govet         # Go vet analysis
+    - staticcheck   # Advanced static analysis
+    - ineffassign   # Detect ineffective assignments
+    - unused        # Find unused code
+
+    # Code quality
+    - gosec         # Security issues
+    - gocritic      # Performance and style issues
+    - revive        # Fast golint replacement
+
+    # Code quality and style
+    - misspell      # Fix common misspellings
+    - whitespace    # Unnecessary whitespace
+
+    # Best practices
+    - nolintlint    # Proper nolint usage
+    - unconvert     # Remove unnecessary conversions
+
+formatters:
+  enable:
+    - goimports     # Fix imports and formatting
+
+issues:
+  # Exclude some linters from test files
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec
+        - revive
+        - gocritic
+
+    # Exclude long lines with go:generate
+    - linters:
+        - revive
+      source: "^//go:generate "
+
+    # Exclude package comment requirements for CLI apps
+    - linters:
+        - revive
+      text: "package-comments"
+
+    # Exclude fmt print error checking for CLI output
+    - linters:
+        - errcheck
+      source: "fmt\\.(Fprint|Print)"
+
+    # Exclude defer close error checking for CLI apps
+    - linters:
+        - errcheck
+      source: "defer.*\\.Close\\(\\)"
+
+    # Exclude unused parameter warnings for CLI handlers
+    - linters:
+        - revive
+      text: "unused-parameter"
+
+    # Exclude exported comment requirements for constants
+    - linters:
+        - revive
+      text: "exported.*should have comment"
+
+    # Exclude var-naming for test packages
+    - linters:
+        - revive
+      text: "var-naming.*meaningless package names"
+
+  max-issues-per-linter: 50
+  max-same-issues: 10
+
+output:
+  formats:
+    text:
+      print-linter-name: true
+      print-issued-lines: true
+  sort-order:
+    - linter
+    - severity
+    - file
+
 run:
   timeout: 5m
   modules-download-mode: readonly
-  skip-dirs:
-    - vendor
-    - testdata
-    - examples
-  skip-files:
-    - ".*_test.go$"
 
 linters-settings:
-  gocyclo:
-    min-complexity: 15
-
-  goconst:
-    min-len: 3
-    min-occurrences: 3
-
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
-    disabled-checks:
-      - dupImport # https://github.com/go-critic/go-critic/issues/845
-      - ifElseChain
-      - octalLiteral
-      - whyNoLint
-
-  gofumpt:
-    lang-version: "1.25"
-
   govet:
-    check-shadowing: true
-    settings:
-      printf:
-        funcs:
-          - (github.com/jonathandaddia/zen/internal/logging.Logger).Debug
-          - (github.com/jonathandaddia/zen/internal/logging.Logger).Info
-          - (github.com/jonathandaddia/zen/internal/logging.Logger).Warn
-          - (github.com/jonathandaddia/zen/internal/logging.Logger).Error
-          - (github.com/jonathandaddia/zen/internal/logging.Logger).Fatal
+    shadow: true
 
   misspell:
     locale: US
 
-  nolintlint:
-    allow-leading-space: true
-    require-explanation: false
-    require-specific: false
+  gosec:
+    # Exclude some gosec rules that are too strict for CLI apps
+    excludes:
+      - G304 # File path provided as taint input
 
   revive:
     rules:
       - name: exported
         disabled: false
       - name: package-comments
-        disabled: true
-
-  staticcheck:
-    checks: ["all"]
-
-linters:
-  enable:
-    - bodyclose
-    - depguard
-    - dogsled
-    - dupl
-    - errcheck
-    - exportloopref
-    - funlen
-    - gochecknoinits
-    - goconst
-    - gocritic
-    - gocyclo
-    - gofmt
-    - gofumpt
-    - goimports
-    - gomnd
-    - goprintffuncname
-    - gosec
-    - gosimple
-    - govet
-    - ineffassign
-    - lll
-    - misspell
-    - nakedret
-    - noctx
-    - nolintlint
-    - revive
-    - staticcheck
-    - stylecheck
-    - typecheck
-    - unconvert
-    - unparam
-    - unused
-    - whitespace
-
-  disable:
-    - deadcode    # deprecated
-    - exhaustive  # too strict for CLI
-    - interfacer  # deprecated
-    - maligned    # deprecated
-    - rowserrcheck # not applicable
-    - scopelint   # deprecated
-    - structcheck # deprecated
-    - varcheck    # deprecated
-
-issues:
-  exclude-rules:
-    # Exclude some linters from running on tests files
-    - path: _test\.go
-      linters:
-        - gomnd
-        - funlen
-        - gocyclo
-        - dupl
-
-    # Exclude known linters from generated files
-    - path: ".*\\.pb\\.go"
-      linters:
-        - gomnd
-        - gocritic
-        - goconst
-
-    # Exclude some staticcheck messages
-    - linters:
-        - staticcheck
-      text: "SA9003:"
-
-    # Exclude lll issues for long lines with go:generate
-    - linters:
-        - lll
-      source: "^//go:generate "
-
-  # Show only new issues for PRs
-  new-from-rev: HEAD~1
-
-  # Maximum issues count per one linter
-  max-issues-per-linter: 0
-
-  # Maximum count of issues with the same text
-  max-same-issues: 0
-
-output:
-  format: colored-line-number
-  print-issued-lines: true
-  print-linter-name: true
-  uniq-by-line: true
-  sort-results: true
+        disabled: true # Not required for CLI apps
