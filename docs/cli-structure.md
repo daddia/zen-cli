@@ -574,7 +574,7 @@ release: ## Create release
 ```go
 module github.com/org/zen
 
-go 1.21
+go 1.25
 
 require (
     github.com/spf13/cobra v1.7.0
@@ -679,7 +679,7 @@ issues:
 ### **Dockerfile**
 ```dockerfile
 # Build stage
-FROM golang:1.21-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 COPY go.mod go.sum ./

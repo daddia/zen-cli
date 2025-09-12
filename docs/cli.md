@@ -251,7 +251,7 @@ internal/
 
 ### 🏗️ **Core Technologies**
 
-- **Language**: Go 1.21+ for performance, concurrency, and single binary distribution
+- **Language**: Go 1.25+ for performance, concurrency, and single binary distribution
 - **CLI Framework**: Cobra for command structure and flag management
 - **Configuration**: Viper for configuration management with multiple sources
 - **Templates**: Go templates with custom functions and helpers

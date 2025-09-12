@@ -1,0 +1,176 @@
+# Zen CLI Release Configuration
+version: 1
+
+project_name: zen
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    main: ./cmd/zen
+    binary: zen
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.buildTime={{.Date}}
+      - -X github.com/jonathandaddia/zen/internal/cli.version={{.Version}}
+      - -X github.com/jonathandaddia/zen/internal/cli.commit={{.Commit}}
+      - -X github.com/jonathandaddia/zen/internal/cli.buildTime={{.Date}}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+universal_binaries:
+  - replace: true
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - LICENSE
+      - CHANGELOG.md
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+      - '^chore:'
+      - '^style:'
+      - '^refactor:'
+  groups:
+    - title: Features
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: 'Bug fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: 'Performance improvements'
+      regexp: "^.*perf[(\\w)]*:+.*$"
+      order: 2
+    - title: Others
+      order: 999
+
+dockers:
+  - image_templates:
+      - "ghcr.io/jonathandaddia/zen:{{ .Tag }}"
+      - "ghcr.io/jonathandaddia/zen:v{{ .Major }}"
+      - "ghcr.io/jonathandaddia/zen:v{{ .Major }}.{{ .Minor }}"
+      - "ghcr.io/jonathandaddia/zen:latest"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.description=AI-Powered Product Lifecycle Productivity Platform
+      - --label=org.opencontainers.image.url=https://github.com/jonathandaddia/zen
+      - --label=org.opencontainers.image.source=https://github.com/jonathandaddia/zen
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.created={{ time "2006-01-02T15:04:05Z07:00" }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=MIT
+
+brews:
+  - name: zen
+    tap:
+      owner: jonathandaddia
+      name: homebrew-zen
+    folder: Formula
+    homepage: https://github.com/jonathandaddia/zen
+    description: AI-Powered Product Lifecycle Productivity Platform
+    license: MIT
+    test: |
+      system "#{bin}/zen --version"
+    install: |-
+      bin.install "zen"
+
+nfpms:
+  - file_name_template: '{{ .ConventionalFileName }}'
+    id: packages
+    homepage: https://github.com/jonathandaddia/zen
+    description: AI-Powered Product Lifecycle Productivity Platform
+    maintainer: Jonathan Daddia <your-email@example.com>
+    license: MIT
+    vendor: Zen CLI
+    bindir: /usr/bin
+    section: utils
+    contents:
+      - src: ./README.md
+        dst: /usr/share/doc/zen/README.md
+      - src: ./LICENSE
+        dst: /usr/share/doc/zen/LICENSE
+    formats:
+      - apk
+      - deb
+      - rpm
+
+publishers:
+  - name: fury.io
+    ids:
+      - packages
+    dir: "{{ dir .ArtifactPath }}"
+    cmd: curl -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/jonathandaddia/
+
+release:
+  github:
+    owner: jonathandaddia
+    name: zen
+  draft: false
+  prerelease: auto
+  mode: replace
+  header: |
+    ## Zen CLI {{ .Tag }} Release
+
+    AI-Powered Product Lifecycle Productivity Platform
+
+    ### Installation
+
+    #### Homebrew (macOS/Linux)
+    ```bash
+    brew install jonathandaddia/zen/zen
+    ```
+
+    #### Direct Download
+    Download the appropriate binary for your platform from the assets below.
+
+    #### Docker
+    ```bash
+    docker run --rm ghcr.io/jonathandaddia/zen:{{ .Tag }} --help
+    ```
+
+  footer: |
+    **Full Changelog**: https://github.com/jonathandaddia/zen/compare/{{ .PreviousTag }}...{{ .Tag }}
+
+    ---
+
+    🧘‍♂️ **Zen: Where AI intelligence meets product development productivity**

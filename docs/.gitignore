@@ -1,0 +1,14 @@
+# Generated documentation
+build/
+*.tmp
+*.temp
+
+# Editor files
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Local development
+.local/
+scratch/

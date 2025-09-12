@@ -21,7 +21,7 @@
 
 #### Epic: CLI Foundation & Workspace Initialization
 
-- [ ] **[ZEN-001] Go Project Setup** *(M)*: Initialize Go module with Cobra CLI framework, project structure (cmd/zen, internal/, pkg/), Makefile, .gitignore, go.mod dependencies
+- [x] **[ZEN-001] Go Project Setup** *(M)*: Initialize Go module with Cobra CLI framework, project structure (cmd/zen, internal/, pkg/), Makefile, .gitignore, go.mod dependencies
   - **Deliverable**: `go build` produces working binary
   - **Acceptance**: Can run `./zen --help` and see command structure
 
@@ -29,11 +29,11 @@
   - **Deliverable**: `zen version` and `zen --help` work
   - **Acceptance**: Professional CLI help output with proper formatting
 
-- [ ] **[ZEN-003] Workspace Detection & Init** *(L)*: Implement `zen init` command with workspace detection, config file generation (zen.yaml), directory structure creation
+- [ ] **[ZEN-003] Workspace Detection & Init** *(L)*: Implement `zen init` command with workspace detection, `.zen/` direcory generation (similar to `.git/`), config file generation (`.zen/config.yaml`), directory structure creation
   - **Deliverable**: `zen init` creates workspace with config
   - **Acceptance**: Can initialize workspace, generates valid config file
 
-- [ ] **[ZEN-004] Configuration Management** *(M)*: Config loading from zen.yaml, environment variables, CLI flags with precedence, validation and schema
+- [ ] **[ZEN-004] Configuration Management** *(M)*: Config loading from `.zen/config.yaml`, environment variables, CLI flags with precedence, validation and schema
   - **Deliverable**: Configuration system with file/env/flag support
   - **Acceptance**: Config loads from multiple sources with proper precedence
 

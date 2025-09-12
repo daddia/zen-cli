@@ -1,6 +1,6 @@
-# Architecture Decision Register - Helix
+# Architecture Decision Register - Zen CLI
 
-Below are all the proposed Architecture Decision Records (ADRs) for the helix agentic engineering framework.
+Below are all the proposed Architecture Decision Records (ADRs) for the Zen AI-powered productivity suite.
 
 ADRs document important architectural decisions which govern the project's design and development.
 
@@ -15,50 +15,34 @@ An Architecture Decision Record captures a single architectural decision and its
 
 ---
 
-All entries are **Proposed** with today’s date; update status as each ADR is reviewed.
+## Foundation Architecture Decisions
+
+The following ADRs document the architectural decisions made todate:
 
 | ID                                                                         | Title                                                               | Status   | Date       | Supersedes | Related ADRs       |
 | -------------------------------------------------------------------------- | ------------------------------------------------------------------- | -------- | ---------- | ---------- | ------------------ |
-| [ADR-0001](ADR-0001-adopt-temporal-for-orchestration.md)                   | Adopt Temporal for durable orchestration                            | Proposed | 2025-09-01 | —          | ADR-0002, ADR-0005 |
-| [ADR-0002](ADR-0002-python-3-12-fastapi-as-primary-runtime.md)             | Python 3.12 + FastAPI as primary runtime                            | Proposed | 2025-09-01 | —          | ADR-0014, ADR-0022 |
-| [ADR-0003](ADR-0003-monorepo-structure-and-packaging.md)                   | Monorepo with Poetry workspaces; libs/services/agents layout        | Proposed | 2025-09-01 | —          | ADR-0014, ADR-0028 |
-| [ADR-0004](ADR-0004-agents-as-microservices-with-single-responsibility.md) | Agents as stateless microservices (single-responsibility)           | Proposed | 2025-09-01 | —          | ADR-0015, ADR-0016 |
-| [ADR-0005](ADR-0005-featureworkflow-per-jira-story.md)                     | One `FeatureWorkflow` per Jira Story; child workflows per stage     | Proposed | 2025-09-01 | —          | ADR-0001, ADR-0017 |
-| [ADR-0006](ADR-0006-contracts-first-protobuf-openapi.md)                   | Contracts-first (Protobuf + OpenAPI) with buf/oasdiff gates         | Proposed | 2025-09-01 | —          | ADR-0015, ADR-0020 |
-| [ADR-0007](ADR-0007-policy-as-code-with-opa-conftest.md)                   | Policy-as-code with OPA/Conftest for gates                          | Proposed | 2025-09-01 | —          | ADR-0015, ADR-0024 |
-| [ADR-0008](ADR-0008-human-in-the-loop-approval-signals.md)                 | Human-in-the-loop approvals via Temporal Signals                    | Proposed | 2025-09-01 | —          | ADR-0005, ADR-0017 |
-| [ADR-0009](ADR-0009-risk-tiers-drive-gates.md)                             | Risk tiers (Low/Medium/High) determine mandatory gates              | Proposed | 2025-09-01 | —          | ADR-0007, ADR-0017 |
-| [ADR-0010](ADR-0010-kubernetes-deployment-model.md)                        | Kubernetes deployment with per-env namespaces                       | Proposed | 2025-09-01 | —          | ADR-0021, ADR-0023 |
-| [ADR-0011](ADR-0011-secrets-management-with-vault-kms.md)                  | Secrets management via Vault/KMS; no plaintext secrets              | Proposed | 2025-09-01 | —          | ADR-0021, ADR-0024 |
-| [ADR-0012](ADR-0012-observability-with-opentelemetry.md)                   | Observability: OpenTelemetry for traces/metrics/logs                | Proposed | 2025-09-01 | —          | ADR-0023, ADR-0026 |
-| [ADR-0013](ADR-0013-structured-logging-and-correlation-ids.md)             | Structured JSON logging + correlation IDs (`jiraKey`,`workflowId`)  | Proposed | 2025-09-01 | —          | ADR-0012           |
-| [ADR-0014](ADR-0014-tooling-poetry-ruff-mypy-pytest.md)                    | Tooling: Poetry, Ruff, mypy (strict), pytest (+async)               | Proposed | 2025-09-01 | —          | ADR-0003           |
-| [ADR-0015](ADR-0015-gateway-gating-and-ci-checks.md)                       | Mandatory CI gates (format/lint/types/tests/contracts/security)     | Proposed | 2025-09-01 | —          | ADR-0006, ADR-0007 |
-| [ADR-0016](ADR-0016-http-vs-grpc-for-agent-apis.md)                        | Transport: HTTP/JSON for agents initially; gRPC optional later      | Proposed | 2025-09-01 | —          | ADR-0004, ADR-0020 |
-| [ADR-0017](ADR-0017-approval-slas-and-escalations.md)                      | Approval SLAs & escalations (Signals, timeouts, retries)            | Proposed | 2025-09-01 | —          | ADR-0008, ADR-0009 |
-| [ADR-0018](ADR-0018-audit-log-and-retention.md)                            | Append-only audit log; ≥400 days retention                          | Proposed | 2025-09-01 | —          | ADR-0024           |
-| [ADR-0019](ADR-0019-feature-flags-strategy.md)                             | Feature flags for user-visible changes; owner + expiry              | Proposed | 2025-09-01 | —          | ADR-0021           |
-| [ADR-0020](ADR-0020-schema-migrations-expand-contract.md)                  | DB & API schema migrations via expand/contract                      | Proposed | 2025-09-01 | —          | ADR-0006, ADR-0016 |
-| [ADR-0021](ADR-0021-build-once-promote-slsa-sbom.md)                       | Build-once promote; signed images + SBOM (SLSA-style)               | Proposed | 2025-09-01 | —          | ADR-0010, ADR-0011 |
-| [ADR-0022](ADR-0022-clients-for-integrations.md)                           | Dedicated clients for Jira/SCM/Confluence/Flags/Sourcegraph         | Proposed | 2025-09-01 | —          | ADR-0002           |
-| [ADR-0023](ADR-0023-observability-dashboards-and-slos.md)                  | Delivery & reliability dashboards; SLO/error-budget reviews         | Proposed | 2025-09-01 | —          | ADR-0012, ADR-0013 |
-| [ADR-0024](ADR-0024-security-scanning-and-cve-policy.md)                   | Security scanning policy (SAST/SCA/IaC/DAST); CVE waiver rules      | Proposed | 2025-09-01 | —          | ADR-0011, ADR-0018 |
-| [ADR-0025](ADR-0025-webhook-ingest-to-signal-mapping.md)                   | Webhook Ingest: map Jira/SCM/CI events to Signals                   | Proposed | 2025-09-01 | —          | ADR-0005, ADR-0022 |
-| [ADR-0026](ADR-0026-pr-size-and-coverage-guardrails.md)                    | PR guardrails (≤400 lines; per-diff coverage; CODEOWNERS)           | Proposed | 2025-09-01 | —          | ADR-0015           |
-| [ADR-0027](ADR-0027-environment-configuration-strategy.md)                 | Config strategy: pydantic settings + env layering                   | Proposed | 2025-09-01 | —          | ADR-0010           |
-| [ADR-0028](ADR-0028-library-boundaries-and-sharing.md)                     | Shared libraries boundaries (`helix-common`, `helix-clients`, etc.) | Proposed | 2025-09-01 | —          | ADR-0003, ADR-0014 |
-| [ADR-0029](ADR-0029-ml-in-agents-optional-baselines.md)                    | ML in agents as optional baselines; deterministic fallback          | Proposed | 2025-09-01 | —          | ADR-0002, ADR-0030 |
-| [ADR-0030](ADR-0030-model-artifacts-versioning-and-governance.md)          | Model artifacts versioning, provenance & rollout controls           | Proposed | 2025-09-01 | —          | ADR-0029           |
-| [ADR-0031](ADR-0031-error-handling-retries-and-compensations.md)           | Error handling: bounded retries + SAGA compensations                | Proposed | 2025-09-01 | —          | ADR-0001, ADR-0005 |
-| [ADR-0032](ADR-0032-access-control-and-rbac-for-approvals.md)              | Access control/RBAC for approvals in Control Plane                  | Proposed | 2025-09-01 | —          | ADR-0008, ADR-0011 |
-| [ADR-0033](ADR-0033-transport-security-and-mtls-internal.md)               | Transport security: TLS everywhere; mTLS for internal calls         | Proposed | 2025-09-01 | —          | ADR-0011, ADR-0024 |
-| [ADR-0034](ADR-0034-incident-and-rollback-strategy.md)                     | Incident & rollback strategy; automated rollback triggers           | Proposed | 2025-09-01 | —          | ADR-0010, ADR-0021 |
-| [ADR-0035](ADR-0035-data-privacy-and-pii-handling.md)                      | Data privacy: no PII in logs; redaction & sampling rules            | Proposed | 2025-09-01 | —          | ADR-0011, ADR-0013 |
-| [ADR-0036](ADR-0036-temporal-task-queue-strategy.md)                       | Task queue strategy (per-stage/per-agent), scaling & isolation      | Proposed | 2025-09-01 | —          | ADR-0001, ADR-0010 |
-| [ADR-0037](ADR-0037-release-strategy-canary-vs-blue-green.md)              | Release strategy: canary for agents; blue/green for orchestrator    | Proposed | 2025-09-01 | —          | ADR-0021, ADR-0034 |
-| [ADR-0038](ADR-0038-telemetry-ids-and-event-schema.md)                     | Telemetry/event schema and ID conventions                           | Proposed | 2025-09-01 | —          | ADR-0012, ADR-0013 |
-| [ADR-0039](ADR-0039-artifact-storage-and-retention.md)                     | Artifact storage (reports/SBOMs) and retention policy               | Proposed | 2025-09-01 | —          | ADR-0021, ADR-0018 |
-| [ADR-0040](ADR-0040-architecture-docs-adr-governance.md)                   | Architecture docs & ADR governance (templates, review cadence)      | Proposed | 2025-09-01 | —          | ADR-0003           |
+| [ADR-0001](ADR-0001-go-language-choice.md)                                | Go Language Choice for Zen CLI Platform                            | Accepted | 2025-09-12 | —          | ADR-0002, ADR-0003 |
+| [ADR-0002](ADR-0002-cobra-cli-framework.md)                               | Cobra CLI Framework Selection                                       | Accepted | 2025-09-12 | —          | ADR-0001, ADR-0004 |
+| [ADR-0003](ADR-0003-project-structure-organization.md)                    | Project Structure and Organization                                  | Accepted | 2025-09-12 | —          | ADR-0001, ADR-0002 |
+| [ADR-0004](ADR-0004-configuration-management-strategy.md)                 | Configuration Management Strategy                                   | Accepted | 2025-09-12 | —          | ADR-0002, ADR-0005 |
+| [ADR-0005](ADR-0005-structured-logging-implementation.md)                 | Structured Logging Implementation                                   | Accepted | 2025-09-12 | —          | ADR-0004          |
+
+## Planned Architecture Decisions
+
+The following ADRs are planned for future implementation phases:
+
+| ID                                                                         | Title                                                               | Status   | Date       | Supersedes | Related ADRs       |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------- | -------- | ---------- | ---------- | ------------------ |
+| [ADR-0006](ADR-0006-plugin-architecture-design.md)                        | Plugin Architecture and Extension System                           | Proposed | TBD        | —          | ADR-0003          |
+| [ADR-0007](ADR-0007-ai-agent-orchestration.md)                            | AI Agent Orchestration and Multi-Provider Support                  | Proposed | TBD        | —          | ADR-0008          |
+| [ADR-0008](ADR-0008-llm-provider-abstraction.md)                          | LLM Provider Abstraction and Cost Management                       | Proposed | TBD        | —          | ADR-0007          |
+| [ADR-0009](ADR-0009-workflow-state-management.md)                         | Workflow State Management and Persistence                          | Proposed | TBD        | —          | ADR-0010          |
+| [ADR-0010](ADR-0010-integration-client-architecture.md)                   | External Integration Client Architecture                            | Proposed | TBD        | —          | ADR-0011          |
+| [ADR-0011](ADR-0011-template-engine-design.md)                            | Template Engine and Content Generation                             | Proposed | TBD        | —          | ADR-0012          |
+| [ADR-0012](ADR-0012-quality-gates-framework.md)                           | Quality Gates Framework and Automation                             | Proposed | TBD        | —          | ADR-0013          |
+| [ADR-0013](ADR-0013-security-model-implementation.md)                     | Security Model and Threat Mitigation                               | Proposed | TBD        | —          | ADR-0004, ADR-0005 |
+| [ADR-0014](ADR-0014-deployment-distribution-strategy.md)                  | Deployment and Distribution Strategy                                | Proposed | TBD        | —          | ADR-0001, ADR-0003 |
+| [ADR-0015](ADR-0015-observability-monitoring-strategy.md)                 | Observability and Monitoring Strategy                              | Proposed | TBD        | —          | ADR-0005          |
 
 
 ---
