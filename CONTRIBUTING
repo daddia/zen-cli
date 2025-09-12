@@ -1,0 +1,140 @@
+# Contributing to zen
+
+Thanks for helping improve **zen**.
+
+This guide covers how to propose changes, our development workflow, coding standards, and release practices.
+
+---
+
+## Ground rules
+
+- Discuss larger changes in an issue first.
+- Follow established architectural patterns and conventions.
+- No secrets in code or config files committed to the repo.
+- Add or update ADRs (`/docs/architecture/decisions/`) for significant decisions.
+- Write tests for new behavior and keep CI green.
+- Follow the coding standards outlined below.
+
+---
+
+## Development workflow
+
+1. **Fork/branch**
+   - Branch from `main` using a descriptive name: `feat/<topic>`, `fix/<bug>`, `docs/<area>`.
+
+2. **Local setup**
+   - Ensure toolchain versions match the README prerequisites.
+   - Copy `.env.example` → `.env` and adjust for local development.
+   - Set up local dependencies as described in the project README.
+
+3. **Make small, focused changes**
+   - Follow the repository layout conventions.
+   - Update or add ADRs if you’re changing architecture or dependencies.
+
+4. **Quality gates (run locally)**
+   - Format and tidy modules.
+   - Lint and static analysis.
+   - Run tests with race detector and measure coverage.
+   - Generate code if you touched APIs or schemas and ensure a clean working tree.
+
+5. **Open a Pull Request**
+   - Fill out the PR template.
+   - Link to the issue.
+   - Describe the change, testing performed, and any rollout or migration notes.
+
+6. **Review & merge**
+   - One approval from CODEOWNERS is required.
+   - Squash merge using Conventional Commits (see below).
+
+---
+
+## Conventional Commits
+
+Use Conventional Commit prefixes to keep history and changelogs clean:
+
+- `feat:` new functionality
+- `fix:` bug fix
+- `docs:` documentation only
+- `refactor:` code change that neither fixes a bug nor adds a feature
+- `perf:` performance improvement
+- `test:` adding or updating tests
+- `build:` build system or dependencies
+- `ci:` CI configuration or scripts
+- `chore:` other changes that don’t modify src or tests
+- `revert:` revert a previous commit
+
+Examples:
+- `feat(http): add request-id middleware`
+- `fix(repo): correct transaction rollback on error`
+
+---
+
+## Coding standards
+
+<!-- Update these standards to match your project's language and tools -->
+
+- **Formatting:** Use project-configured formatters and linters consistently.
+- **Code Style:** Follow established patterns and conventions for the project language.
+- **Error Handling:** Use consistent error handling patterns throughout the codebase.
+- **Logging:** Use structured logging with appropriate log levels and context.
+- **Testing:** Write comprehensive tests for new functionality and maintain good coverage.
+- **Security:** Follow security best practices; no secrets in code, validate inputs, use secure defaults.
+- **Documentation:** Update relevant documentation when making changes to user-facing behavior.
+
+---
+
+## Tests
+
+<!-- Update these test types to match your project's testing strategy -->
+
+- **Unit tests:** Test individual components and business logic in isolation.
+- **Integration tests:** Test component interactions and external service integrations.
+- **End-to-end tests:** Test complete user workflows and critical system paths.
+- **Performance tests:** Validate performance requirements and detect regressions.
+- **Security tests:** Validate security controls and vulnerability scanning.
+
+---
+
+## Documentation
+
+- Update documentation `docs/` when user-facing behavior or setup changes.
+- Add or update ADRs in `docs/architecture/decisions/` for notable decisions.
+- Keep `TODO.md` in sync if you add new phases or tasks.
+
+---
+
+## Dependencies
+
+- Prefer standard library first.
+- Justify new dependencies in an ADR (scope, maintenance, alternatives).
+- Pin versions; rely on Dependabot or similar for updates.
+- Remove unused dependencies promptly.
+
+---
+
+## Security
+
+- Never commit secrets; use environment variables or secret managers.
+- Report vulnerabilities via the instructions in `SECURITY.md`.
+- Keep third-party libraries up to date; address high/critical CVEs promptly.
+
+---
+
+## Releases
+
+- All notable changes should be documented in `CHANGELOG.md`.
+- This project adheres to [Semantic Versioning](http://semver.org/).
+- CI creates images and Helm charts; release notes summarize changes and any migrations.
+
+---
+
+## Code of Conduct
+
+Be respectful and constructive. Disagreements are resolved through evidence and empathy. Escalate via CODEOWNERS if needed.
+
+---
+
+## Getting help
+
+- Open an issue with repro steps and environment details.
+- Tag the area in the title: `[http]`, `[rpc]`, `[repo]`, `[obs]`, `[helm]`, `[ci]`, etc.
