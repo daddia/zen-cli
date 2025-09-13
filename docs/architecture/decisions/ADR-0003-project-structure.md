@@ -74,25 +74,23 @@ The decision has been validated through:
 - CI/CD pipeline successfully targeting specific components
 - Security review confirming proper API isolation
 
-## Project Structure
+## Enhanced Project Structure
 
 ```
 zen/
 ├── cmd/                        # Main Applications
 │   └── zen/                   # CLI Binary
-│       ├── main.go           # Application entry point
-│       └── version.go        # Build-time version info
+│       └── main.go           # Ultra-lightweight entry point (delegates to zencmd)
 ├── internal/                   # Private Application Code
-│   ├── cli/                   # Command Layer
-│   │   ├── root.go           # Root command and global flags
-│   │   ├── version.go        # Version command
-│   │   ├── init.go           # Workspace initialization
-│   │   ├── config.go         # Configuration management
-│   │   └── status.go         # Workspace status
+│   ├── zencmd/               # Command Orchestration
+│   │   ├── cmd.go           # Main command handler with error management
+│   │   └── cmd_test.go      # Command orchestration tests
 │   ├── config/               # Configuration Management
-│   │   └── config.go         # Loading, validation, defaults
+│   │   ├── config.go        # Loading, validation, defaults
+│   │   └── config_test.go   # Configuration tests
 │   ├── logging/              # Logging Infrastructure
-│   │   └── logger.go         # Structured logging interface
+│   │   ├── logger.go        # Structured logging interface
+│   │   └── logger_test.go   # Logging tests
 │   ├── agents/               # AI Agent Orchestration (future)
 │   ├── workflow/             # Workflow State Management (future)
 │   ├── integrations/         # External System Clients (future)
@@ -100,21 +98,52 @@ zen/
 │   ├── quality/              # Quality Gates (future)
 │   └── storage/              # Data Persistence (future)
 ├── pkg/                        # Public Library Code
-│   ├── types/                # Common Type Definitions
-│   │   └── common.go         # Shared types and constants
-│   ├── errors/               # Error Handling
-│   │   └── errors.go         # Error types and utilities
-│   └── client/               # Go Client Library (future)
+│   ├── cmd/                  # Command Implementations
+│   │   ├── factory/         # Dependency injection factory
+│   │   │   ├── default.go   # Default factory implementation
+│   │   │   └── default_test.go # Factory tests
+│   │   ├── root/            # Root command
+│   │   │   ├── root.go      # Root command implementation
+│   │   │   └── root_test.go # Root command tests
+│   │   ├── version/         # Version command
+│   │   │   ├── version.go   # Version command implementation
+│   │   │   └── version_test.go # Version tests
+│   │   ├── init/            # Initialization command
+│   │   │   ├── init.go      # Init command implementation
+│   │   │   └── init_test.go # Init tests
+│   │   ├── config/          # Configuration command
+│   │   │   ├── config.go    # Config command implementation
+│   │   │   └── config_test.go # Config tests
+│   │   └── status/          # Status command
+│   │       ├── status.go    # Status command implementation
+│   │       └── status_test.go # Status tests
+│   ├── cmdutil/             # Command utilities
+│   │   ├── factory.go       # Factory interface and types
+│   │   ├── factory_test.go  # Factory tests
+│   │   ├── errors.go        # Error types and exit codes
+│   │   └── errors_test.go   # Error tests
+│   ├── iostreams/           # I/O abstraction
+│   │   ├── iostreams.go     # I/O streams management
+│   │   └── iostreams_test.go # I/O tests
+│   ├── types/               # Common Type Definitions
+│   │   ├── common.go        # Shared types and constants
+│   │   └── common_test.go   # Type tests
+│   └── errors/              # Error Handling
+│       ├── errors.go        # Error types and utilities
+│       └── errors_test.go   # Error tests
 ├── plugins/                    # Plugin System (future)
 │   ├── agents/               # Custom AI Agents
 │   ├── integrations/         # External Integrations
 │   └── templates/            # Template Extensions
 ├── configs/                    # Configuration Files
-│   └── zen.example.yaml      # Example configuration
+│   ├── examples/            # Example configurations
+│   │   └── zen.example.yaml # Example configuration
+│   └── schemas/             # Configuration schemas
 ├── docs/                       # Documentation
 │   ├── architecture/         # Architecture Documentation
+│   │   ├── decisions/       # Architecture Decision Records
+│   │   └── overview.md      # Architecture overview
 │   ├── cli-structure.md      # Project structure guide
-│   ├── overview.md           # Product overview
 │   └── roadmap.md           # Development roadmap
 ├── scripts/                    # Build and Development Scripts (future)
 ├── test/                       # Additional Test Data (future)
@@ -136,20 +165,23 @@ zen/
 
 ### 🎯 **`cmd/` Directory**
 - Contains main applications and their entry points
-- Each subdirectory represents a separate binary
-- Minimal business logic - delegates to `internal/` packages
-- Build-time information and version handling
+- Ultra-lightweight entry point (main.go reduced to ~10 lines)
+- All logic delegated to `internal/zencmd/` for orchestration
+- Build-time information injected at compile time
 
 ### 🔒 **`internal/` Directory**
 - Private application code not importable by external packages
+- `zencmd/` package handles command orchestration and error management
 - Core business logic and implementation details
-- Organized by functional domains (cli, config, logging, etc.)
+- Organized by functional domains (config, logging, agents, etc.)
 - Security boundary preventing external access
 
 ### 📦 **`pkg/` Directory**
 - Public library code that can be imported by external applications
+- `pkg/cmd/` contains all command implementations with factory pattern
+- `pkg/cmdutil/` provides factory interface and command utilities
+- `pkg/iostreams/` provides I/O abstraction layer
 - Stable APIs with backward compatibility considerations
-- Common types, utilities, and client libraries
 - Well-documented public interfaces
 
 ### 🔌 **`plugins/` Directory**
