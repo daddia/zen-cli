@@ -96,7 +96,7 @@ jobs:
         args: '-no-fail -fmt sarif -out results.sarif ./...'
 
     - name: Upload SARIF file
-      uses: github/codeql-action/upload-sarif@v4
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: results.sarif
 
@@ -152,12 +152,9 @@ jobs:
         fi
 
         LDFLAGS="-ldflags \
-          -X main.version=${VERSION} \
-          -X main.commit=${COMMIT} \
-          -X main.buildTime=${BUILD_TIME} \
-          -X github.com/daddia/zen/internal/cli.version=${VERSION} \
-          -X github.com/daddia/zen/internal/cli.commit=${COMMIT} \
-          -X github.com/daddia/zen/internal/cli.buildTime=${BUILD_TIME}"
+          -X github.com/daddia/zen/pkg/cmd/factory.version=${VERSION} \
+          -X github.com/daddia/zen/pkg/cmd/factory.commit=${COMMIT} \
+          -X github.com/daddia/zen/pkg/cmd/factory.buildTime=${BUILD_TIME}"
 
         mkdir -p bin
         go build ${LDFLAGS} -o bin/${BINARY_NAME} ./cmd/zen
