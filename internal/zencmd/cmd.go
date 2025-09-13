@@ -69,7 +69,7 @@ func handleError(err error, f *cmdutil.Factory) cmdutil.ExitCode {
 	}
 
 	// Print the error
-	printError(stderr, err)
+	printError(stderr, err, f.IOStreams)
 
 	// Check for flag errors
 	var flagError *cmdutil.FlagError
@@ -80,13 +80,15 @@ func handleError(err error, f *cmdutil.Factory) cmdutil.ExitCode {
 	return cmdutil.ExitError
 }
 
-func printError(out io.Writer, err error) {
+func printError(out io.Writer, err error, iostreams interface {
+	FormatError(string) string
+}) {
 	if err == nil {
 		return
 	}
 
-	// Format error message
-	fmt.Fprintf(out, "Error: %s\n", err.Error())
+	// Format error message using design guide formatting
+	fmt.Fprintln(out, iostreams.FormatError(err.Error()))
 
 	// Add helpful suggestions based on error type
 	if msg := getErrorSuggestion(err); msg != "" {

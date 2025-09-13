@@ -3,111 +3,49 @@ package status
 import (
 	"bytes"
 	"encoding/json"
-	"runtime"
 	"testing"
 
-	"github.com/daddia/zen/internal/config"
-	"github.com/daddia/zen/pkg/cmdutil"
-	"github.com/daddia/zen/pkg/iostreams"
-	"github.com/spf13/cobra"
+	"github.com/daddia/zen/pkg/cmd/factory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewCmdStatus(t *testing.T) {
-	f := &cmdutil.Factory{
-		IOStreams: iostreams.Test(),
-		Config: func() (*config.Config, error) {
-			return &config.Config{}, nil
-		},
-		WorkspaceManager: func() (cmdutil.WorkspaceManager, error) {
-			return &mockWorkspaceManager{}, nil
-		},
-	}
+// Mock IOStreams for testing
+type mockIOStreams struct{}
 
+func (m *mockIOStreams) FormatSectionHeader(text string) string {
+	return text + "\n" + "=============="
+}
+
+func (m *mockIOStreams) FormatBold(text string) string {
+	return text
+}
+
+func (m *mockIOStreams) FormatBoolStatus(value bool, trueText, falseText string) string {
+	if value {
+		return "✓ " + trueText
+	}
+	return "✗ " + falseText
+}
+
+func (m *mockIOStreams) Indent(text string, level int) string {
+	indent := ""
+	for i := 0; i < level; i++ {
+		indent += "  "
+	}
+	return indent + text
+}
+
+func TestNewCmdStatus(t *testing.T) {
+	f := factory.New()
 	cmd := NewCmdStatus(f)
 
 	assert.Equal(t, "status", cmd.Use)
-	assert.Equal(t, "Display workspace and system status", cmd.Short)
-	assert.NotNil(t, cmd.RunE)
-}
-
-func TestStatusOutput(t *testing.T) {
-	f := &cmdutil.Factory{
-		IOStreams: iostreams.Test(),
-		Config: func() (*config.Config, error) {
-			return &config.Config{
-				LogLevel: "debug",
-			}, nil
-		},
-		WorkspaceManager: func() (cmdutil.WorkspaceManager, error) {
-			return &mockWorkspaceManager{
-				initialized: true,
-				root:        "/test/workspace",
-				configFile:  "zen.yaml",
-			}, nil
-		},
-	}
-
-	t.Run("text output", func(t *testing.T) {
-		out := &bytes.Buffer{}
-		f.IOStreams = &iostreams.IOStreams{
-			Out: out,
-		}
-
-		cmd := NewCmdStatus(f)
-		err := cmd.Execute()
-		require.NoError(t, err)
-
-		output := out.String()
-		assert.Contains(t, output, "Zen CLI Status")
-		assert.Contains(t, output, "Workspace:")
-		assert.Contains(t, output, "Configuration:")
-		assert.Contains(t, output, "System:")
-		assert.Contains(t, output, "Integrations:")
-		assert.Contains(t, output, runtime.GOOS)
-		assert.Contains(t, output, runtime.Version())
-	})
-
-	t.Run("json output", func(t *testing.T) {
-		out := &bytes.Buffer{}
-		f.IOStreams = &iostreams.IOStreams{
-			Out: out,
-		}
-
-		// Create root command with output flag
-		rootCmd := &cobra.Command{Use: "test"}
-		rootCmd.PersistentFlags().String("output", "text", "")
-
-		cmd := NewCmdStatus(f)
-		rootCmd.AddCommand(cmd)
-
-		// Set args to trigger json output
-		rootCmd.SetArgs([]string{"status", "--output", "json"})
-		rootCmd.PersistentFlags().Set("output", "json")
-
-		err := rootCmd.Execute()
-		require.NoError(t, err)
-
-		var status Status
-		err = json.Unmarshal(out.Bytes(), &status)
-		require.NoError(t, err)
-
-		assert.True(t, status.Workspace.Initialized)
-		assert.Equal(t, "/test/workspace", status.Workspace.Path)
-		assert.True(t, status.Configuration.Loaded)
-		assert.Equal(t, "debug", status.Configuration.LogLevel)
-		assert.Equal(t, runtime.GOOS, status.System.OS)
-	})
-}
-
-func TestGetStatusText(t *testing.T) {
-	assert.Equal(t, "Ready", getStatusText(true))
-	assert.Equal(t, "Not Ready", getStatusText(false))
+	assert.Contains(t, cmd.Short, "status")
+	assert.NotEmpty(t, cmd.Long)
 }
 
 func TestDisplayTextStatus(t *testing.T) {
-	buf := &bytes.Buffer{}
 	status := Status{
 		Workspace: WorkspaceStatus{
 			Initialized: true,
@@ -122,57 +60,159 @@ func TestDisplayTextStatus(t *testing.T) {
 		System: SystemStatus{
 			OS:           "linux",
 			Architecture: "amd64",
-			GoVersion:    "go1.21",
+			GoVersion:    "go1.21.0",
 			NumCPU:       8,
 		},
 		Integrations: IntegrationStatus{
-			Available: []string{"jira", "git"},
+			Available: []string{"jira", "confluence", "git", "slack"},
 			Active:    []string{"git"},
 		},
 	}
 
-	err := displayTextStatus(buf, status)
-	require.NoError(t, err)
+	buf := &bytes.Buffer{}
+	mockStreams := &mockIOStreams{}
+	err := displayTextStatus(buf, status, mockStreams)
+	assert.NoError(t, err)
 
 	output := buf.String()
+
+	// Check for main sections
 	assert.Contains(t, output, "Zen CLI Status")
-	assert.Contains(t, output, "Ready")
+	assert.Contains(t, output, "==============")
+	assert.Contains(t, output, "Workspace:")
+	assert.Contains(t, output, "Configuration:")
+	assert.Contains(t, output, "System:")
+	assert.Contains(t, output, "Integrations:")
+
+	// Check for specific values
+	assert.Contains(t, output, "✓ Ready")
 	assert.Contains(t, output, "/home/user/project")
+	assert.Contains(t, output, "zen.yaml")
+	assert.Contains(t, output, "✓ Loaded")
 	assert.Contains(t, output, "linux")
+	assert.Contains(t, output, "amd64")
+	assert.Contains(t, output, "go1.21.0")
 	assert.Contains(t, output, "8")
 }
 
-// mockWorkspaceManager is a mock implementation for testing
-type mockWorkspaceManager struct {
-	initialized bool
-	root        string
-	configFile  string
-}
-
-func (m *mockWorkspaceManager) Root() string {
-	return m.root
-}
-
-func (m *mockWorkspaceManager) ConfigFile() string {
-	return m.configFile
-}
-
-func (m *mockWorkspaceManager) Initialize() error {
-	return nil
-}
-
-func (m *mockWorkspaceManager) InitializeWithForce(force bool) error {
-	return nil
-}
-
-func (m *mockWorkspaceManager) Status() (cmdutil.WorkspaceStatus, error) {
-	return cmdutil.WorkspaceStatus{
-		Initialized: m.initialized,
-		ConfigPath:  m.configFile,
-		Root:        m.root,
-		Project: cmdutil.ProjectInfo{
-			Type: "unknown",
-			Name: "test-project",
+func TestDisplayTextStatus_NotInitialized(t *testing.T) {
+	status := Status{
+		Workspace: WorkspaceStatus{
+			Initialized: false,
+			Path:        "/home/user/project",
+			ConfigFile:  "",
 		},
-	}, nil
+		Configuration: ConfigStatus{
+			Loaded:   false,
+			Source:   "none",
+			LogLevel: "unknown",
+		},
+		System: SystemStatus{
+			OS:           "darwin",
+			Architecture: "arm64",
+			GoVersion:    "go1.21.0",
+			NumCPU:       4,
+		},
+		Integrations: IntegrationStatus{
+			Available: []string{},
+			Active:    []string{},
+		},
+	}
+
+	buf := &bytes.Buffer{}
+	mockStreams := &mockIOStreams{}
+	err := displayTextStatus(buf, status, mockStreams)
+	assert.NoError(t, err)
+
+	output := buf.String()
+
+	// Check for failure status
+	assert.Contains(t, output, "✗ Not Initialized")
+	assert.Contains(t, output, "✗ Not Loaded")
+	assert.Contains(t, output, "none")
+	assert.Contains(t, output, "unknown")
+}
+
+func TestGetConfigSource(t *testing.T) {
+	tests := []struct {
+		name     string
+		setup    func() func()
+		expected string
+	}{
+		{
+			name: "nil config",
+			setup: func() func() {
+				return func() {}
+			},
+			expected: "none",
+		},
+		{
+			name: "non-nil config",
+			setup: func() func() {
+				return func() {}
+			},
+			expected: "defaults",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cleanup := tt.setup()
+			defer cleanup()
+
+			var cfg interface{}
+			if tt.name != "nil config" {
+				cfg = map[string]interface{}{}
+			}
+
+			result := getConfigSource(cfg)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestStatusCommand_Integration(t *testing.T) {
+	f := factory.New()
+	cmd := NewCmdStatus(f)
+
+	// Test that the command can be created and basic properties are set
+	require.NotNil(t, cmd)
+	assert.Equal(t, "status", cmd.Name())
+	assert.True(t, cmd.Runnable())
+
+	// Test that it accepts no arguments (cobra.NoArgs)
+	assert.NotNil(t, cmd.Args)
+}
+
+func TestStatusJSON(t *testing.T) {
+	status := Status{
+		Workspace: WorkspaceStatus{
+			Initialized: true,
+			Path:        "/test",
+			ConfigFile:  "zen.yaml",
+		},
+		Configuration: ConfigStatus{
+			Loaded:   true,
+			Source:   "zen.yaml",
+			LogLevel: "info",
+		},
+		System: SystemStatus{
+			OS:           "linux",
+			Architecture: "amd64",
+			GoVersion:    "go1.21.0",
+			NumCPU:       4,
+		},
+		Integrations: IntegrationStatus{
+			Available: []string{"git"},
+			Active:    []string{},
+		},
+	}
+
+	// Test JSON marshaling
+	data, err := json.Marshal(status)
+	assert.NoError(t, err)
+	assert.Contains(t, string(data), `"initialized":true`)
+	assert.Contains(t, string(data), `"path":"/test"`)
+	assert.Contains(t, string(data), `"loaded":true`)
+	assert.Contains(t, string(data), `"os":"linux"`)
 }

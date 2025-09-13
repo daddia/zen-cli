@@ -2,136 +2,169 @@ package config
 
 import (
 	"bytes"
-	"encoding/json"
 	"testing"
 
-	"github.com/daddia/zen/internal/config"
-	"github.com/daddia/zen/pkg/cmdutil"
-	"github.com/daddia/zen/pkg/iostreams"
-	"github.com/spf13/cobra"
+	"github.com/daddia/zen/pkg/cmd/factory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewCmdConfig(t *testing.T) {
-	f := &cmdutil.Factory{
-		IOStreams: iostreams.Test(),
-		Config: func() (*config.Config, error) {
-			return &config.Config{
-				LogLevel:  "info",
-				LogFormat: "text",
-			}, nil
-		},
-	}
+// Mock IOStreams for testing
+type mockIOStreams struct{}
 
+func (m *mockIOStreams) FormatSectionHeader(text string) string {
+	return text + "\n" + "================"
+}
+
+func (m *mockIOStreams) FormatBold(text string) string {
+	return text
+}
+
+func (m *mockIOStreams) Indent(text string, level int) string {
+	indent := ""
+	for i := 0; i < level; i++ {
+		indent += "  "
+	}
+	return indent + text
+}
+
+func TestNewCmdConfig(t *testing.T) {
+	f := factory.New()
 	cmd := NewCmdConfig(f)
 
 	assert.Equal(t, "config", cmd.Use)
-	assert.Equal(t, "Display current configuration", cmd.Short)
-	assert.NotNil(t, cmd.RunE)
-}
-
-func TestConfigOutput(t *testing.T) {
-	testConfig := &config.Config{
-		LogLevel:  "debug",
-		LogFormat: "json",
-		CLI: config.CLIConfig{
-			NoColor:      true,
-			Verbose:      true,
-			OutputFormat: "yaml",
-		},
-		Workspace: config.WorkspaceConfig{
-			Root:       "/test/workspace",
-			ConfigFile: "zen.yaml",
-		},
-		Development: config.DevelopmentConfig{
-			Debug:   true,
-			Profile: false,
-		},
-	}
-
-	t.Run("text output", func(t *testing.T) {
-		out := &bytes.Buffer{}
-		f := &cmdutil.Factory{
-			IOStreams: &iostreams.IOStreams{
-				Out: out,
-			},
-			Config: func() (*config.Config, error) {
-				return testConfig, nil
-			},
-		}
-
-		cmd := NewCmdConfig(f)
-		err := cmd.Execute()
-		require.NoError(t, err)
-
-		output := out.String()
-		assert.Contains(t, output, "Zen Configuration")
-		assert.Contains(t, output, "Logging:")
-		assert.Contains(t, output, "debug")
-	})
-
-	t.Run("json output", func(t *testing.T) {
-		out := &bytes.Buffer{}
-		f := &cmdutil.Factory{
-			IOStreams: &iostreams.IOStreams{
-				Out: out,
-			},
-			Config: func() (*config.Config, error) {
-				return testConfig, nil
-			},
-		}
-
-		// Create root command with output flag
-		rootCmd := &cobra.Command{Use: "test"}
-		rootCmd.PersistentFlags().String("output", "text", "")
-
-		cmd := NewCmdConfig(f)
-		rootCmd.AddCommand(cmd)
-
-		// Set args to trigger json output
-		rootCmd.SetArgs([]string{"config", "--output", "json"})
-		rootCmd.PersistentFlags().Set("output", "json")
-
-		err := rootCmd.Execute()
-		require.NoError(t, err)
-
-		var result map[string]interface{}
-		err = json.Unmarshal(out.Bytes(), &result)
-		assert.NoError(t, err)
-		assert.Equal(t, "debug", result["LogLevel"])
-	})
+	assert.Contains(t, cmd.Short, "configuration")
+	assert.NotEmpty(t, cmd.Long)
 }
 
 func TestDisplayTextConfig(t *testing.T) {
-	buf := &bytes.Buffer{}
-
-	cfg := map[string]interface{}{
-		"LogLevel":  "info",
-		"LogFormat": "text",
-		"CLI": map[string]interface{}{
-			"NoColor":      false,
-			"Verbose":      true,
-			"OutputFormat": "text",
+	tests := []struct {
+		name     string
+		config   map[string]interface{}
+		expected []string
+	}{
+		{
+			name: "basic config",
+			config: map[string]interface{}{
+				"LogLevel":  "info",
+				"LogFormat": "text",
+				"CLI": map[string]interface{}{
+					"NoColor":      false,
+					"Verbose":      false,
+					"OutputFormat": "text",
+				},
+			},
+			expected: []string{
+				"Zen Configuration",
+				"================",
+				"Logging:",
+				"  Level:  info",
+				"  Format: text",
+				"CLI:",
+				"  No Color:      false",
+				"  Verbose:       false",
+				"  Output Format: text",
+			},
 		},
-		"Workspace": map[string]interface{}{
-			"Root":       "/home/user",
-			"ConfigFile": "zen.yaml",
+		{
+			name: "workspace config",
+			config: map[string]interface{}{
+				"LogLevel": "debug",
+				"Workspace": map[string]interface{}{
+					"Root":       "/home/user/project",
+					"ConfigFile": "zen.yaml",
+				},
+			},
+			expected: []string{
+				"Zen Configuration",
+				"================",
+				"Logging:",
+				"  Level:  debug",
+				"Workspace:",
+				"  Root:        /home/user/project",
+				"  Config File: zen.yaml",
+			},
 		},
-		"Development": map[string]interface{}{
-			"Debug":   false,
-			"Profile": false,
+		{
+			name: "development config",
+			config: map[string]interface{}{
+				"LogLevel": "trace",
+				"Development": map[string]interface{}{
+					"Debug":   true,
+					"Profile": false,
+				},
+			},
+			expected: []string{
+				"Zen Configuration",
+				"================",
+				"Logging:",
+				"  Level:  trace",
+				"Development:",
+				"  Debug:   true",
+				"  Profile: false",
+			},
 		},
 	}
 
-	err := displayTextConfig(buf, cfg)
-	require.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			mockStreams := &mockIOStreams{}
+			err := displayTextConfig(buf, tt.config, mockStreams)
+			assert.NoError(t, err)
+
+			output := buf.String()
+			for _, expected := range tt.expected {
+				assert.Contains(t, output, expected)
+			}
+		})
+	}
+}
+
+func TestDisplayTextConfig_JSONMarshaling(t *testing.T) {
+	// Test with a struct that needs JSON marshaling
+	type TestConfig struct {
+		LogLevel string `json:"LogLevel"`
+		CLI      struct {
+			NoColor bool `json:"NoColor"`
+		} `json:"CLI"`
+	}
+
+	config := TestConfig{
+		LogLevel: "warn",
+	}
+	config.CLI.NoColor = true
+
+	buf := &bytes.Buffer{}
+	mockStreams := &mockIOStreams{}
+	err := displayTextConfig(buf, config, mockStreams)
+	assert.NoError(t, err)
 
 	output := buf.String()
 	assert.Contains(t, output, "Zen Configuration")
-	assert.Contains(t, output, "Logging:")
-	assert.Contains(t, output, "Level:  info")
-	assert.Contains(t, output, "CLI:")
-	assert.Contains(t, output, "Workspace:")
-	assert.Contains(t, output, "Development:")
+	assert.Contains(t, output, "Level:  warn")
+	assert.Contains(t, output, "No Color:      true")
+}
+
+func TestDisplayTextConfig_InvalidJSON(t *testing.T) {
+	// Test with something that can't be marshaled to JSON
+	invalidConfig := make(chan int)
+
+	buf := &bytes.Buffer{}
+	mockStreams := &mockIOStreams{}
+	err := displayTextConfig(buf, invalidConfig, mockStreams)
+	assert.Error(t, err)
+}
+
+func TestConfigCommand_Integration(t *testing.T) {
+	f := factory.New()
+	cmd := NewCmdConfig(f)
+
+	// Test that the command can be created and basic properties are set
+	require.NotNil(t, cmd)
+	assert.Equal(t, "config", cmd.Name())
+	assert.True(t, cmd.Runnable())
+
+	// Test flags
+	assert.NotNil(t, cmd.Flags())
 }

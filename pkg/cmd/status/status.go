@@ -114,7 +114,7 @@ configuration, system environment, and available integrations.`,
 				return encoder.Encode(status)
 
 			default:
-				return displayTextStatus(f.IOStreams.Out, status)
+				return displayTextStatus(f.IOStreams.Out, status, f.IOStreams)
 			}
 		},
 	}
@@ -146,38 +146,45 @@ func getConfigSource(cfg interface{}) string {
 	return "defaults"
 }
 
-// displayTextStatus displays status in human-readable text format
-func displayTextStatus(out interface{ Write([]byte) (int, error) }, status Status) error {
-	fmt.Fprintln(out, "Zen CLI Status")
-	fmt.Fprintln(out, "--------------")
+// displayTextStatus displays status in human-readable text format following design guide
+func displayTextStatus(out interface{ Write([]byte) (int, error) }, status Status, iostreams interface {
+	FormatSectionHeader(string) string
+	FormatBoolStatus(bool, string, string) string
+	FormatBold(string) string
+	Indent(string, int) string
+}) error {
+	// Main header following design guide typography
+	fmt.Fprintln(out, iostreams.FormatSectionHeader("Zen CLI Status"))
 	fmt.Fprintln(out)
 
-	// Workspace status
-	fmt.Fprintln(out, "Workspace:")
-	fmt.Fprintf(out, "  Status:      %s\n", getStatusText(status.Workspace.Initialized))
-	fmt.Fprintf(out, "  Path:        %s\n", status.Workspace.Path)
-	fmt.Fprintf(out, "  Config File: %s\n", status.Workspace.ConfigFile)
+	// Workspace status with proper formatting and indentation
+	fmt.Fprintln(out, iostreams.FormatBold("Workspace:"))
+	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Status:      %s\n", 
+		iostreams.FormatBoolStatus(status.Workspace.Initialized, "Ready", "Not Initialized")), 1))
+	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Path:        %s\n", status.Workspace.Path), 1))
+	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Config File: %s\n", status.Workspace.ConfigFile), 1))
 	fmt.Fprintln(out)
 
 	// Configuration status
-	fmt.Fprintln(out, "Configuration:")
-	fmt.Fprintf(out, "  Status:    %s\n", getStatusText(status.Configuration.Loaded))
-	fmt.Fprintf(out, "  Source:    %s\n", status.Configuration.Source)
-	fmt.Fprintf(out, "  Log Level: %s\n", status.Configuration.LogLevel)
+	fmt.Fprintln(out, iostreams.FormatBold("Configuration:"))
+	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Status:    %s\n", 
+		iostreams.FormatBoolStatus(status.Configuration.Loaded, "Loaded", "Not Loaded")), 1))
+	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Source:    %s\n", status.Configuration.Source), 1))
+	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Log Level: %s\n", status.Configuration.LogLevel), 1))
 	fmt.Fprintln(out)
 
 	// System information
-	fmt.Fprintln(out, "System:")
-	fmt.Fprintf(out, "  OS:           %s\n", status.System.OS)
-	fmt.Fprintf(out, "  Architecture: %s\n", status.System.Architecture)
-	fmt.Fprintf(out, "  Go Version:   %s\n", status.System.GoVersion)
-	fmt.Fprintf(out, "  CPU Cores:    %d\n", status.System.NumCPU)
+	fmt.Fprintln(out, iostreams.FormatBold("System:"))
+	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("OS:           %s\n", status.System.OS), 1))
+	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Architecture: %s\n", status.System.Architecture), 1))
+	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Go Version:   %s\n", status.System.GoVersion), 1))
+	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("CPU Cores:    %d\n", status.System.NumCPU), 1))
 	fmt.Fprintln(out)
 
 	// Integrations
-	fmt.Fprintln(out, "Integrations:")
-	fmt.Fprintf(out, "  Available: %v\n", status.Integrations.Available)
-	fmt.Fprintf(out, "  Active:    %v\n", status.Integrations.Active)
+	fmt.Fprintln(out, iostreams.FormatBold("Integrations:"))
+	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Available: %v\n", status.Integrations.Available), 1))
+	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Active:    %v\n", status.Integrations.Active), 1))
 
 	return nil
 }

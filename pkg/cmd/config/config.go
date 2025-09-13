@@ -46,7 +46,7 @@ environment variables, and command-line flags.`,
 				return encoder.Encode(cfg)
 
 			default:
-				return displayTextConfig(f.IOStreams.Out, cfg)
+				return displayTextConfig(f.IOStreams.Out, cfg, f.IOStreams)
 			}
 		},
 	}
@@ -54,8 +54,12 @@ environment variables, and command-line flags.`,
 	return cmd
 }
 
-// displayTextConfig displays configuration in human-readable text format
-func displayTextConfig(out interface{ Write([]byte) (int, error) }, cfg interface{}) error {
+// displayTextConfig displays configuration in human-readable text format following design guide
+func displayTextConfig(out interface{ Write([]byte) (int, error) }, cfg interface{}, iostreams interface {
+	FormatSectionHeader(string) string
+	FormatBold(string) string
+	Indent(string, int) string
+}) error {
 	// Type assert to get the actual config
 	configMap, ok := cfg.(map[string]interface{})
 	if !ok {
@@ -69,52 +73,52 @@ func displayTextConfig(out interface{ Write([]byte) (int, error) }, cfg interfac
 		}
 	}
 
-	fmt.Fprintln(out, "Zen Configuration")
-	fmt.Fprintln(out, "=================")
+	// Main header following design guide typography
+	fmt.Fprintln(out, iostreams.FormatSectionHeader("Zen Configuration"))
 	fmt.Fprintln(out)
 
-	// Display configuration sections
+	// Display configuration sections with proper formatting and indentation
 	if logging, ok := configMap["LogLevel"]; ok {
-		fmt.Fprintln(out, "Logging:")
-		fmt.Fprintf(out, "  Level:  %v\n", logging)
+		fmt.Fprintln(out, iostreams.FormatBold("Logging:"))
+		fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Level:  %v\n", logging), 1))
 		if format, ok := configMap["LogFormat"]; ok {
-			fmt.Fprintf(out, "  Format: %v\n", format)
+			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Format: %v\n", format), 1))
 		}
 		fmt.Fprintln(out)
 	}
 
 	if cli, ok := configMap["CLI"].(map[string]interface{}); ok {
-		fmt.Fprintln(out, "CLI:")
+		fmt.Fprintln(out, iostreams.FormatBold("CLI:"))
 		if noColor, ok := cli["NoColor"]; ok {
-			fmt.Fprintf(out, "  No Color:      %v\n", noColor)
+			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("No Color:      %v\n", noColor), 1))
 		}
 		if verbose, ok := cli["Verbose"]; ok {
-			fmt.Fprintf(out, "  Verbose:       %v\n", verbose)
+			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Verbose:       %v\n", verbose), 1))
 		}
 		if outputFormat, ok := cli["OutputFormat"]; ok {
-			fmt.Fprintf(out, "  Output Format: %v\n", outputFormat)
+			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Output Format: %v\n", outputFormat), 1))
 		}
 		fmt.Fprintln(out)
 	}
 
 	if workspace, ok := configMap["Workspace"].(map[string]interface{}); ok {
-		fmt.Fprintln(out, "Workspace:")
+		fmt.Fprintln(out, iostreams.FormatBold("Workspace:"))
 		if root, ok := workspace["Root"]; ok {
-			fmt.Fprintf(out, "  Root:        %v\n", root)
+			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Root:        %v\n", root), 1))
 		}
 		if configFile, ok := workspace["ConfigFile"]; ok {
-			fmt.Fprintf(out, "  Config File: %v\n", configFile)
+			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Config File: %v\n", configFile), 1))
 		}
 		fmt.Fprintln(out)
 	}
 
 	if dev, ok := configMap["Development"].(map[string]interface{}); ok {
-		fmt.Fprintln(out, "Development:")
+		fmt.Fprintln(out, iostreams.FormatBold("Development:"))
 		if debug, ok := dev["Debug"]; ok {
-			fmt.Fprintf(out, "  Debug:   %v\n", debug)
+			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Debug:   %v\n", debug), 1))
 		}
 		if profile, ok := dev["Profile"]; ok {
-			fmt.Fprintf(out, "  Profile: %v\n", profile)
+			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Profile: %v\n", profile), 1))
 		}
 	}
 

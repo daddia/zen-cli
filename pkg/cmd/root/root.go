@@ -16,7 +16,7 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "zen",
 		Short: "AI-Powered Productivity Suite",
-		Long: `🧘 Zen CLI - AI-Powered Productivity Suite
+		Long: `Zen CLI - AI-Powered Productivity Suite
 
 Zen is a unified command-line interface that revolutionizes productivity across
 the entire product lifecycle. By orchestrating intelligent workflows for both
@@ -24,20 +24,20 @@ product management and engineering teams, Zen eliminates context switching,
 automates repetitive tasks, and ensures consistent quality delivery from
 ideation to production.
 
-✨ Key Features:
-  • Product Management Excellence - Market research, strategy, and roadmap planning
-  • Engineering Workflow Automation - 12-stage development workflow automation
-  • AI-First Intelligence - Multi-provider LLM support with context-aware automation
-  • Comprehensive Integrations - Product tools, engineering platforms, and communication
+Key Features:
+  ✓ Product Management Excellence - Market research, strategy, and roadmap planning
+  ✓ Engineering Workflow Automation - 12-stage development workflow automation
+  ✓ AI-First Intelligence - Multi-provider LLM support with context-aware automation
+  ✓ Comprehensive Integrations - Product tools, engineering platforms, and communication
 
-🚀 Getting Started:
+Getting Started:
   zen init          Initialize a new workspace
   zen config        Configure Zen settings
   zen status        Check workspace status
   zen --help        Show detailed help for any command
 
-📚 Documentation: https://zen.dev/docs
-🐛 Report Issues:  https://github.com/daddia/zen/issues`,
+Documentation: https://zen.dev/docs
+Report Issues:  https://github.com/daddia/zen/issues`,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}

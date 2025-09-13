@@ -1,0 +1,50 @@
+---
+description: Zen CLI design system guidelines and patterns
+---
+
+# Zen CLI Design System
+
+When building CLI commands and terminal interfaces, follow the zen design system principles documented in [docs/design/foundations/README.md](mdc:docs/design/foundations/README.md).
+
+## Core Design Principles
+
+### Language Structure
+Follow the established command pattern: `zen <command> <subcommand> [value] [flags]`
+- Use clear, unambiguous language that cannot be misconstrued
+- Prefer shorter phrases when appropriate
+- Use understood shorthands to save typing (e.g., `repo` vs `repository`)
+- Flags should modify actions, not be separate commands
+
+### Visual Hierarchy & Typography
+- Use consistent typography with bold text for headers and important information
+- Implement proper spacing with line breaks, indentation (2 spaces per level), and tables
+- Create visual rhythm through consistent formatting patterns
+
+### Color & Iconography System
+Use the 8 basic ANSI colors implemented in [pkg/iostreams/colors.go](mdc:pkg/iostreams/colors.go):
+- **Unicode Symbols**: `✓` (success), `✗` (failure), `!` (alert), `-` (neutral), `+` (changes)
+- **Semantic Colors**: Green for success, Red for errors, Yellow for warnings, Blue for info
+- **Color Functions**: Use `FormatSuccess()`, `FormatError()`, `FormatWarning()` etc.
+- Always provide `--no-color` fallback support
+
+### Terminal Experience Standards
+- Support both human-readable and machine-readable output formats
+- Use proper indentation and section headers with underlines
+- Implement consistent status formatting with symbols and colors
+- Ensure scriptability with tab-delimited machine output
+- Follow accessibility guidelines for screen readers
+
+### Output Formatting
+- **Headers**: Use `FormatSectionHeader()` for main sections
+- **Status**: Use `FormatBoolStatus()` for success/failure states
+- **Tables**: Use `FormatTable()` for human output, `FormatMachineTable()` for pipes
+- **Errors**: Use `FormatError()` with appropriate symbols and suggestions
+
+## Implementation References
+
+- **Color System**: [pkg/iostreams/colors.go](mdc:pkg/iostreams/colors.go)
+- **Command Examples**: [pkg/cmd/status/status.go](mdc:pkg/cmd/status/status.go), [pkg/cmd/config/config.go](mdc:pkg/cmd/config/config.go)
+- **Design Foundations**: [docs/design/foundations/README.md](mdc:docs/design/foundations/README.md)
+- **Build Output**: [Makefile](mdc:Makefile) for consistent build messaging
+
+When creating new commands or modifying existing ones, ensure they align with these established patterns for a cohesive user experience.
