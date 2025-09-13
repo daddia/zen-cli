@@ -25,7 +25,7 @@
   - **Deliverable**: `go build` produces working binary
   - **Acceptance**: Can run `./zen --help` and see command structure
 
-- [ ] **[ZEN-002] Core CLI Framework** *(L)*: Implement root command with global flags (--config, --verbose, --dry-run), version command, basic error handling and logging
+- [x] **[ZEN-002] Core CLI Framework** *(L)*: Implement root command with global flags (--config, --verbose, --dry-run), version command, basic error handling and logging
   - **Deliverable**: `zen version` and `zen --help` work
   - **Acceptance**: Professional CLI help output with proper formatting
 

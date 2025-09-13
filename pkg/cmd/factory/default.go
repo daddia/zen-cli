@@ -14,6 +14,7 @@ func New() *cmdutil.Factory {
 	f := &cmdutil.Factory{
 		AppVersion:     getVersion(),
 		ExecutableName: "zen",
+		BuildInfo:      GetBuildInfo(),
 	}
 
 	// Build dependency chain (order matters)
@@ -95,9 +96,24 @@ func agentFunc(f *cmdutil.Factory) func() (cmdutil.AgentManager, error) {
 	}
 }
 
+// Build information variables set at build time via ldflags
+var (
+	version   = "dev"
+	commit    = "unknown"
+	buildTime = "unknown"
+)
+
 func getVersion() string {
-	// This will be replaced with actual version info at build time
-	return "dev"
+	return version
+}
+
+// GetBuildInfo returns structured build information
+func GetBuildInfo() map[string]string {
+	return map[string]string{
+		"version":    version,
+		"commit":     commit,
+		"build_time": buildTime,
+	}
 }
 
 // workspaceManager implements cmdutil.WorkspaceManager

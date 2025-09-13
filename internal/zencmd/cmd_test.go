@@ -5,93 +5,10 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/jonathandaddia/zen/pkg/cmd/factory"
 	"github.com/jonathandaddia/zen/pkg/cmdutil"
-	"github.com/jonathandaddia/zen/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestHandleError(t *testing.T) {
-	tests := []struct {
-		name     string
-		err      error
-		expected cmdutil.ExitCode
-	}{
-		{
-			name:     "silent error",
-			err:      cmdutil.SilentError,
-			expected: cmdutil.ExitError,
-		},
-		{
-			name:     "pending error",
-			err:      cmdutil.PendingError,
-			expected: cmdutil.ExitError,
-		},
-		{
-			name:     "user cancellation",
-			err:      errors.New("cancelled"),
-			expected: cmdutil.ExitCancel,
-		},
-		{
-			name:     "no results error",
-			err:      cmdutil.NoResultsError{Message: "no items"},
-			expected: cmdutil.ExitOK,
-		},
-		{
-			name:     "flag error",
-			err:      &cmdutil.FlagError{Err: errors.New("bad flag")},
-			expected: cmdutil.ExitError,
-		},
-		{
-			name:     "general error",
-			err:      errors.New("something went wrong"),
-			expected: cmdutil.ExitError,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			f := &cmdutil.Factory{
-				IOStreams: &iostreams.IOStreams{
-					ErrOut: &bytes.Buffer{},
-				},
-			}
-			result := handleError(tt.err, f)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
-func TestPrintError(t *testing.T) {
-	tests := []struct {
-		name           string
-		err            error
-		expectedOutput string
-	}{
-		{
-			name:           "nil error",
-			err:            nil,
-			expectedOutput: "",
-		},
-		{
-			name:           "simple error",
-			err:            errors.New("test error"),
-			expectedOutput: "test error\n",
-		},
-		{
-			name:           "config error with suggestion",
-			err:            errors.New("config not found"),
-			expectedOutput: "config not found\n\nTry running 'zen config' to check your configuration\n",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			buf := &bytes.Buffer{}
-			printError(buf, tt.err)
-			assert.Equal(t, tt.expectedOutput, buf.String())
-		})
-	}
-}
 
 func TestGetErrorSuggestion(t *testing.T) {
 	tests := []struct {
@@ -100,28 +17,58 @@ func TestGetErrorSuggestion(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "nil error",
-			err:      nil,
-			expected: "",
+			name:     "config not found error",
+			err:      errors.New("config file not found"),
+			expected: "💡 Suggestion: Run 'zen config' to check your configuration or 'zen init' to initialize a workspace",
 		},
 		{
-			name:     "config error",
-			err:      errors.New("config not found"),
-			expected: "Try running 'zen config' to check your configuration",
+			name:     "config invalid error",
+			err:      errors.New("invalid config syntax"),
+			expected: "💡 Suggestion: Check your configuration file syntax with 'zen config validate'",
 		},
 		{
-			name:     "workspace error",
-			err:      errors.New("workspace not initialized"),
-			expected: "Try running 'zen init' to initialize your workspace",
+			name:     "workspace not found error",
+			err:      errors.New("workspace not found"),
+			expected: "💡 Suggestion: Run 'zen init' to initialize a new workspace in this directory",
+		},
+		{
+			name:     "unknown flag error",
+			err:      errors.New("unknown flag --invalid"),
+			expected: "💡 Suggestion: Use 'zen --help' to see available flags and options",
+		},
+		{
+			name:     "unknown command error",
+			err:      errors.New("unknown command 'invalid'"),
+			expected: "💡 Suggestion: Use 'zen --help' to see available commands",
 		},
 		{
 			name:     "permission error",
 			err:      errors.New("permission denied"),
-			expected: "Check file permissions and try again",
+			expected: "💡 Suggestion: Check file permissions or try running with appropriate privileges",
 		},
 		{
-			name:     "unknown error",
-			err:      errors.New("unknown error"),
+			name:     "network error",
+			err:      errors.New("network connection failed"),
+			expected: "💡 Suggestion: Check your internet connection and try again",
+		},
+		{
+			name:     "timeout error",
+			err:      errors.New("operation timeout"),
+			expected: "💡 Suggestion: The operation timed out. Try again or check network connectivity",
+		},
+		{
+			name:     "authentication error",
+			err:      errors.New("authentication failed"),
+			expected: "💡 Suggestion: Check your credentials or run authentication setup",
+		},
+		{
+			name:     "generic error",
+			err:      errors.New("something went wrong"),
+			expected: "💡 Suggestion: Use 'zen --help' for usage information or check the documentation at https://zen.dev/docs",
+		},
+		{
+			name:     "nil error",
+			err:      nil,
 			expected: "",
 		},
 	}
@@ -130,6 +77,81 @@ func TestGetErrorSuggestion(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := getErrorSuggestion(tt.err)
 			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestPrintError(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      error
+		expected string
+	}{
+		{
+			name:     "error with suggestion",
+			err:      errors.New("config not found"),
+			expected: "❌ Error: config not found\n\n💡 Suggestion: Run 'zen config' to check your configuration or 'zen init' to initialize a workspace\n",
+		},
+		{
+			name:     "nil error",
+			err:      nil,
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			printError(buf, tt.err)
+			assert.Equal(t, tt.expected, buf.String())
+		})
+	}
+}
+
+func TestHandleError(t *testing.T) {
+	f := factory.New()
+
+	tests := []struct {
+		name         string
+		err          error
+		expectedCode cmdutil.ExitCode
+	}{
+		{
+			name:         "silent error",
+			err:          cmdutil.SilentError,
+			expectedCode: cmdutil.ExitError,
+		},
+		{
+			name:         "pending error",
+			err:          cmdutil.PendingError,
+			expectedCode: cmdutil.ExitError,
+		},
+		{
+			name:         "user cancellation",
+			err:          errors.New("cancelled"),
+			expectedCode: cmdutil.ExitCancel,
+		},
+		{
+			name:         "no results error",
+			err:          cmdutil.NoResultsError{Message: "no results"},
+			expectedCode: cmdutil.ExitOK,
+		},
+		{
+			name:         "flag error",
+			err:          &cmdutil.FlagError{Err: errors.New("invalid flag")},
+			expectedCode: cmdutil.ExitError,
+		},
+		{
+			name:         "generic error",
+			err:          errors.New("something went wrong"),
+			expectedCode: cmdutil.ExitError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			code := handleError(tt.err, f)
+			assert.Equal(t, tt.expectedCode, code)
 		})
 	}
 }

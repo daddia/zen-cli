@@ -31,8 +31,8 @@ func NewCmdVersion(f *cmdutil.Factory) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			info := BuildInfo{
 				Version:   f.AppVersion,
-				GitCommit: getGitCommit(),
-				BuildDate: getBuildDate(),
+				GitCommit: f.BuildInfo["commit"],
+				BuildDate: f.BuildInfo["build_time"],
 				GoVersion: runtime.Version(),
 				Platform:  fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
 			}

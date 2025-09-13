@@ -26,12 +26,9 @@ GO_VERSION?=$(shell go version | awk '{print $$3}')
 
 # Build flags
 LDFLAGS=-ldflags "\
-	-X main.version=$(VERSION) \
-	-X main.commit=$(COMMIT) \
-	-X main.buildTime=$(BUILD_TIME) \
-	-X github.com/jonathandaddia/zen/internal/cli.version=$(VERSION) \
-	-X github.com/jonathandaddia/zen/internal/cli.commit=$(COMMIT) \
-	-X github.com/jonathandaddia/zen/internal/cli.buildTime=$(BUILD_TIME)"
+	-X github.com/jonathandaddia/zen/pkg/cmd/factory.version=$(VERSION) \
+	-X github.com/jonathandaddia/zen/pkg/cmd/factory.commit=$(COMMIT) \
+	-X github.com/jonathandaddia/zen/pkg/cmd/factory.buildTime=$(BUILD_TIME)"
 
 # Build tags
 BUILD_TAGS?=

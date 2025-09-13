@@ -17,6 +17,11 @@ func TestNewCmdVersion(t *testing.T) {
 	f := &cmdutil.Factory{
 		AppVersion: "1.0.0",
 		IOStreams:  iostreams.Test(),
+		BuildInfo: map[string]string{
+			"version":    "1.0.0",
+			"commit":     "abc123",
+			"build_time": "2024-01-01T00:00:00Z",
+		},
 	}
 
 	cmd := NewCmdVersion(f)
@@ -73,6 +78,11 @@ func TestVersionOutput(t *testing.T) {
 				AppVersion: "1.0.0",
 				IOStreams: &iostreams.IOStreams{
 					Out: out,
+				},
+				BuildInfo: map[string]string{
+					"version":    "1.0.0",
+					"commit":     "abc123",
+					"build_time": "2024-01-01T00:00:00Z",
 				},
 			}
 

@@ -17,6 +17,13 @@ type Factory struct {
 	Config           func() (*config.Config, error)
 	WorkspaceManager func() (WorkspaceManager, error)
 	AgentManager     func() (AgentManager, error)
+
+	// Global flag values
+	ConfigFile string
+	DryRun     bool
+
+	// Build information
+	BuildInfo map[string]string
 }
 
 // WorkspaceManager defines the interface for workspace operations

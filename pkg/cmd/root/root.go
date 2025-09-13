@@ -16,17 +16,28 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "zen",
 		Short: "AI-Powered Product Lifecycle Productivity Platform",
-		Long: `Zen is a unified CLI that revolutionizes productivity across the entire product lifecycle.
+		Long: `🧘 Zen CLI - AI-Powered Product Lifecycle Productivity Platform
 
-By orchestrating intelligent workflows for both product management and engineering,
-Zen eliminates context switching, automates repetitive tasks, and ensures consistent
-quality delivery from ideation to production.
+Zen is a unified command-line interface that revolutionizes productivity across
+the entire product lifecycle. By orchestrating intelligent workflows for both
+product management and engineering teams, Zen eliminates context switching,
+automates repetitive tasks, and ensures consistent quality delivery from
+ideation to production.
 
-Features:
-• Product Management Excellence - Market research, strategy, and roadmap planning
-• Engineering Workflow Automation - 12-stage development workflow automation
-• AI-First Intelligence - Multi-provider LLM support with context-aware automation
-• Comprehensive Integrations - Product tools, engineering platforms, and communication`,
+✨ Key Features:
+  • Product Management Excellence - Market research, strategy, and roadmap planning
+  • Engineering Workflow Automation - 12-stage development workflow automation
+  • AI-First Intelligence - Multi-provider LLM support with context-aware automation
+  • Comprehensive Integrations - Product tools, engineering platforms, and communication
+
+🚀 Getting Started:
+  zen init          Initialize a new workspace
+  zen config        Configure Zen settings
+  zen status        Check workspace status
+  zen --help        Show detailed help for any command
+
+📚 Documentation: https://zen.dev/docs
+🐛 Report Issues:  https://github.com/jonathandaddia/zen/issues`,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
@@ -35,10 +46,14 @@ Features:
 	var verbose bool
 	var noColor bool
 	var outputFormat string
+	var configFile string
+	var dryRun bool
 
 	cmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
 	cmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "Disable colored output")
 	cmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "text", "Output format (text, json, yaml)")
+	cmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Path to configuration file")
+	cmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Show what would be executed without making changes")
 
 	// Apply flag values
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
@@ -50,6 +65,17 @@ Features:
 		}
 		if cmd.Flags().Changed("no-color") {
 			f.IOStreams.SetColorEnabled(!noColor)
+		}
+		if cmd.Flags().Changed("config") {
+			// Store config file path for use by commands
+			f.ConfigFile = configFile
+		}
+		if cmd.Flags().Changed("dry-run") {
+			// Store dry-run flag for use by commands
+			f.DryRun = dryRun
+			if dryRun {
+				f.Logger.Info("dry-run mode enabled - no changes will be made")
+			}
 		}
 		return nil
 	}
@@ -81,6 +107,9 @@ Features:
 	cmd.AddCommand(newPlaceholderCommand("templates", "Template management", f))
 	cmd.AddCommand(newPlaceholderCommand("agents", "AI agent management", f))
 
+	// Add shell completion command
+	cmd.AddCommand(newCompletionCommand(f))
+
 	return cmd, nil
 }
 
@@ -97,6 +126,47 @@ func newPlaceholderCommand(name, description string, f *cmdutil.Factory) *cobra.
 			fmt.Fprintf(cmd.OutOrStdout(), "📋 Command '%s' is planned for future implementation.\n", name)
 			fmt.Fprintf(cmd.OutOrStdout(), "💡 Description: %s\n", description)
 			fmt.Fprintln(cmd.OutOrStdout(), "\n🚀 This will be available in upcoming releases!")
+		},
+	}
+}
+
+// newCompletionCommand creates the shell completion command
+func newCompletionCommand(f *cmdutil.Factory) *cobra.Command {
+	return &cobra.Command{
+		Use:   "completion [bash|zsh|fish|powershell]",
+		Short: "Generate shell completion scripts",
+		Long: `Generate shell completion scripts for Zen CLI.
+
+The completion script for each shell will be different. Please refer to your shell's
+documentation on how to install completion scripts.
+
+Examples:
+  # Generate bash completion script
+  zen completion bash > /usr/local/etc/bash_completion.d/zen
+
+  # Generate zsh completion script
+  zen completion zsh > "${fpath[1]}/_zen"
+
+  # Generate fish completion script
+  zen completion fish > ~/.config/fish/completions/zen.fish
+
+  # Generate PowerShell completion script
+  zen completion powershell > zen.ps1`,
+		ValidArgs: []string{"bash", "zsh", "fish", "powershell"},
+		Args:      cobra.ExactValidArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			switch args[0] {
+			case "bash":
+				return cmd.Root().GenBashCompletion(f.IOStreams.Out)
+			case "zsh":
+				return cmd.Root().GenZshCompletion(f.IOStreams.Out)
+			case "fish":
+				return cmd.Root().GenFishCompletion(f.IOStreams.Out, true)
+			case "powershell":
+				return cmd.Root().GenPowerShellCompletionWithDesc(f.IOStreams.Out)
+			default:
+				return fmt.Errorf("unsupported shell: %s", args[0])
+			}
 		},
 	}
 }
