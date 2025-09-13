@@ -35,16 +35,17 @@ The following ADRs are planned for future implementation phases:
 
 | ID                                               | Title                                   | Status   | Date       | Supersedes | Related ADRs       |
 | ------------------------------------------------ | --------------------------------------- | -------- | ---------- | ---------- | ------------------ |
-| [ADR-0008](ADR-0008-plugin-architecture.md)      | Plugin Architecture Design              | Proposed | TBD        | —          | ADR-0003, ADR-0006 |
+| [ADR-0008](ADR-0008-plugin-architecture.md)      | Plugin Architecture Design              | Proposed | 2025-09-13 | —          | ADR-0003, ADR-0006 |
 | [ADR-0009](ADR-0009-agent-orchestration.md)      | AI Agent Orchestration                  | Proposed | TBD        | —          | ADR-0010           |
 | [ADR-0010](ADR-0010-llm-abstraction.md)          | LLM Provider Abstraction                | Proposed | TBD        | —          | ADR-0009           |
 | [ADR-0011](ADR-0011-workflow-management.md)      | Workflow State Management               | Proposed | TBD        | —          | ADR-0012           |
 | [ADR-0012](ADR-0012-integration-architecture.md) | External Integration Architecture       | Proposed | TBD        | —          | ADR-0013           |
 | [ADR-0013](ADR-0013-template-engine.md)          | Template Engine Design                  | Proposed | TBD        | —          | ADR-0014           |
-| [ADR-0014](ADR-0014-quality-gates.md)            | Quality Gates Framework                 | Proposed | TBD        | —          | ADR-0015           |
-| [ADR-0015](ADR-0015-security-model.md)           | Security Model Implementation           | Proposed | TBD        | —          | ADR-0004, ADR-0005 |
+| [ADR-0014](ADR-0014-quality-gates.md)            | Quality Gates Framework                 | Proposed | 2025-09-13 | —          | ADR-0015           |
+| [ADR-0015](ADR-0015-security-model.md)           | Security Model Implementation           | Proposed | 2025-09-13 | —          | ADR-0004, ADR-0005 |
 | [ADR-0016](ADR-0016-deployment-strategy.md)      | Deployment Distribution Strategy        | Proposed | TBD        | —          | ADR-0001, ADR-0003 |
 | [ADR-0017](ADR-0017-observability-strategy.md)   | Observability Monitoring Strategy       | Proposed | TBD        | —          | ADR-0005           |
+| [ADR-0018](ADR-0018-configuration-validation.md) | Configuration Validation Framework      | Proposed | 2025-09-13 | —          | ADR-0004, ADR-0015 |
 
 ---
 

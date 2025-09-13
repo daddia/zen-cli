@@ -8,7 +8,7 @@ Zen is architected as a modern, extensible CLI platform built with Go 1.25, desi
 
 ## Architectural Principles
 
-### 🎯 **Core Principles**
+### **Core Principles**
 
 1. **Single Binary Distribution**: Zero-dependency deployment with embedded assets
 2. **Modular Design**: Clean separation between CLI, business logic, and integrations
@@ -17,7 +17,7 @@ Zen is architected as a modern, extensible CLI platform built with Go 1.25, desi
 5. **Developer Experience**: Comprehensive help, error messages, and debugging tools
 6. **Cross-Platform**: Native support for Linux, macOS, and Windows
 
-### 🏗️ **Architectural Patterns**
+### **Architectural Patterns**
 
 - **Command Pattern**: CLI commands as discrete, composable operations
 - **Repository Pattern**: Data access abstraction for configuration and state
@@ -27,7 +27,7 @@ Zen is architected as a modern, extensible CLI platform built with Go 1.25, desi
 
 ## System Architecture
 
-### 🔧 **Technology Stack**
+### **Technology Stack**
 
 | Layer | Technology | Version | Purpose |
 |-------|------------|---------|---------|
@@ -38,7 +38,7 @@ Zen is architected as a modern, extensible CLI platform built with Go 1.25, desi
 | **Templates** | Go Templates | Built-in | Dynamic content generation |
 | **Validation** | Custom | - | Input validation and schema enforcement |
 
-### 📦 **Component Architecture**
+### **Component Architecture**
 
 ```
 zen/
@@ -82,7 +82,7 @@ zen/
 
 ## Core Components
 
-### 🎮 **Command Layer (`pkg/cmd/`)**
+### **Command Layer (`pkg/cmd/`)**
 
 **Responsibility**: User interface, command parsing, flag handling, and output formatting.
 
@@ -100,7 +100,7 @@ zen/
 - Template method for common command structure
 - Strategy pattern for output formatting (text/json/yaml)
 
-### 🚀 **Command Orchestration (`internal/zencmd/`)**
+### **Command Orchestration (`internal/zencmd/`)**
 
 **Responsibility**: Main entry point orchestration, error handling, and exit code management.
 
@@ -115,7 +115,7 @@ zen/
 - Consistent exit code management
 - Better testability through separation
 
-### ⚙️ **Configuration Management (`internal/config/`)**
+### **Configuration Management (`internal/config/`)**
 
 **Responsibility**: Multi-source configuration loading, validation, and environment-specific overrides.
 
@@ -131,7 +131,7 @@ zen/
 - Secure secret handling (no plaintext storage)
 - Hot-reload support for development
 
-### 📝 **Logging Infrastructure (`internal/logging/`)**
+### **Logging Infrastructure (`internal/logging/`)**
 
 **Responsibility**: Structured logging with configurable levels, formats, and outputs.
 
@@ -142,7 +142,7 @@ zen/
 - **Multiple Outputs**: Console, file, syslog, external services
 - **Performance**: Minimal overhead, async processing for high-throughput scenarios
 
-### 🤖 **AI Agent System (`internal/agents/`)**
+### **AI Agent System (`internal/agents/`)**
 
 **Responsibility**: Multi-provider LLM orchestration, conversation management, and cost optimization.
 
@@ -152,11 +152,11 @@ zen/
 - **Cost Tracking**: Usage monitoring, budget controls, cost attribution
 - **Prompt Management**: Template-based prompts, version control, A/B testing
 
-### 🔄 **Workflow Engine (`internal/workflow/`)**
+### **Workflow Engine (`internal/workflow/`)**
 
 **Responsibility**: State management for multi-stage product and engineering workflows.
 
-**12-Stage Engineering Workflow**:
+**Stuctured Engineering Workflow**:
 1. **Discover** - Requirements analysis and story definition
 2. **Prioritize** - Backlog prioritization and sprint planning
 3. **Design** - Technical design and architecture review
@@ -170,7 +170,7 @@ zen/
 11. **Verify** - Post-deployment verification and monitoring
 12. **Feedback** - Analytics collection and improvement identification
 
-### 🔌 **Integration System (`internal/integrations/`)**
+### **Integration System (`internal/integrations/`)**
 
 **Responsibility**: External system connectivity with authentication, rate limiting, and error handling.
 
@@ -182,7 +182,7 @@ zen/
 - **Communication**: Slack, Microsoft Teams, Discord
 - **Analytics**: Google Analytics, Mixpanel, Amplitude, Segment
 
-### 🎨 **Template Engine (`internal/templates/`)**
+### **Template Engine (`internal/templates/`)**
 
 **Responsibility**: Dynamic content generation with Go templates and custom functions.
 
@@ -192,7 +192,7 @@ zen/
 - **Documentation Templates**: README files, API documentation
 - **Configuration Templates**: CI/CD configs, deployment manifests
 
-### ✅ **Quality Gates (`internal/quality/`)**
+### **Quality Gates (`internal/quality/`)**
 
 **Responsibility**: Automated quality enforcement with configurable rules and reporting.
 
@@ -202,7 +202,7 @@ zen/
 - **Performance**: Load testing, resource usage, optimization
 - **Documentation**: Coverage, accuracy, accessibility
 
-### 💾 **Storage Layer (`internal/storage/`)**
+### **Storage Layer (`internal/storage/`)**
 
 **Responsibility**: Data persistence with multiple backend support.
 
@@ -213,7 +213,7 @@ zen/
 
 ## Security Architecture
 
-### 🔐 **Security Principles**
+### **Security Principles**
 
 1. **Secure by Default**: Minimal permissions, encrypted communications
 2. **Zero Trust**: Verify all inputs, validate all outputs
@@ -221,7 +221,7 @@ zen/
 4. **Defense in Depth**: Multiple security layers and controls
 5. **Audit Everything**: Comprehensive logging and monitoring
 
-### 🛡️ **Security Controls**
+### **Security Controls**
 
 - **Input Validation**: Schema validation, sanitization, injection prevention
 - **Authentication**: API key management, OAuth2 integration, SSO support
@@ -232,26 +232,26 @@ zen/
 
 ## Deployment Architecture
 
-### 📦 **Distribution Models**
+### **Distribution Models**
 
 1. **Single Binary**: Static compilation with embedded assets
 2. **Container Images**: Docker images with minimal attack surface
 3. **Package Managers**: Homebrew, apt, yum, chocolatey
 4. **Cloud Native**: Kubernetes operators, Helm charts
 
-### 🌐 **Cross-Platform Support**
+### **Cross-Platform Support**
 
-| Platform | Architecture | Status | Notes |
-|----------|-------------|--------|-------|
-| Linux | amd64 | ✅ Supported | Primary development platform |
-| Linux | arm64 | ✅ Supported | ARM-based servers and devices |
-| macOS | amd64 | ✅ Supported | Intel-based Macs |
-| macOS | arm64 | ✅ Supported | Apple Silicon Macs |
-| Windows | amd64 | ✅ Supported | Windows 10+ |
+| Platform | Architecture | Status    | Notes                         |
+|----------|--------------|-----------|-------------------------------|
+| Linux    | amd64        | Supported | Primary development platform  |
+| Linux    | arm64        | Supported | ARM-based servers and devices |
+| macOS    | amd64        | Supported | Intel-based Macs              |
+| macOS    | arm64        | Supported | Apple Silicon Macs            |
+| Windows  | amd64        | Supported | Windows 10+                   |
 
 ## Performance & Scalability
 
-### ⚡ **Performance Characteristics**
+### **Performance Characteristics**
 
 - **Startup Time**: < 100ms cold start
 - **Memory Usage**: < 50MB baseline, < 200MB under load
@@ -259,7 +259,7 @@ zen/
 - **Concurrent Operations**: 1000+ parallel integrations
 - **Template Rendering**: 10,000+ templates/second
 
-### 📈 **Scalability Considerations**
+### **Scalability Considerations**
 
 - **Horizontal Scaling**: Stateless design enables load balancing
 - **Vertical Scaling**: Efficient resource utilization
@@ -269,7 +269,7 @@ zen/
 
 ## Development & Testing
 
-### 🧪 **Testing Strategy**
+### **Testing Strategy**
 
 - **Unit Tests**: 80%+ coverage with comprehensive edge case testing
 - **Integration Tests**: End-to-end workflow validation
@@ -277,7 +277,7 @@ zen/
 - **Performance Tests**: Load testing and benchmark validation
 - **Security Tests**: Vulnerability scanning and penetration testing
 
-### 🔄 **CI/CD Pipeline**
+### **CI/CD Pipeline**
 
 1. **Code Quality**: Linting, formatting, complexity analysis
 2. **Security Scanning**: SAST, dependency scanning, secret detection
@@ -287,7 +287,7 @@ zen/
 
 ## Future Architecture
 
-### 🚀 **Planned Enhancements**
+### **Planned Enhancements**
 
 - **Plugin System**: Dynamic plugin loading and marketplace
 - **Distributed Workflows**: Multi-node workflow execution
@@ -295,7 +295,7 @@ zen/
 - **Advanced Analytics**: Machine learning insights and predictions
 - **Enterprise Features**: SSO, LDAP, audit compliance, enterprise support
 
-### 🔮 **Technology Evolution**
+### **Technology Evolution**
 
 - **WebAssembly**: Plugin sandboxing and cross-language support
 - **GraphQL**: Unified API layer for integrations
