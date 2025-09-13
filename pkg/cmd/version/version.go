@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/jonathandaddia/zen/pkg/cmdutil"
+	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -69,34 +69,7 @@ func NewCmdVersion(f *cmdutil.Factory) *cobra.Command {
 
 // displayTextVersion displays version in human-readable text format
 func displayTextVersion(out interface{ Write([]byte) (int, error) }, info BuildInfo) error {
-	fmt.Fprintf(out, "Zen CLI %s\n", info.Version)
-	if info.GitCommit != "" {
-		fmt.Fprintf(out, "Commit: %s\n", info.GitCommit)
-	}
-	if info.BuildDate != "" {
-		fmt.Fprintf(out, "Built:  %s\n", info.BuildDate)
-	}
-	fmt.Fprintf(out, "Go:     %s\n", info.GoVersion)
-	fmt.Fprintf(out, "OS:     %s\n", info.Platform)
+	// Simple format: zen version X.X.X (like git version)
+	fmt.Fprintf(out, "zen version %s\n", info.Version)
 	return nil
-}
-
-// These variables are set at build time
-var (
-	gitCommit = ""
-	buildDate = ""
-)
-
-func getGitCommit() string {
-	if gitCommit != "" {
-		return gitCommit
-	}
-	return "unknown"
-}
-
-func getBuildDate() string {
-	if buildDate != "" {
-		return buildDate
-	}
-	return "unknown"
 }

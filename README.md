@@ -1,6 +1,6 @@
-# Zen: AI-Powered Product Lifecycle Productivity Suite
+# Zen: AI-Powered Productivity Suite
 
-**Zen** is the definitive platform for AI-assisted product development, enabling teams to build better products faster through intelligent automation and seamless workflow orchestration.
+**Zen** is the definitive platform for AI-assisted productivity, enabling teams to build better products faster through intelligent automation and seamless workflow orchestration.
 
 ## Key Features
 
@@ -13,8 +13,8 @@
 - **Stakeholder Management**: Automated communication and alignment tracking
 
 ### **Engineering Workflow Automation**
-- **12-Stage Development Workflow**: From discovery to feedback, fully automated
-- **AI-Powered Code Generation**: Intelligent scaffolding and pattern implementation
+- **AI-Powered Development Workflow**: From discovery to feedback, fully automated
+- **Robust Code Generation**: Intelligent scaffolding and pattern implementation
 - **Quality Gates**: Automated code review, testing, and security validation
 - **DevOps Integration**: CI/CD pipeline automation and deployment management
 - **Documentation**: Automated technical documentation and knowledge management
@@ -50,19 +50,7 @@ Zen is built with:
 
 ## Documentation
 
-- [Overview](docs/overview.md) - Comprehensive platform overview and capabilities
-- [CLI Structure](docs/cli-structure.md) - Detailed project architecture and structure
-- [Implementation Roadmap](docs/cli.md) - Development phases and technical specifications
-
-## Current Status
-
-Zen is in active development. The platform builds upon proven engineering workflow foundations and expands to encompass comprehensive product management capabilities.
-
-**Development Phases:**
-- **Phase 1**: Foundation & Core Framework *(In Planning)*
-- **Phase 2**: Product Management & Engineering Workflows
-- **Phase 3**: Advanced AI Integration & Extensibility
-- **Phase 4**: Enterprise Features & Production Hardening
+See comprehensive documentation [Overview](docs/index.md).
 
 ## Contributing
 
@@ -74,4 +62,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Zen: Where AI intelligence meets product development productivity** 🧘‍♂️✨
+**Zen: Where AI intelligence meets productivity**

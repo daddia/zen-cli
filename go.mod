@@ -1,4 +1,4 @@
-module github.com/jonathandaddia/zen
+module github.com/daddia/zen
 
 go 1.25
 

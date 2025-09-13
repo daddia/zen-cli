@@ -2,11 +2,13 @@ package factory
 
 import (
 	"os"
+	"path/filepath"
 
-	"github.com/jonathandaddia/zen/internal/config"
-	"github.com/jonathandaddia/zen/internal/logging"
-	"github.com/jonathandaddia/zen/pkg/cmdutil"
-	"github.com/jonathandaddia/zen/pkg/iostreams"
+	"github.com/daddia/zen/internal/config"
+	"github.com/daddia/zen/internal/logging"
+	"github.com/daddia/zen/internal/workspace"
+	"github.com/daddia/zen/pkg/cmdutil"
+	"github.com/daddia/zen/pkg/iostreams"
 )
 
 // New creates a new factory with all dependencies configured
@@ -77,12 +79,23 @@ func workspaceFunc(f *cmdutil.Factory) func() (cmdutil.WorkspaceManager, error) 
 	return func() (cmdutil.WorkspaceManager, error) {
 		cfg, err := f.Config()
 		if err != nil {
-			return nil, err
+			// If config loading fails, use current directory and default config file
+			cwd, cwdErr := os.Getwd()
+			if cwdErr != nil {
+				return nil, cwdErr
+			}
+			return &workspaceManagerAdapter{
+				manager: workspace.New(cwd, "", f.Logger), // Empty string will default to .zen/config.yaml
+			}, nil
 		}
-		return &workspaceManager{
-			root:       cfg.Workspace.Root,
-			configFile: cfg.Workspace.ConfigFile,
-			logger:     f.Logger,
+
+		configFile := cfg.Workspace.ConfigFile
+		if configFile == "" {
+			configFile = filepath.Join(".zen", "config.yaml")
+		}
+
+		return &workspaceManagerAdapter{
+			manager: workspace.New(cfg.Workspace.Root, configFile, f.Logger),
 		}, nil
 	}
 }
@@ -116,31 +129,46 @@ func GetBuildInfo() map[string]string {
 	}
 }
 
-// workspaceManager implements cmdutil.WorkspaceManager
-type workspaceManager struct {
-	root       string
-	configFile string
-	logger     logging.Logger
+// workspaceManagerAdapter adapts the internal workspace.Manager to cmdutil.WorkspaceManager
+type workspaceManagerAdapter struct {
+	manager *workspace.Manager
 }
 
-func (w *workspaceManager) Root() string {
-	return w.root
+func (w *workspaceManagerAdapter) Root() string {
+	return w.manager.Root()
 }
 
-func (w *workspaceManager) ConfigFile() string {
-	return w.configFile
+func (w *workspaceManagerAdapter) ConfigFile() string {
+	return w.manager.ConfigFile()
 }
 
-func (w *workspaceManager) Initialize() error {
-	// Placeholder implementation
-	return nil
+func (w *workspaceManagerAdapter) Initialize() error {
+	return w.manager.Initialize(false)
 }
 
-func (w *workspaceManager) Status() (cmdutil.WorkspaceStatus, error) {
+func (w *workspaceManagerAdapter) InitializeWithForce(force bool) error {
+	return w.manager.Initialize(force)
+}
+
+func (w *workspaceManagerAdapter) Status() (cmdutil.WorkspaceStatus, error) {
+	status, err := w.manager.Status()
+	if err != nil {
+		return cmdutil.WorkspaceStatus{}, err
+	}
+
 	return cmdutil.WorkspaceStatus{
-		Initialized: true,
-		ConfigPath:  w.configFile,
-		Root:        w.root,
+		Initialized: status.Initialized,
+		ConfigPath:  status.ConfigPath,
+		Root:        status.Root,
+		Project: cmdutil.ProjectInfo{
+			Type:        string(status.Project.Type),
+			Name:        status.Project.Name,
+			Description: status.Project.Description,
+			Version:     status.Project.Version,
+			Language:    status.Project.Language,
+			Framework:   status.Project.Framework,
+			Metadata:    status.Project.Metadata,
+		},
 	}, nil
 }
 

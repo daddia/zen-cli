@@ -18,10 +18,10 @@ const (
 
 // Common errors
 var (
-	// SilentError is returned when an error should not be displayed
-	SilentError = errors.New("silent error")
-	// PendingError indicates an operation is pending
-	PendingError = errors.New("pending error")
+	// ErrSilent is returned when an error should not be displayed
+	ErrSilent = errors.New("silent error")
+	// ErrPending indicates an operation is pending
+	ErrPending = errors.New("pending error")
 )
 
 // FlagError represents a command flag error

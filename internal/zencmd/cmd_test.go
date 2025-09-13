@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/jonathandaddia/zen/pkg/cmd/factory"
-	"github.com/jonathandaddia/zen/pkg/cmdutil"
+	"github.com/daddia/zen/pkg/cmd/factory"
+	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,52 +19,52 @@ func TestGetErrorSuggestion(t *testing.T) {
 		{
 			name:     "config not found error",
 			err:      errors.New("config file not found"),
-			expected: "💡 Suggestion: Run 'zen config' to check your configuration or 'zen init' to initialize a workspace",
+			expected: "Run 'zen config' to check your configuration or 'zen init' to initialize a workspace",
 		},
 		{
 			name:     "config invalid error",
 			err:      errors.New("invalid config syntax"),
-			expected: "💡 Suggestion: Check your configuration file syntax with 'zen config validate'",
+			expected: "Check your configuration file syntax with 'zen config validate'",
 		},
 		{
 			name:     "workspace not found error",
 			err:      errors.New("workspace not found"),
-			expected: "💡 Suggestion: Run 'zen init' to initialize a new workspace in this directory",
+			expected: "Run 'zen init' to initialize a new workspace in this directory",
 		},
 		{
 			name:     "unknown flag error",
 			err:      errors.New("unknown flag --invalid"),
-			expected: "💡 Suggestion: Use 'zen --help' to see available flags and options",
+			expected: "Use 'zen --help' to see available flags and options",
 		},
 		{
 			name:     "unknown command error",
 			err:      errors.New("unknown command 'invalid'"),
-			expected: "💡 Suggestion: Use 'zen --help' to see available commands",
+			expected: "Use 'zen --help' to see available commands",
 		},
 		{
 			name:     "permission error",
 			err:      errors.New("permission denied"),
-			expected: "💡 Suggestion: Check file permissions or try running with appropriate privileges",
+			expected: "Check file permissions or try running with appropriate privileges",
 		},
 		{
 			name:     "network error",
 			err:      errors.New("network connection failed"),
-			expected: "💡 Suggestion: Check your internet connection and try again",
+			expected: "Check your internet connection and try again",
 		},
 		{
 			name:     "timeout error",
 			err:      errors.New("operation timeout"),
-			expected: "💡 Suggestion: The operation timed out. Try again or check network connectivity",
+			expected: "The operation timed out. Try again or check network connectivity",
 		},
 		{
 			name:     "authentication error",
 			err:      errors.New("authentication failed"),
-			expected: "💡 Suggestion: Check your credentials or run authentication setup",
+			expected: "Check your credentials or run authentication setup",
 		},
 		{
 			name:     "generic error",
 			err:      errors.New("something went wrong"),
-			expected: "💡 Suggestion: Use 'zen --help' for usage information or check the documentation at https://zen.dev/docs",
+			expected: "Use 'zen --help' for usage information or check the documentation at https://zen.dev/docs",
 		},
 		{
 			name:     "nil error",
@@ -90,7 +90,7 @@ func TestPrintError(t *testing.T) {
 		{
 			name:     "error with suggestion",
 			err:      errors.New("config not found"),
-			expected: "❌ Error: config not found\n\n💡 Suggestion: Run 'zen config' to check your configuration or 'zen init' to initialize a workspace\n",
+			expected: "Error: config not found\n\nRun 'zen config' to check your configuration or 'zen init' to initialize a workspace\n",
 		},
 		{
 			name:     "nil error",
@@ -118,12 +118,12 @@ func TestHandleError(t *testing.T) {
 	}{
 		{
 			name:         "silent error",
-			err:          cmdutil.SilentError,
+			err:          cmdutil.ErrSilent,
 			expectedCode: cmdutil.ExitError,
 		},
 		{
 			name:         "pending error",
-			err:          cmdutil.PendingError,
+			err:          cmdutil.ErrPending,
 			expectedCode: cmdutil.ExitError,
 		},
 		{

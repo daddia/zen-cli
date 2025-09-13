@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/jonathandaddia/zen/pkg/types"
+	"github.com/daddia/zen/pkg/types"
 )
 
 func TestNew(t *testing.T) {
@@ -223,7 +223,7 @@ func TestCommonErrorConstructors(t *testing.T) {
 		},
 		{
 			name:         "ErrWorkspaceNotInitialized",
-			constructor:  func() error { return ErrWorkspaceNotInitialized() },
+			constructor:  ErrWorkspaceNotInitialized,
 			expectedCode: types.ErrorCodeWorkspaceNotInit,
 		},
 		{

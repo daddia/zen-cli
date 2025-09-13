@@ -35,6 +35,5 @@ func GetVersionInfo() VersionInfo {
 
 // GetVersionString returns a formatted version string
 func GetVersionString() string {
-	return fmt.Sprintf("zen version %s (%s) built with %s on %s",
-		version, commit, goVersion, buildTime)
+	return fmt.Sprintf("zen version %s", version)
 }

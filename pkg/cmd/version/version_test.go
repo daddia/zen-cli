@@ -6,8 +6,8 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/jonathandaddia/zen/pkg/cmdutil"
-	"github.com/jonathandaddia/zen/pkg/iostreams"
+	"github.com/daddia/zen/pkg/cmdutil"
+	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -41,10 +41,7 @@ func TestVersionOutput(t *testing.T) {
 			name:         "text output",
 			outputFormat: "text",
 			checkFunc: func(t *testing.T, output string) {
-				assert.Contains(t, output, "Zen CLI")
-				assert.Contains(t, output, "1.0.0")
-				assert.Contains(t, output, "Go:")
-				assert.Contains(t, output, "OS:")
+				assert.Equal(t, "zen version 1.0.0\n", output)
 			},
 		},
 		{
@@ -111,9 +108,5 @@ func TestDisplayTextVersion(t *testing.T) {
 	require.NoError(t, err)
 
 	output := buf.String()
-	assert.Contains(t, output, "Zen CLI 1.2.3")
-	assert.Contains(t, output, "Commit: abc123")
-	assert.Contains(t, output, "Built:  2024-01-01")
-	assert.Contains(t, output, "Go:     go1.21")
-	assert.Contains(t, output, "OS:     linux/amd64")
+	assert.Equal(t, "zen version 1.2.3\n", output)
 }

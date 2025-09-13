@@ -3,7 +3,7 @@ package root
 import (
 	"testing"
 
-	"github.com/jonathandaddia/zen/pkg/cmd/factory"
+	"github.com/daddia/zen/pkg/cmd/factory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

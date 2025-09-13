@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/jonathandaddia/zen/internal/zencmd"
+	"github.com/daddia/zen/internal/zencmd"
 )
 
 func main() {

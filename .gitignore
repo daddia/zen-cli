@@ -73,3 +73,6 @@ plugins/**/*.dylib
 dev/
 scratch/
 
+
+# Zen CLI workspace directory
+.zen/

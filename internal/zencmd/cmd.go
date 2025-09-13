@@ -9,9 +9,9 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/jonathandaddia/zen/pkg/cmd/factory"
-	"github.com/jonathandaddia/zen/pkg/cmd/root"
-	"github.com/jonathandaddia/zen/pkg/cmdutil"
+	"github.com/daddia/zen/pkg/cmd/factory"
+	"github.com/daddia/zen/pkg/cmd/root"
+	"github.com/daddia/zen/pkg/cmdutil"
 )
 
 // Main is the main entry point for the Zen CLI
@@ -47,11 +47,11 @@ func handleError(err error, f *cmdutil.Factory) cmdutil.ExitCode {
 	stderr := f.IOStreams.ErrOut
 
 	// Check for specific error types
-	if err == cmdutil.SilentError {
+	if err == cmdutil.ErrSilent {
 		return cmdutil.ExitError
 	}
 
-	if err == cmdutil.PendingError {
+	if err == cmdutil.ErrPending {
 		return cmdutil.ExitError
 	}
 
@@ -85,8 +85,8 @@ func printError(out io.Writer, err error) {
 		return
 	}
 
-	// Format error message with emoji for better visibility
-	fmt.Fprintf(out, "❌ Error: %s\n", err.Error())
+	// Format error message
+	fmt.Fprintf(out, "Error: %s\n", err.Error())
 
 	// Add helpful suggestions based on error type
 	if msg := getErrorSuggestion(err); msg != "" {
@@ -105,26 +105,26 @@ func getErrorSuggestion(err error) string {
 
 	switch {
 	case strings.Contains(errMsg, "config") && strings.Contains(errMsg, "not found"):
-		return "💡 Suggestion: Run 'zen config' to check your configuration or 'zen init' to initialize a workspace"
+		return "Run 'zen config' to check your configuration or 'zen init' to initialize a workspace"
 	case strings.Contains(errMsg, "config") && strings.Contains(errMsg, "invalid"):
-		return "💡 Suggestion: Check your configuration file syntax with 'zen config validate'"
+		return "Check your configuration file syntax with 'zen config validate'"
 	case strings.Contains(errMsg, "workspace") && strings.Contains(errMsg, "not found"):
-		return "💡 Suggestion: Run 'zen init' to initialize a new workspace in this directory"
+		return "Run 'zen init' to initialize a new workspace in this directory"
 	case strings.Contains(errMsg, "workspace") && strings.Contains(errMsg, "invalid"):
-		return "💡 Suggestion: Check workspace structure with 'zen status' or reinitialize with 'zen init --force'"
+		return "Check workspace structure with 'zen status' or reinitialize with 'zen init --force'"
 	case strings.Contains(errMsg, "permission"):
-		return "💡 Suggestion: Check file permissions or try running with appropriate privileges"
+		return "Check file permissions or try running with appropriate privileges"
 	case strings.Contains(errMsg, "unknown flag"):
-		return "💡 Suggestion: Use 'zen --help' to see available flags and options"
+		return "Use 'zen --help' to see available flags and options"
 	case strings.Contains(errMsg, "unknown command"):
-		return "💡 Suggestion: Use 'zen --help' to see available commands"
+		return "Use 'zen --help' to see available commands"
 	case strings.Contains(errMsg, "network") || strings.Contains(errMsg, "connection"):
-		return "💡 Suggestion: Check your internet connection and try again"
+		return "Check your internet connection and try again"
 	case strings.Contains(errMsg, "timeout"):
-		return "💡 Suggestion: The operation timed out. Try again or check network connectivity"
+		return "The operation timed out. Try again or check network connectivity"
 	case strings.Contains(errMsg, "authentication") || strings.Contains(errMsg, "auth"):
-		return "💡 Suggestion: Check your credentials or run authentication setup"
+		return "Check your credentials or run authentication setup"
 	default:
-		return "💡 Suggestion: Use 'zen --help' for usage information or check the documentation at https://zen.dev/docs"
+		return "Use 'zen --help' for usage information or check the documentation at https://zen.dev/docs"
 	}
 }

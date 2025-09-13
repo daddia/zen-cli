@@ -1,5 +1,5 @@
 # Zen CLI Makefile
-# AI-Powered Product Lifecycle Productivity Platform
+# AI-Powered Productivity Suite
 
 .PHONY: help build build-all test test-unit test-integration test-e2e lint security deps clean install docker-build release dev-setup
 
@@ -26,9 +26,9 @@ GO_VERSION?=$(shell go version | awk '{print $$3}')
 
 # Build flags
 LDFLAGS=-ldflags "\
-	-X github.com/jonathandaddia/zen/pkg/cmd/factory.version=$(VERSION) \
-	-X github.com/jonathandaddia/zen/pkg/cmd/factory.commit=$(COMMIT) \
-	-X github.com/jonathandaddia/zen/pkg/cmd/factory.buildTime=$(BUILD_TIME)"
+	-X github.com/daddia/zen/pkg/cmd/factory.version=$(VERSION) \
+	-X github.com/daddia/zen/pkg/cmd/factory.commit=$(COMMIT) \
+	-X github.com/daddia/zen/pkg/cmd/factory.buildTime=$(BUILD_TIME)"
 
 # Build tags
 BUILD_TAGS?=
@@ -105,7 +105,6 @@ lint: ## Run linting checks
 	@echo "Running linter..."
 	@if command -v golangci-lint >/dev/null 2>&1; then \
 		golangci-lint run --timeout=5m; \
-		echo "✅ Linting completed"; \
 	else \
 		echo "⚠️  golangci-lint not installed, running basic checks..."; \
 		$(GOFMT) -d -s .; \
@@ -126,7 +125,7 @@ security: ## Run security analysis
 fmt: ## Format Go code
 	@echo "Formatting code..."
 	$(GOFMT) -w -s .
-	@echo "✅ Code formatted"
+	@echo "Code formatted"
 
 ## Dependency targets
 

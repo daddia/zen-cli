@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/jonathandaddia/zen/internal/config"
-	"github.com/jonathandaddia/zen/pkg/cmdutil"
-	"github.com/jonathandaddia/zen/pkg/iostreams"
+	"github.com/daddia/zen/internal/config"
+	"github.com/daddia/zen/pkg/cmdutil"
+	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

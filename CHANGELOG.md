@@ -9,58 +9,40 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/), and this 
 ## [Unreleased]
 
 ### Added
-- Complete Go CLI foundation with Cobra framework
-- Structured logging system with configurable levels and formats (text/json)
-- Configuration management with YAML support and environment variable overrides
-- Comprehensive CLI commands: `version`, `init`, `config`, `status`
-- Cross-platform build system with Makefile supporting Linux, macOS, and Windows
-- Docker containerization with multi-stage builds
-- GitHub Actions CI/CD pipeline with automated testing, linting, and security scanning
-- Comprehensive unit test suite with >80% coverage
-- Error handling system with standardized error codes and types
-- Workspace initialization and status management
-- Professional CLI help system with placeholder commands for future features
-- GoReleaser configuration for automated releases
-- Linting configuration with golangci-lint
-- Git hooks and development tooling setup
+- **ZEN-003**: Enhanced `zen init` command with comprehensive workspace detection
+  - Automatic project type detection (Git, Node.js, Go, Python, Rust, Java)
+  - Creates `.zen/` directory structure similar to `.git/`
+  - Generates project-specific configuration with detected metadata
+  - Framework detection (React, Vue, Angular, Express, Maven, Gradle, etc.)
+  - Language detection (TypeScript, JavaScript, Go, Python, Rust, Java)
+  - Force flag (`--force`) with automatic backup creation
+  - Automatic `.gitignore` updates
+  - Comprehensive error handling with user-friendly messages
 
 ---
 
-## [v0.0.1] - 2025-09-12
+## [v0.1.0] - YYYY-MM-DD
 
 ### Added
-- **ZEN-001 Foundation**: Complete Go project setup and CLI framework
-- Core CLI binary with professional help system and version information
-- Workspace management with `zen init` and `zen status` commands
-- Configuration system supporting YAML files and environment variables
-- Structured logging with multiple output formats and configurable levels
-- Comprehensive error handling with standardized error codes
-- Cross-platform build support (Linux, macOS, Windows) for both amd64 and arm64
-- Docker containerization with scratch-based runtime image
-- GitHub Actions CI/CD with automated testing, security scanning, and releases
-- Unit test suite achieving 84.2% overall coverage
-- Makefile with comprehensive build, test, and development targets
-- GoReleaser configuration for automated binary releases and package distribution
-- Linting configuration with 40+ enabled rules and security checks
-- Git ignore configuration optimized for Go projects
-- Project documentation and architectural decision records
+- Describe new features or functionalities.
+- Example: Added support for feature XYZ.
 
-### Technical Implementation
-- **Language**: Go 1.25 with modern idioms and best practices
-- **CLI Framework**: Cobra v1.10.1 with comprehensive flag and command support
-- **Configuration**: Viper v1.20.0 with YAML, environment, and flag support
-- **Logging**: Logrus v1.9.3 with structured JSON and text output
-- **Error Handling**: Custom error system with typed error codes
-- **Testing**: Race condition detection, coverage reporting, and parallel execution
-- **Build System**: Cross-compilation, version injection, and artifact generation
-- **Security**: Dependency scanning, SAST analysis, and secure build practices
+### Changed
+- Detail updates to existing functionality.
+- Example: Updated dependency ABC to version 1.2.3.
 
-### Project Structure
-- `cmd/zen/`: Main CLI entry point with version information
-- `internal/cli/`: Command implementations (root, version, init, config, status)
-- `internal/config/`: Configuration loading, validation, and management
-- `internal/logging/`: Structured logging interface and implementation
-- `pkg/types/`: Public type definitions and constants
-- `pkg/errors/`: Error handling utilities and constructors
-- `.github/workflows/`: CI/CD pipeline configurations
-- `configs/`: Configuration templates and examples
+### Fixed
+- List bug fixes.
+- Example: Fixed issue with module loading on startup.
+
+### Deprecated
+- Mention any soon-to-be removed features.
+- Example: Deprecated legacy API endpoints.
+
+### Removed
+- Document features that have been removed.
+- Example: Removed support for legacy configuration files.
+
+### Security
+- Note any security-related changes.
+- Example: Patched vulnerability in dependency DEF.

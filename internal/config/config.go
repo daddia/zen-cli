@@ -63,15 +63,15 @@ func Load() (*Config, error) {
 	setDefaults(v)
 
 	// Set configuration name and paths
-	v.SetConfigName("zen")
+	v.SetConfigName("config")
 	v.SetConfigType("yaml")
 
-	// Add configuration paths
+	// Add configuration paths - look in .zen directory
+	v.AddConfigPath("./.zen")
 	if home, err := os.UserHomeDir(); err == nil {
 		v.AddConfigPath(filepath.Join(home, ".zen"))
 	}
-	v.AddConfigPath(".")
-	v.AddConfigPath("./configs")
+	v.AddConfigPath("./configs") // For backwards compatibility
 
 	// Read environment variables
 	v.SetEnvPrefix("ZEN")

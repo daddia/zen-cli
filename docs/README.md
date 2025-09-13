@@ -1,6 +1,6 @@
 # Zen CLI Documentation
 
-Welcome to the comprehensive documentation for the Zen AI-powered product lifecycle productivity platform.
+Welcome to the comprehensive documentation for the Zen AI-Powered Productivity Suite.
 
 ## 📚 **Documentation Structure**
 
@@ -77,7 +77,7 @@ zen/
 ### **Installation**
 ```bash
 # Clone the repository
-git clone https://github.com/jonathandaddia/zen.git
+git clone https://github.com/daddia/zen.git
 cd zen
 
 # Build the CLI

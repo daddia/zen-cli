@@ -1,6 +1,6 @@
 # Zen CLI: Comprehensive Project Structure
 
-*AI-Powered Product Lifecycle Productivity Platform*
+*AI-Powered Productivity Suite*
 
 ## 📁 **Root Directory Structure**
 
@@ -602,7 +602,7 @@ release: ## Create release
 
 ### **go.mod**
 ```go
-module github.com/jonathandaddia/zen
+module github.com/daddia/zen
 
 go 1.21
 
@@ -728,7 +728,7 @@ CMD ["./zen"]
 ```bash
 # Initialize new Zen project
 mkdir zen && cd zen
-go mod init github.com/jonathandaddia/zen
+go mod init github.com/daddia/zen
 
 # Create enhanced structure with factory pattern
 mkdir -p cmd/zen internal/{zencmd,config,logging,agents,workflow} 
@@ -746,7 +746,7 @@ package main
 
 import (
     "os"
-    "github.com/jonathandaddia/zen/internal/zencmd"
+    "github.com/daddia/zen/internal/zencmd"
 )
 
 func main() {
@@ -778,4 +778,4 @@ This enhanced project structure provides:
 7. **Production Ready** - Build automation, security, and deployment configs
 8. **Developer Friendly** - Clear documentation, consistent patterns, and development tools
 
-The enhanced structure follows Go best practices and incorporates proven patterns from successful CLI tools like GitHub CLI, while maintaining the specific needs of the Zen AI-powered product lifecycle productivity platform.
+The enhanced structure follows Go best practices and incorporates proven patterns from successful CLI tools like GitHub CLI, while maintaining the specific needs of the Zen AI-Powered Productivity Suite.

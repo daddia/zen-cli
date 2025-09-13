@@ -9,7 +9,11 @@ import (
 func TestLoad(t *testing.T) {
 	// Create a temporary directory for test config
 	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "zen.yaml")
+	zenDir := filepath.Join(tempDir, ".zen")
+	if err := os.MkdirAll(zenDir, 0755); err != nil {
+		t.Fatalf("Failed to create .zen directory: %v", err)
+	}
+	configPath := filepath.Join(zenDir, "config.yaml")
 
 	// Create a test config file
 	configContent := `

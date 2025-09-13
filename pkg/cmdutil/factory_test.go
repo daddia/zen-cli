@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/jonathandaddia/zen/internal/config"
-	"github.com/jonathandaddia/zen/internal/logging"
-	"github.com/jonathandaddia/zen/pkg/iostreams"
+	"github.com/daddia/zen/internal/config"
+	"github.com/daddia/zen/internal/logging"
+	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
 )
 

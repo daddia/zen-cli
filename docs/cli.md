@@ -1,6 +1,6 @@
 # Zen CLI: Comprehensive Analysis & Implementation Roadmap
 
-*AI-Powered Product Lifecycle Productivity Platform*
+*AI-Powered Productivity Suite*
 
 ## Executive Summary
 

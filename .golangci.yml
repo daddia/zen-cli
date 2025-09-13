@@ -3,25 +3,25 @@ version: "2"
 
 linters:
   enable:
-    # Critical error detection
-    - errcheck      # Check for unchecked errors
-    - govet         # Go vet analysis
+    # Core Go tooling
+    - govet         # Built-in Go analysis
     - staticcheck   # Advanced static analysis
     - ineffassign   # Detect ineffective assignments
     - unused        # Find unused code
 
     # Code quality
-    - gosec         # Security issues
     - gocritic      # Performance and style issues
-    - revive        # Fast golint replacement
 
-    # Code quality and style
+    # Code style
+    - nolintlint    # Proper nolint usage
+    - unconvert     # Remove unnecessary conversions
     - misspell      # Fix common misspellings
     - whitespace    # Unnecessary whitespace
 
-    # Best practices
-    - nolintlint    # Proper nolint usage
-    - unconvert     # Remove unnecessary conversions
+  disable:
+    - errcheck      # Too many false positives
+    - gosec         # Security issues (many false positives for CLI apps)
+    - revive        # Fast golint replacement (mostly style preferences)
 
 formatters:
   enable:

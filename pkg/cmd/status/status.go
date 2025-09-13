@@ -6,7 +6,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/jonathandaddia/zen/pkg/cmdutil"
+	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -149,43 +149,43 @@ func getConfigSource(cfg interface{}) string {
 // displayTextStatus displays status in human-readable text format
 func displayTextStatus(out interface{ Write([]byte) (int, error) }, status Status) error {
 	fmt.Fprintln(out, "Zen CLI Status")
-	fmt.Fprintln(out, "==============")
+	fmt.Fprintln(out, "--------------")
 	fmt.Fprintln(out)
 
 	// Workspace status
-	fmt.Fprintln(out, "📁 Workspace:")
-	fmt.Fprintf(out, "   Status:      %s\n", getStatusIcon(status.Workspace.Initialized))
-	fmt.Fprintf(out, "   Path:        %s\n", status.Workspace.Path)
-	fmt.Fprintf(out, "   Config File: %s\n", status.Workspace.ConfigFile)
+	fmt.Fprintln(out, "Workspace:")
+	fmt.Fprintf(out, "  Status:      %s\n", getStatusText(status.Workspace.Initialized))
+	fmt.Fprintf(out, "  Path:        %s\n", status.Workspace.Path)
+	fmt.Fprintf(out, "  Config File: %s\n", status.Workspace.ConfigFile)
 	fmt.Fprintln(out)
 
 	// Configuration status
-	fmt.Fprintln(out, "⚙️  Configuration:")
-	fmt.Fprintf(out, "   Status:    %s\n", getStatusIcon(status.Configuration.Loaded))
-	fmt.Fprintf(out, "   Source:    %s\n", status.Configuration.Source)
-	fmt.Fprintf(out, "   Log Level: %s\n", status.Configuration.LogLevel)
+	fmt.Fprintln(out, "Configuration:")
+	fmt.Fprintf(out, "  Status:    %s\n", getStatusText(status.Configuration.Loaded))
+	fmt.Fprintf(out, "  Source:    %s\n", status.Configuration.Source)
+	fmt.Fprintf(out, "  Log Level: %s\n", status.Configuration.LogLevel)
 	fmt.Fprintln(out)
 
 	// System information
-	fmt.Fprintln(out, "💻 System:")
-	fmt.Fprintf(out, "   OS:           %s\n", status.System.OS)
-	fmt.Fprintf(out, "   Architecture: %s\n", status.System.Architecture)
-	fmt.Fprintf(out, "   Go Version:   %s\n", status.System.GoVersion)
-	fmt.Fprintf(out, "   CPU Cores:    %d\n", status.System.NumCPU)
+	fmt.Fprintln(out, "System:")
+	fmt.Fprintf(out, "  OS:           %s\n", status.System.OS)
+	fmt.Fprintf(out, "  Architecture: %s\n", status.System.Architecture)
+	fmt.Fprintf(out, "  Go Version:   %s\n", status.System.GoVersion)
+	fmt.Fprintf(out, "  CPU Cores:    %d\n", status.System.NumCPU)
 	fmt.Fprintln(out)
 
 	// Integrations
-	fmt.Fprintln(out, "🔌 Integrations:")
-	fmt.Fprintf(out, "   Available: %v\n", status.Integrations.Available)
-	fmt.Fprintf(out, "   Active:    %v\n", status.Integrations.Active)
+	fmt.Fprintln(out, "Integrations:")
+	fmt.Fprintf(out, "  Available: %v\n", status.Integrations.Available)
+	fmt.Fprintf(out, "  Active:    %v\n", status.Integrations.Active)
 
 	return nil
 }
 
-// getStatusIcon returns an icon based on status
-func getStatusIcon(ok bool) string {
+// getStatusText returns status text
+func getStatusText(ok bool) string {
 	if ok {
-		return "✅ Ready"
+		return "Ready"
 	}
-	return "❌ Not Ready"
+	return "Not Ready"
 }

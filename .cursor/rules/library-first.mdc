@@ -20,15 +20,8 @@ Adopt popular, battle-tested libraries first to limit writing custom code. Custo
 2. **Established Libraries** - Well-known, widely-adopted packages
 3. **Custom Implementation** - Only when no suitable library exists
 
-## Current Approved Libraries
-- `github.com/spf13/cobra` - CLI framework
-- `github.com/spf13/viper` - Configuration management
-- `github.com/sirupsen/logrus` - Structured logging
-- `github.com/stretchr/testify` - Testing framework
-- `github.com/pkg/errors` - Error handling
-
 ## When to Write Custom Code
-- **Core Business Logic**: Zen-specific workflow orchestration
+- **Core Business Logic**: Specific workflow orchestration
 - **Domain Models**: Product lifecycle concepts unique to Zen
 - **Integration Adapters**: Custom connectors for proprietary systems
 - **Performance Critical**: When libraries don't meet performance requirements

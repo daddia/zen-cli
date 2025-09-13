@@ -18,9 +18,9 @@ builds:
       - -X main.version={{.Version}}
       - -X main.commit={{.Commit}}
       - -X main.buildTime={{.Date}}
-      - -X github.com/jonathandaddia/zen/internal/cli.version={{.Version}}
-      - -X github.com/jonathandaddia/zen/internal/cli.commit={{.Commit}}
-      - -X github.com/jonathandaddia/zen/internal/cli.buildTime={{.Date}}
+      - -X github.com/daddia/zen/internal/cli.version={{.Version}}
+      - -X github.com/daddia/zen/internal/cli.commit={{.Commit}}
+      - -X github.com/daddia/zen/internal/cli.buildTime={{.Date}}
     goos:
       - linux
       - darwin
@@ -92,9 +92,9 @@ dockers:
     build_flag_templates:
       - --platform=linux/amd64
       - --label=org.opencontainers.image.title={{ .ProjectName }}
-      - --label=org.opencontainers.image.description=AI-Powered Product Lifecycle Productivity Platform
-      - --label=org.opencontainers.image.url=https://github.com/jonathandaddia/zen
-      - --label=org.opencontainers.image.source=https://github.com/jonathandaddia/zen
+      - --label=org.opencontainers.image.description=AI-Powered Productivity Suite
+      - --label=org.opencontainers.image.url=https://github.com/daddia/zen
+      - --label=org.opencontainers.image.source=https://github.com/daddia/zen
       - --label=org.opencontainers.image.version={{ .Version }}
       - --label=org.opencontainers.image.created={{ time "2006-01-02T15:04:05Z07:00" }}
       - --label=org.opencontainers.image.revision={{ .FullCommit }}
@@ -106,8 +106,8 @@ brews:
       owner: jonathandaddia
       name: homebrew-zen
     folder: Formula
-    homepage: https://github.com/jonathandaddia/zen
-    description: AI-Powered Product Lifecycle Productivity Platform
+    homepage: https://github.com/daddia/zen
+    description: AI-Powered Productivity Suite
     license: MIT
     test: |
       system "#{bin}/zen --version"
@@ -117,8 +117,8 @@ brews:
 nfpms:
   - file_name_template: '{{ .ConventionalFileName }}'
     id: packages
-    homepage: https://github.com/jonathandaddia/zen
-    description: AI-Powered Product Lifecycle Productivity Platform
+    homepage: https://github.com/daddia/zen
+    description: AI-Powered Productivity Suite
     maintainer: Jonathan Daddia <your-email@example.com>
     license: MIT
     vendor: Zen CLI
@@ -151,7 +151,7 @@ release:
   header: |
     ## Zen CLI {{ .Tag }} Release
 
-    AI-Powered Product Lifecycle Productivity Platform
+    AI-Powered Productivity Suite
 
     ### Installation
 
@@ -169,7 +169,7 @@ release:
     ```
 
   footer: |
-    **Full Changelog**: https://github.com/jonathandaddia/zen/compare/{{ .PreviousTag }}...{{ .Tag }}
+    **Full Changelog**: https://github.com/daddia/zen/compare/{{ .PreviousTag }}...{{ .Tag }}
 
     ---
 

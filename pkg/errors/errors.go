@@ -3,7 +3,7 @@ package errors
 import (
 	"fmt"
 
-	"github.com/jonathandaddia/zen/pkg/types"
+	"github.com/daddia/zen/pkg/types"
 	"github.com/pkg/errors"
 )
 

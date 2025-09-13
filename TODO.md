@@ -1,10 +1,6 @@
 # TODO - Zen CLI MVP
 
-*AI-Powered Product Lifecycle Productivity Platform*  
-*Last updated: 12 September, 2025*  
-
----
-
+*Last updated: 12 September, 20255
 ## Conventions
 
 - **Story ID:** ZEN-### (sequential numbering)
@@ -29,17 +25,18 @@
   - **Deliverable**: `zen version` and `zen --help` work
   - **Acceptance**: Professional CLI help output with proper formatting
 
-- [ ] **[ZEN-003] Workspace Detection & Init** *(L)*: Implement `zen init` command with workspace detection, `.zen/` directory generation (similar to `.git/`), config file generation (`.zen/config.yaml`), directory structure creation
+- [x] **[ZEN-003] Workspace Detection & Init** *(L)*: Implement `zen init` command with workspace detection, `.zen/` directory generation (similar to `.git/`), config file generation (`.zen/config.yaml`), directory structure creation
   - **Deliverable**: `zen init` creates workspace with config
   - **Acceptance**: Can initialize workspace, generates valid config file
+  - **Status**: COMPLETED - Full implementation with project type detection, framework detection, force flag, backups, and comprehensive testing
 
 - [ ] **[ZEN-004] Configuration Management** *(M)*: Config loading from `.zen/config.yaml`, environment variables, CLI flags with precedence, validation and schema
   - **Deliverable**: Configuration system with file/env/flag support
   - **Acceptance**: Config loads from multiple sources with proper precedence
 
-- [ ] **[ZEN-005] Basic Testing & CI** *(S)*: Unit tests for core commands, GitHub Actions for build/test, binary artifact generation
-  - **Deliverable**: Automated testing and release pipeline
-  - **Acceptance**: Tests pass, releases generate cross-platform binaries
+- [ ] **[ZEN-005] Testing, CI & GitHub Releases** *(M)*: Unit tests for core commands, GitHub Actions for build/test/release, cross-platform binary generation (darwin-amd64, darwin-arm64, linux-amd64, linux-arm64, windows-amd64), automated GitHub releases with checksums
+  - **Deliverable**: Automated testing and release pipeline with downloadable binaries
+  - **Acceptance**: Tests pass, GitHub releases created with cross-platform binaries, installation script available
 
 **Sprint 1 Goal**: Working CLI that can be installed and initialized in any project
 
@@ -408,6 +405,10 @@
 - [ ] **[ZEN-066] Launch & Marketing Materials** *(S)*: Launch website, demo videos, case studies, press materials, community resources
   - **Deliverable**: Complete launch package
   - **Acceptance**: Professional launch materials ready for public release
+
+- [ ] **[ZEN-067] Homebrew Tap & Installation** *(S)*: Create Homebrew tap repository (homebrew-zen), formula generation, installation script, getting started documentation
+  - **Deliverable**: `brew install jonathandaddia/zen/zen` works
+  - **Acceptance**: Users can install via Homebrew on macOS/Linux, auto-updates work
 
 **Sprint 16 Goal**: Professional v1.0.0 launch with comprehensive distribution
 

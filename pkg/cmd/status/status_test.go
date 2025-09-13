@@ -6,9 +6,9 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/jonathandaddia/zen/internal/config"
-	"github.com/jonathandaddia/zen/pkg/cmdutil"
-	"github.com/jonathandaddia/zen/pkg/iostreams"
+	"github.com/daddia/zen/internal/config"
+	"github.com/daddia/zen/pkg/cmdutil"
+	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -101,9 +101,9 @@ func TestStatusOutput(t *testing.T) {
 	})
 }
 
-func TestGetStatusIcon(t *testing.T) {
-	assert.Equal(t, "✅ Ready", getStatusIcon(true))
-	assert.Equal(t, "❌ Not Ready", getStatusIcon(false))
+func TestGetStatusText(t *testing.T) {
+	assert.Equal(t, "Ready", getStatusText(true))
+	assert.Equal(t, "Not Ready", getStatusText(false))
 }
 
 func TestDisplayTextStatus(t *testing.T) {
@@ -136,7 +136,7 @@ func TestDisplayTextStatus(t *testing.T) {
 
 	output := buf.String()
 	assert.Contains(t, output, "Zen CLI Status")
-	assert.Contains(t, output, "✅ Ready")
+	assert.Contains(t, output, "Ready")
 	assert.Contains(t, output, "/home/user/project")
 	assert.Contains(t, output, "linux")
 	assert.Contains(t, output, "8")
@@ -161,10 +161,18 @@ func (m *mockWorkspaceManager) Initialize() error {
 	return nil
 }
 
+func (m *mockWorkspaceManager) InitializeWithForce(force bool) error {
+	return nil
+}
+
 func (m *mockWorkspaceManager) Status() (cmdutil.WorkspaceStatus, error) {
 	return cmdutil.WorkspaceStatus{
 		Initialized: m.initialized,
 		ConfigPath:  m.configFile,
 		Root:        m.root,
+		Project: cmdutil.ProjectInfo{
+			Type: "unknown",
+			Name: "test-project",
+		},
 	}, nil
 }

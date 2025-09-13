@@ -3,11 +3,11 @@ package root
 import (
 	"fmt"
 
-	"github.com/jonathandaddia/zen/pkg/cmd/config"
-	cmdinit "github.com/jonathandaddia/zen/pkg/cmd/init"
-	"github.com/jonathandaddia/zen/pkg/cmd/status"
-	"github.com/jonathandaddia/zen/pkg/cmd/version"
-	"github.com/jonathandaddia/zen/pkg/cmdutil"
+	"github.com/daddia/zen/pkg/cmd/config"
+	cmdinit "github.com/daddia/zen/pkg/cmd/init"
+	"github.com/daddia/zen/pkg/cmd/status"
+	"github.com/daddia/zen/pkg/cmd/version"
+	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/spf13/cobra"
 )
 
@@ -15,8 +15,8 @@ import (
 func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "zen",
-		Short: "AI-Powered Product Lifecycle Productivity Platform",
-		Long: `🧘 Zen CLI - AI-Powered Product Lifecycle Productivity Platform
+		Short: "AI-Powered Productivity Suite",
+		Long: `🧘 Zen CLI - AI-Powered Productivity Suite
 
 Zen is a unified command-line interface that revolutionizes productivity across
 the entire product lifecycle. By orchestrating intelligent workflows for both
@@ -37,7 +37,7 @@ ideation to production.
   zen --help        Show detailed help for any command
 
 📚 Documentation: https://zen.dev/docs
-🐛 Report Issues:  https://github.com/jonathandaddia/zen/issues`,
+🐛 Report Issues:  https://github.com/daddia/zen/issues`,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
@@ -59,6 +59,7 @@ ideation to production.
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		if cmd.Flags().Changed("verbose") {
 			// Update logger level if verbose
+			f.Verbose = verbose
 			if verbose {
 				f.Logger = f.Logger.WithLevel("debug")
 			}
@@ -153,7 +154,7 @@ Examples:
   # Generate PowerShell completion script
   zen completion powershell > zen.ps1`,
 		ValidArgs: []string{"bash", "zsh", "fish", "powershell"},
-		Args:      cobra.ExactValidArgs(1),
+		Args:      cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch args[0] {
 			case "bash":
