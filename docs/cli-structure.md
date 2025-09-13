@@ -10,7 +10,6 @@ zen/
 ├── .vscode/                    # VS Code workspace configuration
 ├── build/                      # Build artifacts and packaging
 ├── cmd/                        # CLI entry points and commands
-├── configs/                    # Configuration templates and examples
 ├── docs/                       # Documentation
 ├── examples/                   # Usage examples and tutorials
 ├── internal/                   # Private Go packages
@@ -364,33 +363,10 @@ templates/
 │   ├── react-app/
 │   ├── python-api/
 │   └── terraform-module/
-└── configs/                  # Configuration templates
-    ├── zen.yaml.template
-    ├── agents.yaml.template
-    ├── integrations.yaml.template
-    └── product.yaml.template
 ```
 
-### **6. Configuration (`configs/`)**
 
-```
-configs/
-├── examples/                  # Example configurations
-│   ├── basic.yaml            # Basic configuration
-│   ├── enterprise.yaml       # Enterprise setup
-│   ├── development.yaml      # Development environment
-│   └── ci-cd.yaml           # CI/CD integration
-├── schemas/                  # Configuration schemas
-│   ├── zen.schema.json
-│   ├── agent.schema.json
-│   ├── integration.schema.json
-│   └── product.schema.json
-└── migrations/               # Configuration migrations
-    ├── v1-to-v2.yaml
-    └── v2-to-v3.yaml
-```
-
-### **7. Documentation (`docs/`)**
+### **6. Documentation (`docs/`)**
 
 ```
 docs/
@@ -429,7 +405,7 @@ docs/
     └── custom-agents.md
 ```
 
-### **8. Testing (`test/`)**
+### **7. Testing (`test/`)**
 
 ```
 test/
@@ -456,7 +432,7 @@ test/
     └── fixtures.go
 ```
 
-### **9. Build & Deployment (`build/`)**
+### **8. Build & Deployment (`build/`)**
 
 ```
 build/
@@ -480,7 +456,7 @@ build/
     └── package.sh
 ```
 
-### **10. Development Tools (`tools/`)**
+### **9. Development Tools (`tools/`)**
 
 ```
 tools/

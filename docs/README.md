@@ -30,7 +30,7 @@ Welcome to the comprehensive documentation for the Zen AI-Powered Productivity S
 - `zen status` - Show workspace status and health
 
 #### **Configuration**
-- **Configuration File**: `zen.yaml` (see [example](../configs/zen.example.yaml))
+- **Configuration File**: `zen.yaml` (consumer-side configuration)
 - **Environment Variables**: `ZEN_*` prefix (e.g., `ZEN_LOG_LEVEL=debug`)
 - **Command-line Flags**: Global flags available for all commands
 
@@ -50,7 +50,6 @@ zen/
 │   └── errors/               # Error Handling
 ├── docs/                      # Documentation
 ├── .github/workflows/         # CI/CD Pipelines
-└── configs/                   # Configuration Examples
 ```
 
 #### **Build System**

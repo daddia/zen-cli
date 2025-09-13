@@ -65,10 +65,11 @@ func TestInitCommand_EmptyDirectory(t *testing.T) {
 	// Check files were created
 	assert.FileExists(t, filepath.Join(tempDir, ".zen", "config.yaml"))
 	assert.DirExists(t, filepath.Join(tempDir, ".zen"))
+	assert.DirExists(t, filepath.Join(tempDir, ".zen", "tasks"))
 	assert.DirExists(t, filepath.Join(tempDir, ".zen", "cache"))
-	assert.DirExists(t, filepath.Join(tempDir, ".zen", "logs"))
 	assert.DirExists(t, filepath.Join(tempDir, ".zen", "templates"))
-	assert.DirExists(t, filepath.Join(tempDir, ".zen", "backups"))
+	assert.DirExists(t, filepath.Join(tempDir, ".zen", "scripts"))
+	assert.DirExists(t, filepath.Join(tempDir, ".zen", "logs"))
 }
 
 func TestInitCommand_NodeJSProject(t *testing.T) {
@@ -219,9 +220,9 @@ func TestInitCommand_ExistingWorkspace_WithForce(t *testing.T) {
 	defer func() { _ = os.Chdir(oldCwd) }()
 	require.NoError(t, os.Chdir(tempDir))
 
-	// Create .zen directory first for backup
+	// Create .zen directory first
 	zenDir := filepath.Join(tempDir, ".zen")
-	require.NoError(t, os.MkdirAll(filepath.Join(zenDir, "backups"), 0755))
+	require.NoError(t, os.MkdirAll(zenDir, 0755))
 
 	// Create existing config file
 	existingConfig := "version: 0.9\nold: config"

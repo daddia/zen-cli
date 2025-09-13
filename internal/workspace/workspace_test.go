@@ -202,10 +202,11 @@ func TestInitialize_NewWorkspace(t *testing.T) {
 	// Check .zen directory was created
 	zenDir := filepath.Join(tempDir, ".zen")
 	assert.DirExists(t, zenDir)
+	assert.DirExists(t, filepath.Join(zenDir, "tasks"))
 	assert.DirExists(t, filepath.Join(zenDir, "cache"))
-	assert.DirExists(t, filepath.Join(zenDir, "logs"))
 	assert.DirExists(t, filepath.Join(zenDir, "templates"))
-	assert.DirExists(t, filepath.Join(zenDir, "backups"))
+	assert.DirExists(t, filepath.Join(zenDir, "scripts"))
+	assert.DirExists(t, filepath.Join(zenDir, "logs"))
 
 	// Check config file was created
 	configFile := manager.ConfigFile()
@@ -260,7 +261,7 @@ func TestInitialize_ExistingWorkspace_WithForce(t *testing.T) {
 
 	// Create .zen directory first
 	zenDir := filepath.Join(tempDir, ".zen")
-	require.NoError(t, os.MkdirAll(filepath.Join(zenDir, "backups"), 0755))
+	require.NoError(t, os.MkdirAll(zenDir, 0755))
 
 	// Create existing config file
 	configFile := manager.ConfigFile()

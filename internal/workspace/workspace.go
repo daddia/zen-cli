@@ -363,10 +363,11 @@ func (m *Manager) createZenDirectory() error {
 
 	// Create subdirectories
 	subdirs := []string{
-		"cache",     // For caching data
-		"logs",      // For log files
-		"templates", // For future template system
-		"backups",   // For configuration backups
+		"tasks",     // Per-task workspaces
+		"cache",     // CLI caches
+		"templates", // Scaffolds for new tasks
+		"scripts",   // CLI helper scripts
+		"logs",      // CLI run logs, sync traces
 	}
 
 	for _, subdir := range subdirs {
@@ -376,12 +377,12 @@ func (m *Manager) createZenDirectory() error {
 	}
 
 	// Create .gitkeep files to ensure directories are tracked
-	for _, subdir := range subdirs {
-		gitkeepPath := filepath.Join(zenDir, subdir, ".gitkeep")
-		if err := os.WriteFile(gitkeepPath, []byte(""), 0644); err != nil {
-			return err
-		}
-	}
+	// for _, subdir := range subdirs {
+	// 	gitkeepPath := filepath.Join(zenDir, subdir, ".gitkeep")
+	// 	if err := os.WriteFile(gitkeepPath, []byte(""), 0644); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 }
