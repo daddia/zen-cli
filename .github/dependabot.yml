@@ -1,0 +1,87 @@
+# Dependabot configuration for automated dependency updates
+# See: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Go modules
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "jonathandaddia"
+    assignees:
+      - "jonathandaddia"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "go"
+    # Group updates to reduce PR noise
+    groups:
+      go-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "golang.org/x/*"
+      go-tools:
+        patterns:
+          - "golang.org/x/*"
+    # Security updates
+    allow:
+      - dependency-type: "all"
+    # Ignore specific dependencies if needed
+    ignore:
+      # Example: ignore major version updates for specific packages
+      # - dependency-name: "github.com/spf13/cobra"
+      #   update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "jonathandaddia"
+    assignees:
+      - "jonathandaddia"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # Docker (if you add Dockerfiles in the future)
+  - package-ecosystem: "docker"
+    directory: "/build/docker"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "jonathandaddia"
+    assignees:
+      - "jonathandaddia"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"

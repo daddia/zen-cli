@@ -1,0 +1,82 @@
+# Stale bot configuration for managing inactive issues and pull requests
+# See: https://github.com/actions/stale
+
+# Number of days of inactivity before an issue becomes stale
+daysUntilStale: 60
+
+# Number of days of inactivity before a stale issue is closed
+daysUntilClose: 14
+
+# Issues with these labels will never be considered stale
+exemptLabels:
+  - "pinned"
+  - "security"
+  - "bug"
+  - "enhancement"
+  - "good first issue"
+  - "help wanted"
+  - "roadmap"
+  - "wontfix"
+
+# Label to use when marking an issue as stale
+staleLabel: "stale"
+
+# Comment to post when marking an issue as stale
+markComment: >
+  This issue has been automatically marked as stale because it has not had
+  recent activity. It will be closed if no further activity occurs within 14 days.
+  If this issue is still relevant, please comment to keep it open.
+  Thank you for your contributions.
+
+# Comment to post when closing a stale issue
+closeComment: >
+  This issue has been automatically closed due to inactivity. If you believe
+  this issue is still relevant, please reopen it or create a new issue with
+  updated information. Thank you for your contributions.
+
+# Limit to only issues or only pull requests
+only: issues
+
+# Pull Requests configuration (separate from issues)
+# Number of days of inactivity before a pull request becomes stale
+daysUntilPrStale: 30
+
+# Number of days of inactivity before a stale pull request is closed
+daysUntilPrClose: 7
+
+# Pull requests with these labels will never be considered stale
+exemptPrLabels:
+  - "pinned"
+  - "security"
+  - "work-in-progress"
+  - "wip"
+  - "dependencies"
+  - "do-not-merge"
+
+# Label to use when marking a pull request as stale
+stalePrLabel: "stale"
+
+# Comment to post when marking a pull request as stale
+markPrComment: >
+  This pull request has been automatically marked as stale because it has not had
+  recent activity. It will be closed if no further activity occurs within 7 days.
+  If this pull request is still relevant, please comment or push new commits to keep it open.
+  Thank you for your contributions.
+
+# Comment to post when closing a stale pull request
+closePrComment: >
+  This pull request has been automatically closed due to inactivity. If you believe
+  this pull request is still relevant, please reopen it or create a new pull request.
+  Thank you for your contributions.
+
+# Exempt pull requests in draft state
+exemptDraftPr: true
+
+# Limit the number of operations per run (to avoid hitting rate limits)
+operationsPerRun: 30
+
+# Remove stale label when new activity occurs
+removeStaleWhenUpdated: true
+
+# Enable debug logging
+enableStatistics: true
