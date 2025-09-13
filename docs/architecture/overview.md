@@ -43,19 +43,17 @@ Zen is architected as a modern, extensible CLI platform built with Go 1.25, desi
 ```
 zen/
 ├── cmd/zen/                    # CLI Entry Point
-│   ├── main.go                # Application bootstrap
-│   └── version.go             # Build-time version info
+│   └── main.go                # Ultra-lightweight entry (delegates to zencmd)
 ├── internal/                   # Private Implementation
-│   ├── cli/                   # Command Layer
-│   │   ├── root.go           # Root command & global flags
-│   │   ├── version.go        # Version command
-│   │   ├── init.go           # Workspace initialization
-│   │   ├── config.go         # Configuration management
-│   │   └── status.go         # Workspace status
+│   ├── zencmd/               # Command Orchestration
+│   │   ├── cmd.go           # Main command handler
+│   │   └── cmd_test.go      # Command tests
 │   ├── config/               # Configuration Management
-│   │   └── config.go         # Loading, validation, defaults
+│   │   ├── config.go        # Loading, validation, defaults
+│   │   └── config_test.go   # Configuration tests
 │   ├── logging/              # Logging Infrastructure
-│   │   └── logger.go         # Structured logging interface
+│   │   ├── logger.go        # Structured logging interface
+│   │   └── logger_test.go   # Logging tests
 │   ├── agents/               # AI Agent Orchestration
 │   ├── workflow/             # Workflow State Management
 │   ├── integrations/         # External System Clients
@@ -63,9 +61,19 @@ zen/
 │   ├── quality/              # Quality Gates
 │   └── storage/              # Data Persistence
 ├── pkg/                       # Public APIs
-│   ├── types/                # Common Type Definitions
-│   ├── errors/               # Error Handling
-│   └── client/               # Go Client Library
+│   ├── cmd/                  # Command Implementations
+│   │   ├── factory/         # Dependency injection factory
+│   │   ├── root/            # Root command
+│   │   ├── version/         # Version command
+│   │   ├── init/            # Initialization command
+│   │   ├── config/          # Configuration command
+│   │   └── status/          # Status command
+│   ├── cmdutil/             # Command utilities
+│   │   ├── factory.go       # Factory interface
+│   │   └── errors.go        # Error types
+│   ├── iostreams/           # I/O abstraction
+│   ├── types/               # Common Type Definitions
+│   └── errors/              # Error Handling
 └── plugins/                   # Plugin System
     ├── agents/               # Custom AI Agents
     ├── integrations/         # External Integrations
@@ -74,21 +82,38 @@ zen/
 
 ## Core Components
 
-### 🎮 **Command Layer (`internal/cli/`)**
+### 🎮 **Command Layer (`pkg/cmd/`)**
 
 **Responsibility**: User interface, command parsing, flag handling, and output formatting.
 
 **Key Components**:
-- **Root Command**: Global configuration, help system, subcommand routing
-- **Version Command**: Build information, platform details, dependency versions
-- **Init Command**: Workspace initialization, configuration file creation
-- **Config Command**: Configuration display, validation, environment detection
-- **Status Command**: Workspace health, integration status, system diagnostics
+- **Factory Pattern (`pkg/cmd/factory/`)**: Dependency injection and lazy initialization
+- **Root Command (`pkg/cmd/root/`)**: Global configuration, help system, subcommand routing
+- **Version Command (`pkg/cmd/version/`)**: Build information, platform details, dependency versions
+- **Init Command (`pkg/cmd/init/`)**: Workspace initialization, configuration file creation
+- **Config Command (`pkg/cmd/config/`)**: Configuration display, validation, environment detection
+- **Status Command (`pkg/cmd/status/`)**: Workspace health, integration status, system diagnostics
 
 **Design Patterns**:
+- Factory pattern for dependency injection
 - Command pattern for discrete operations
 - Template method for common command structure
 - Strategy pattern for output formatting (text/json/yaml)
+
+### 🚀 **Command Orchestration (`internal/zencmd/`)**
+
+**Responsibility**: Main entry point orchestration, error handling, and exit code management.
+
+**Key Components**:
+- **Main Handler**: Graceful shutdown, signal handling, context management
+- **Error Handler**: Categorized error handling with helpful suggestions
+- **Exit Codes**: Structured exit codes (OK, Error, Cancel, Auth)
+
+**Design Benefits**:
+- Ultra-lightweight main.go (10 lines)
+- Centralized error handling
+- Consistent exit code management
+- Better testability through separation
 
 ### ⚙️ **Configuration Management (`internal/config/`)**
 

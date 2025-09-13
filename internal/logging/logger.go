@@ -17,6 +17,7 @@ type Logger interface {
 	Fatal(msg string, fields ...interface{})
 	WithField(key string, value interface{}) Logger
 	WithFields(fields map[string]interface{}) Logger
+	WithLevel(level string) Logger
 }
 
 // LogrusLogger wraps logrus.Logger to implement our Logger interface
@@ -110,6 +111,27 @@ func (l *LogrusLogger) WithFields(fields map[string]interface{}) Logger {
 	return &LogrusLogger{
 		logger: l.logger,
 		entry:  l.entry.WithFields(logrus.Fields(fields)),
+	}
+}
+
+// WithLevel returns a logger with a new log level
+func (l *LogrusLogger) WithLevel(level string) Logger {
+	newLogger := logrus.New()
+
+	// Copy settings from original logger
+	newLogger.SetFormatter(l.logger.Formatter)
+	newLogger.SetOutput(l.logger.Out)
+
+	// Set new level
+	logLevel, err := logrus.ParseLevel(level)
+	if err != nil {
+		logLevel = l.logger.GetLevel()
+	}
+	newLogger.SetLevel(logLevel)
+
+	return &LogrusLogger{
+		logger: newLogger,
+		entry:  logrus.NewEntry(newLogger),
 	}
 }
 
