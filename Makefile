@@ -158,8 +158,7 @@ clean: ## Clean build artifacts and cache
 
 install: build ## Install binary to system PATH
 	@echo "Installing zen binary..."
-	@if [ -w /usr/local/bin ]; then \
-		cp $(BINARY_DIR)/$(BINARY_NAME) /usr/local/bin/; \
+	@if cp $(BINARY_DIR)/$(BINARY_NAME) /usr/local/bin/ 2>/dev/null; then \
 		echo "✅ Installed to /usr/local/bin/$(BINARY_NAME)"; \
 	else \
 		echo "❌ Cannot write to /usr/local/bin (try: sudo make install)"; \
