@@ -1,0 +1,40 @@
+---
+alwaysApply: true
+description: Architectural patterns and project structure
+---
+
+# Architectural Patterns
+
+## Project Structure
+Entry point: [cmd/zen/main.go](mdc:cmd/zen/main.go) delegates to [internal/zencmd/cmd.go](mdc:internal/zencmd/cmd.go)
+
+Core directories:
+- `internal/` - Private implementation, business logic
+- `pkg/` - Public APIs and shared utilities
+- `cmd/zen/` - Ultra-lightweight CLI entry point only
+
+## Design Patterns
+- **Factory Pattern**: Dependency injection via [pkg/cmd/factory/](mdc:pkg/cmd/factory/)
+- **Command Pattern**: CLI commands as discrete operations
+- **Repository Pattern**: Data access abstraction
+- **Strategy Pattern**: Pluggable algorithms for prioritization/analysis
+
+## Component Responsibilities
+- **CLI Layer**: Command parsing, flag handling, user interaction
+- **Business Logic**: Core functionality in `internal/` packages
+- **Integration Layer**: External system connectivity
+- **Configuration**: Multi-source config via Viper in [internal/config/](mdc:internal/config/)
+- **Logging**: Structured logging via [internal/logging/](mdc:internal/logging/)
+
+## Modularity Rules
+- Clean separation between CLI and business logic
+- No business logic in `cmd/` or `pkg/cmd/` packages
+- Use dependency injection for testability
+- Keep external dependencies at boundaries
+- Plugin architecture for extensibility
+
+## Security Architecture
+- Secure defaults, no hardcoded secrets
+- Input validation at boundaries
+- Audit logging for sensitive operations
+- Minimal permissions principle

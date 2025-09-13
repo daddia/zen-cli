@@ -1,0 +1,48 @@
+---
+alwaysApply: true
+description: Library-first development approach
+---
+
+# Library-First Development
+
+## Core Principle
+Adopt popular, battle-tested libraries first to limit writing custom code. Custom code should be reserved for differentiating features and capabilities.
+
+## Library Selection Criteria
+- **Battle-tested**: Proven in production environments
+- **Popular**: Strong community adoption and support
+- **Maintained**: Active development and security updates
+- **Compatible**: Fits Go ecosystem and project architecture
+- **Licensed**: Compatible open-source license
+
+## Standard Library Priority
+1. **Go Standard Library** - Always prefer built-in packages first
+2. **Established Libraries** - Well-known, widely-adopted packages
+3. **Custom Implementation** - Only when no suitable library exists
+
+## Current Approved Libraries
+- `github.com/spf13/cobra` - CLI framework
+- `github.com/spf13/viper` - Configuration management
+- `github.com/sirupsen/logrus` - Structured logging
+- `github.com/stretchr/testify` - Testing framework
+- `github.com/pkg/errors` - Error handling
+
+## When to Write Custom Code
+- **Core Business Logic**: Zen-specific workflow orchestration
+- **Domain Models**: Product lifecycle concepts unique to Zen
+- **Integration Adapters**: Custom connectors for proprietary systems
+- **Performance Critical**: When libraries don't meet performance requirements
+- **Security Requirements**: When standard libraries lack required security features
+
+## Decision Process
+1. Research existing solutions thoroughly
+2. Evaluate against selection criteria
+3. Document decision in ADR if adding new dependency
+4. Justify custom implementation with clear reasoning
+5. Consider maintenance burden and expertise required
+
+## Maintenance Responsibility
+- Keep dependencies updated and secure
+- Monitor for security vulnerabilities
+- Remove unused dependencies promptly
+- Document dependency decisions and rationale

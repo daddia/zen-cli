@@ -1,0 +1,56 @@
+---
+globs: *.go,go.mod,go.sum
+description: Go coding standards and patterns
+---
+
+# Go Development Standards
+
+## Language Requirements
+- Go 1.25+ only
+- Use modern Go idioms and best practices
+- Leverage Go's built-in concurrency patterns
+
+## Dependencies
+Core dependencies only:
+- `github.com/spf13/cobra` v1.10.1+ for CLI framework
+- `github.com/spf13/viper` v1.20.0+ for configuration
+- `github.com/sirupsen/logrus` v1.9.3+ for structured logging
+- `github.com/stretchr/testify` v1.10.0+ for testing
+- `github.com/pkg/errors` v0.9.1+ for error wrapping
+
+Justify new dependencies in ADR before adding.
+
+## Error Handling
+- Use typed errors from `pkg/types/common.go`
+- Wrap errors with context using `github.com/pkg/errors`
+- Use `pkg/errors` package constructors (ErrInvalidInput, ErrNotFound)
+- Include error codes for programmatic handling
+- Never ignore errors without explicit comment
+
+## Logging
+- Use structured logging with logrus
+- Standard fields: component, command, operation, duration
+- Security: Never log API keys, tokens, or sensitive data
+- Use appropriate log levels: Debug/Info/Warn/Error/Fatal
+- Include contextual information for debugging
+
+## Code Organization
+- `internal/` for private implementation
+- `pkg/` for public APIs
+- `cmd/zen/` ultra-lightweight entry point only
+- Business logic in `internal/` packages
+- Factory pattern for dependency injection
+
+## Performance
+- Use context.Context for cancellation and timeouts
+- Implement proper resource cleanup (defer, Close())
+- Avoid premature optimization
+- Profile performance-critical paths
+- Use sync.Pool for object reuse when beneficial
+
+## Testing
+- Minimum 80% test coverage
+- Use testify for assertions and mocking
+- Test error conditions and edge cases
+- Separate unit, integration, and e2e tests
+- Use table-driven tests for multiple scenarios

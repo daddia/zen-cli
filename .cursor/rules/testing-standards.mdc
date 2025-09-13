@@ -1,0 +1,68 @@
+---
+globs: *_test.go,test/**/*.go
+description: Testing standards and quality gates
+---
+
+# Testing Standards
+
+## Test Coverage Requirements
+- Minimum 80% code coverage for all packages
+- 100% coverage for critical paths (error handling, security)
+- Use `go test -race -coverprofile=coverage.out ./...`
+- Generate coverage reports: `go tool cover -html=coverage.out`
+
+## Test Types
+- **Unit Tests**: Test individual functions/methods in isolation
+- **Integration Tests**: Test component interactions, use build tag `integration`
+- **End-to-End Tests**: Test complete workflows, use build tag `e2e`
+
+## Testing Framework
+- Use `github.com/stretchr/testify` for assertions and mocking
+- Use `testify/assert` for simple assertions
+- Use `testify/require` when test should stop on failure
+- Use `testify/mock` for mocking interfaces
+
+## Test Organization
+```go
+func TestFunctionName(t *testing.T) {
+    // Table-driven tests for multiple scenarios
+    tests := []struct {
+        name     string
+        input    InputType
+        expected OutputType
+        wantErr  bool
+    }{
+        // Test cases
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            // Test implementation
+        })
+    }
+}
+```
+
+## Error Testing
+- Test all error conditions and edge cases
+- Verify error types using `pkg/errors.IsCode()`
+- Test error messages for user-facing errors
+- Use `testify/require.Error()` and `testify/require.NoError()`
+
+## Mock Usage
+- Mock external dependencies and interfaces
+- Use dependency injection to enable mocking
+- Keep mocks simple and focused
+- Verify mock expectations with `mock.AssertExpectations(t)`
+
+## Test Data
+- Use `testdata/` directories for test fixtures
+- Keep test data minimal and focused
+- Use table-driven tests for multiple scenarios
+- Clean up test resources in teardown
+
+## Performance Testing
+- Benchmark performance-critical code
+- Use `testing.B` for benchmark tests
+- Set baseline performance expectations
+- Run benchmarks in CI for regression detection

@@ -1,0 +1,65 @@
+---
+globs: go.mod,go.sum
+description: Dependency management and version control
+---
+
+# Dependency Management Standards
+
+## Latest Version Policy
+- **Always install latest stable versions** when adding new dependencies
+- Research and verify latest version before installation
+- MUST avoid old or out-of-support versions
+- Check release notes for breaking changes and security updates
+
+## Version Update Strategy
+- **Minor version bumps**: Update to latest minor versions during code changes
+- **Major version updates**: Evaluate breaking changes and plan migration
+- **Security patches**: Apply immediately regardless of timing
+- **Keep platform fresh**: Regular dependency maintenance prevents technical debt
+
+## Installation Process
+1. **Research**: Check official documentation for latest stable release
+2. **Verify compatibility**: Ensure version works with Go 1.25+
+3. **Install latest**: Use `go get package@latest` for most recent version
+4. **Pin version**: Commit exact version to go.mod for reproducible builds
+5. **Test thoroughly**: Verify all functionality works with new version
+
+## Update Workflow
+```bash
+# Check for outdated dependencies
+go list -u -m all
+
+# Update specific dependency to latest
+go get package@latest
+
+# Update all dependencies (use carefully)
+go get -u ./...
+
+# Clean up and verify
+go mod tidy
+go test ./...
+```
+
+## Version Constraints
+- Use semantic versioning (semver) principles
+- Pin major versions to prevent breaking changes
+- Allow minor and patch updates for security and bug fixes
+- Document version constraints and reasoning in go.mod comments
+
+## Maintenance Schedule
+- **Weekly**: Check for security updates
+- **Monthly**: Review and update minor versions
+- **Quarterly**: Evaluate major version upgrades
+- **Before releases**: Ensure all dependencies are current and secure
+
+## Testing Requirements
+- Run full test suite after any dependency update
+- Test critical paths and integration points
+- Verify performance hasn't regressed
+- Check for deprecated API usage warnings
+
+## Security Considerations
+- Monitor security advisories for all dependencies
+- Use `go mod download` to verify checksums
+- Scan for known vulnerabilities regularly
+- Remove unused dependencies promptly

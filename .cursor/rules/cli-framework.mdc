@@ -1,0 +1,57 @@
+---
+globs: cmd/**/*.go,pkg/cmd/**/*.go
+description: CLI development with Cobra framework
+---
+
+# CLI Framework Standards
+
+## Cobra Framework Usage
+- Use Cobra v1.10.1+ for all CLI commands
+- Implement commands in `pkg/cmd/` packages
+- Keep `cmd/zen/main.go` ultra-lightweight (delegates only)
+- Use factory pattern for command creation and dependency injection
+
+## Command Structure
+- Root command in [pkg/cmd/root/](mdc:pkg/cmd/root/)
+- Subcommands in separate packages (init, config, status, version)
+- Use `cobra.Command` with proper Use, Short, Long descriptions
+- Implement `RunE` function for error handling
+
+## Flag Management
+- Use Viper for configuration binding
+- Support environment variables with `ZEN_` prefix
+- Precedence: CLI flags > environment > config file > defaults
+- Validate required flags and combinations
+
+## Error Handling
+- Return typed errors from command functions
+- Use `pkg/errors` for error wrapping and context
+- Provide helpful error messages with suggestions
+- Exit with appropriate error codes
+
+## Help and Documentation
+- Write clear, actionable help text
+- Include examples in Long descriptions
+- Use consistent terminology across commands
+- Support `--help` and `-h` flags
+
+## User Experience
+- Provide progress indicators for long operations
+- Use colors and formatting appropriately
+- Support `--verbose` and `--quiet` flags
+- Implement `--dry-run` where applicable
+
+## Command Organization
+```go
+// Command implementation pattern
+func NewCommand(factory cmdutil.Factory) *cobra.Command {
+    cmd := &cobra.Command{
+        Use:   "command",
+        Short: "Brief description",
+        Long:  "Detailed description with examples",
+        RunE:  runCommand(factory),
+    }
+    // Add flags and configuration
+    return cmd
+}
+```

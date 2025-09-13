@@ -1,0 +1,54 @@
+---
+alwaysApply: true
+description: Security and privacy handling requirements
+---
+
+# Security & Privacy Standards
+
+## Secret Management
+- Never commit secrets, API keys, or tokens to code
+- Use environment variables with `ZEN_` prefix
+- Support external secret managers (AWS Secrets Manager, etc.)
+- Implement secure defaults for all configurations
+
+## Data Privacy
+- Never log sensitive user data (API keys, tokens, passwords)
+- Sanitize file paths in logs (relative to workspace when possible)
+- Implement configurable field filtering for compliance
+- Auto-redact sensitive fields in structured logging
+
+## Input Validation
+- Validate all user inputs at boundaries
+- Sanitize file paths to prevent directory traversal
+- Use allowlists for accepted values where possible
+- Implement proper error handling without information leakage
+
+## Authentication & Authorization
+- Implement secure authentication flows
+- Use industry-standard protocols (OAuth 2.0, OIDC)
+- Support role-based access control (RBAC)
+- Implement proper session management
+
+## Audit Logging
+- Log all security-relevant events
+- Include user context and correlation IDs
+- Use structured logging for security events
+- Implement tamper-evident logging where required
+
+## Dependency Security
+- Regularly scan dependencies for vulnerabilities
+- Pin dependency versions in go.mod
+- Use Dependabot or similar for security updates
+- Remove unused dependencies promptly
+
+## Secure Communication
+- Use TLS for all external communications
+- Verify SSL certificates
+- Implement proper timeout and retry mechanisms
+- Use secure defaults for HTTP clients
+
+## Error Handling Security
+- Don't expose sensitive information in error messages
+- Use generic error messages for user-facing errors
+- Log detailed errors internally with appropriate security context
+- Implement proper error correlation without data leakage
