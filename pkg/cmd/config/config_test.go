@@ -32,8 +32,8 @@ func TestNewCmdConfig(t *testing.T) {
 	f := factory.New()
 	cmd := NewCmdConfig(f)
 
-	assert.Equal(t, "config", cmd.Use)
-	assert.Contains(t, cmd.Short, "configuration")
+	assert.Equal(t, "config <command>", cmd.Use)
+	assert.Contains(t, cmd.Short, "Manage configuration")
 	assert.NotEmpty(t, cmd.Long)
 }
 

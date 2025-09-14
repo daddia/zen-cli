@@ -3,16 +3,19 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoad(t *testing.T) {
 	// Create a temporary directory for test config
 	tempDir := t.TempDir()
 	zenDir := filepath.Join(tempDir, ".zen")
-	if err := os.MkdirAll(zenDir, 0755); err != nil {
-		t.Fatalf("Failed to create .zen directory: %v", err)
-	}
+	require.NoError(t, os.MkdirAll(zenDir, 0755))
 	configPath := filepath.Join(zenDir, "config.yaml")
 
 	// Create a test config file
@@ -24,74 +27,51 @@ cli:
   verbose: true
   output_format: yaml
 workspace:
-  root: /test
+  root: .
   config_file: test.yaml
 development:
   debug: true
   profile: true
 `
 
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
-		t.Fatalf("Failed to write test config: %v", err)
-	}
+	require.NoError(t, os.WriteFile(configPath, []byte(configContent), 0644))
 
 	// Change to temp directory so config is found
 	oldWd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Failed to get working directory: %v", err)
-	}
+	require.NoError(t, err)
 	defer func() {
-		if err := os.Chdir(oldWd); err != nil {
-			t.Errorf("Failed to restore working directory: %v", err)
-		}
+		require.NoError(t, os.Chdir(oldWd))
 	}()
 
-	if err := os.Chdir(tempDir); err != nil {
-		t.Fatalf("Failed to change to temp directory: %v", err)
-	}
+	require.NoError(t, os.Chdir(tempDir))
 
 	// Load configuration
 	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
 
 	// Test loaded values
-	if cfg.LogLevel != "debug" {
-		t.Errorf("LogLevel = %q, want %q", cfg.LogLevel, "debug")
-	}
+	assert.Equal(t, "debug", cfg.LogLevel)
+	assert.Equal(t, "json", cfg.LogFormat)
+	assert.True(t, cfg.CLI.NoColor)
+	assert.True(t, cfg.CLI.Verbose)
+	assert.Equal(t, "yaml", cfg.CLI.OutputFormat)
+	assert.Equal(t, ".", cfg.Workspace.Root)
+	assert.Equal(t, "test.yaml", cfg.Workspace.ConfigFile)
+	assert.True(t, cfg.Development.Debug)
+	assert.True(t, cfg.Development.Profile)
 
-	if cfg.LogFormat != "json" {
-		t.Errorf("LogFormat = %q, want %q", cfg.LogFormat, "json")
+	// Test configuration metadata
+	assert.NotEmpty(t, cfg.GetConfigFile())
+	// Check that a file source was loaded (path may have /private prefix)
+	hasFileSource := false
+	for _, source := range cfg.GetLoadedSources() {
+		if strings.HasPrefix(source, "file:") {
+			hasFileSource = true
+			break
+		}
 	}
-
-	if !cfg.CLI.NoColor {
-		t.Error("CLI.NoColor = false, want true")
-	}
-
-	if !cfg.CLI.Verbose {
-		t.Error("CLI.Verbose = false, want true")
-	}
-
-	if cfg.CLI.OutputFormat != "yaml" {
-		t.Errorf("CLI.OutputFormat = %q, want %q", cfg.CLI.OutputFormat, "yaml")
-	}
-
-	if cfg.Workspace.Root != "/test" {
-		t.Errorf("Workspace.Root = %q, want %q", cfg.Workspace.Root, "/test")
-	}
-
-	if cfg.Workspace.ConfigFile != "test.yaml" {
-		t.Errorf("Workspace.ConfigFile = %q, want %q", cfg.Workspace.ConfigFile, "test.yaml")
-	}
-
-	if !cfg.Development.Debug {
-		t.Error("Development.Debug = false, want true")
-	}
-
-	if !cfg.Development.Profile {
-		t.Error("Development.Profile = false, want true")
-	}
+	assert.True(t, hasFileSource, "Should have a file source")
 }
 
 func TestLoadDefaults(t *testing.T) {
@@ -100,61 +80,31 @@ func TestLoadDefaults(t *testing.T) {
 
 	// Change to temp directory
 	oldWd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Failed to get working directory: %v", err)
-	}
+	require.NoError(t, err)
 	defer func() {
-		if err := os.Chdir(oldWd); err != nil {
-			t.Errorf("Failed to restore working directory: %v", err)
-		}
+		require.NoError(t, os.Chdir(oldWd))
 	}()
 
-	if err := os.Chdir(tempDir); err != nil {
-		t.Fatalf("Failed to change to temp directory: %v", err)
-	}
+	require.NoError(t, os.Chdir(tempDir))
 
 	// Load configuration (should use defaults)
 	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
 
 	// Test default values
-	if cfg.LogLevel != "info" {
-		t.Errorf("LogLevel = %q, want %q", cfg.LogLevel, "info")
-	}
+	assert.Equal(t, "info", cfg.LogLevel)
+	assert.Equal(t, "text", cfg.LogFormat)
+	assert.False(t, cfg.CLI.NoColor)
+	assert.False(t, cfg.CLI.Verbose)
+	assert.Equal(t, "text", cfg.CLI.OutputFormat)
+	assert.Equal(t, ".", cfg.Workspace.Root)
+	assert.Equal(t, "zen.yaml", cfg.Workspace.ConfigFile)
+	assert.False(t, cfg.Development.Debug)
+	assert.False(t, cfg.Development.Profile)
 
-	if cfg.LogFormat != "text" {
-		t.Errorf("LogFormat = %q, want %q", cfg.LogFormat, "text")
-	}
-
-	if cfg.CLI.NoColor {
-		t.Error("CLI.NoColor = true, want false")
-	}
-
-	if cfg.CLI.Verbose {
-		t.Error("CLI.Verbose = true, want false")
-	}
-
-	if cfg.CLI.OutputFormat != "text" {
-		t.Errorf("CLI.OutputFormat = %q, want %q", cfg.CLI.OutputFormat, "text")
-	}
-
-	if cfg.Workspace.Root != "." {
-		t.Errorf("Workspace.Root = %q, want %q", cfg.Workspace.Root, ".")
-	}
-
-	if cfg.Workspace.ConfigFile != "zen.yaml" {
-		t.Errorf("Workspace.ConfigFile = %q, want %q", cfg.Workspace.ConfigFile, "zen.yaml")
-	}
-
-	if cfg.Development.Debug {
-		t.Error("Development.Debug = true, want false")
-	}
-
-	if cfg.Development.Profile {
-		t.Error("Development.Profile = true, want false")
-	}
+	// Test that defaults are loaded
+	assert.Contains(t, cfg.GetLoadedSources(), "defaults")
 }
 
 func TestApplyEnvOverrides(t *testing.T) {
@@ -187,13 +137,9 @@ func TestApplyEnvOverrides(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set environment variables
 			for key, value := range tt.envVars {
-				if err := os.Setenv(key, value); err != nil {
-					t.Fatalf("Failed to set env var %s: %v", key, err)
-				}
+				require.NoError(t, os.Setenv(key, value))
 				defer func(k string) {
-					if err := os.Unsetenv(k); err != nil {
-						t.Errorf("Failed to unset env var %s: %v", k, err)
-					}
+					require.NoError(t, os.Unsetenv(k))
 				}(key)
 			}
 
@@ -217,9 +163,7 @@ func TestApplyEnvOverrides(t *testing.T) {
 
 			applyEnvOverrides(cfg)
 
-			if !tt.expected(cfg) {
-				t.Errorf("Environment override not applied correctly")
-			}
+			assert.True(t, tt.expected(cfg), "Environment override not applied correctly")
 		})
 	}
 }
@@ -229,6 +173,7 @@ func TestValidate(t *testing.T) {
 		name      string
 		config    *Config
 		wantError bool
+		errorType string
 	}{
 		{
 			name: "valid config",
@@ -237,6 +182,9 @@ func TestValidate(t *testing.T) {
 				LogFormat: "text",
 				CLI: CLIConfig{
 					OutputFormat: "text",
+				},
+				Workspace: WorkspaceConfig{
+					Root: ".",
 				},
 			},
 			wantError: false,
@@ -249,8 +197,12 @@ func TestValidate(t *testing.T) {
 				CLI: CLIConfig{
 					OutputFormat: "text",
 				},
+				Workspace: WorkspaceConfig{
+					Root: ".",
+				},
 			},
 			wantError: true,
+			errorType: "validation",
 		},
 		{
 			name: "invalid log format",
@@ -260,8 +212,12 @@ func TestValidate(t *testing.T) {
 				CLI: CLIConfig{
 					OutputFormat: "text",
 				},
+				Workspace: WorkspaceConfig{
+					Root: ".",
+				},
 			},
 			wantError: true,
+			errorType: "validation",
 		},
 		{
 			name: "invalid output format",
@@ -271,16 +227,25 @@ func TestValidate(t *testing.T) {
 				CLI: CLIConfig{
 					OutputFormat: "invalid",
 				},
+				Workspace: WorkspaceConfig{
+					Root: ".",
+				},
 			},
 			wantError: true,
+			errorType: "validation",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := validate(tt.config)
-			if (err != nil) != tt.wantError {
-				t.Errorf("validate() error = %v, wantError %v", err, tt.wantError)
+			if tt.wantError {
+				require.Error(t, err)
+				if tt.errorType == "validation" {
+					assert.True(t, IsValidationError(err), "Expected ValidationError")
+				}
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}
@@ -316,9 +281,259 @@ func TestContains(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := contains(tt.slice, tt.item)
-			if result != tt.expected {
-				t.Errorf("contains() = %v, want %v", result, tt.expected)
-			}
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+// Test new functionality for ZEN-004
+
+func TestLoadWithCommand(t *testing.T) {
+	// Create a temporary directory for test config
+	tempDir := t.TempDir()
+	zenDir := filepath.Join(tempDir, ".zen")
+	require.NoError(t, os.MkdirAll(zenDir, 0755))
+	configPath := filepath.Join(zenDir, "config.yaml")
+
+	// Create a test config file
+	configContent := `
+log_level: info
+cli:
+  verbose: false
+  no_color: false
+  output_format: text
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(configContent), 0644))
+
+	// Change to temp directory
+	oldWd, err := os.Getwd()
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.Chdir(oldWd))
+	}()
+	require.NoError(t, os.Chdir(tempDir))
+
+	// Create a mock command with flags
+	cmd := &cobra.Command{
+		Use: "test",
+	}
+	cmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose output")
+	cmd.PersistentFlags().Bool("no-color", false, "Disable colored output")
+	cmd.PersistentFlags().StringP("output", "o", "text", "Output format")
+
+	// Set some flags
+	require.NoError(t, cmd.PersistentFlags().Set("verbose", "true"))
+	require.NoError(t, cmd.PersistentFlags().Set("output", "json"))
+
+	// Load configuration with command
+	cfg, err := LoadWithCommand(cmd)
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	// CLI flags should override config file
+	assert.True(t, cfg.CLI.Verbose, "CLI flag should override config file")
+	assert.Equal(t, "json", cfg.CLI.OutputFormat, "CLI flag should override config file")
+	assert.False(t, cfg.CLI.NoColor, "Config file value should be used when flag not set")
+
+	// Should track that flags were used
+	assert.Contains(t, cfg.GetLoadedSources(), "flags")
+}
+
+func TestLoadWithOptions(t *testing.T) {
+	// Create a temporary directory
+	tempDir := t.TempDir()
+	zenDir := filepath.Join(tempDir, ".zen")
+	require.NoError(t, os.MkdirAll(zenDir, 0755))
+
+	// Test with custom config file
+	customConfigPath := filepath.Join(tempDir, "custom-config.yaml")
+	configContent := `
+log_level: debug
+cli:
+  output_format: yaml
+`
+	require.NoError(t, os.WriteFile(customConfigPath, []byte(configContent), 0644))
+
+	// Change to temp directory
+	oldWd, err := os.Getwd()
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.Chdir(oldWd))
+	}()
+	require.NoError(t, os.Chdir(tempDir))
+
+	// Load with custom config file
+	cfg, err := LoadWithOptions(LoadOptions{
+		ConfigFile: customConfigPath,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	assert.Equal(t, "debug", cfg.LogLevel)
+	assert.Equal(t, "yaml", cfg.CLI.OutputFormat)
+	assert.Equal(t, customConfigPath, cfg.GetConfigFile())
+}
+
+func TestEnvironmentVariableIntegration(t *testing.T) {
+	// Create a temporary directory
+	tempDir := t.TempDir()
+
+	// Change to temp directory
+	oldWd, err := os.Getwd()
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.Chdir(oldWd))
+	}()
+	require.NoError(t, os.Chdir(tempDir))
+
+	// Set environment variables
+	envVars := map[string]string{
+		"ZEN_LOG_LEVEL":         "debug",
+		"ZEN_CLI_VERBOSE":       "true",
+		"ZEN_CLI_OUTPUT_FORMAT": "json",
+		"ZEN_WORKSPACE_ROOT":    ".",
+	}
+
+	for key, value := range envVars {
+		require.NoError(t, os.Setenv(key, value))
+		defer func(k string) {
+			require.NoError(t, os.Unsetenv(k))
+		}(key)
+	}
+
+	// Load configuration
+	cfg, err := Load()
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	// Environment variables should be applied
+	assert.Equal(t, "debug", cfg.LogLevel)
+	assert.True(t, cfg.CLI.Verbose)
+	assert.Equal(t, "json", cfg.CLI.OutputFormat)
+	assert.Equal(t, ".", cfg.Workspace.Root)
+
+	// Should track that environment was used
+	assert.Contains(t, cfg.GetLoadedSources(), "environment")
+}
+
+func TestConfigurationPrecedence(t *testing.T) {
+	// Create a temporary directory for test config
+	tempDir := t.TempDir()
+	zenDir := filepath.Join(tempDir, ".zen")
+	require.NoError(t, os.MkdirAll(zenDir, 0755))
+	configPath := filepath.Join(zenDir, "config.yaml")
+
+	// Create a test config file
+	configContent := `
+log_level: info
+cli:
+  verbose: false
+  output_format: text
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(configContent), 0644))
+
+	// Change to temp directory
+	oldWd, err := os.Getwd()
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.Chdir(oldWd))
+	}()
+	require.NoError(t, os.Chdir(tempDir))
+
+	// Set environment variables (should override config file)
+	require.NoError(t, os.Setenv("ZEN_LOG_LEVEL", "warn"))
+	require.NoError(t, os.Setenv("ZEN_CLI_VERBOSE", "true"))
+	defer func() {
+		require.NoError(t, os.Unsetenv("ZEN_LOG_LEVEL"))
+		require.NoError(t, os.Unsetenv("ZEN_CLI_VERBOSE"))
+	}()
+
+	// Create command with flags (should override environment)
+	cmd := &cobra.Command{Use: "test"}
+	cmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose output")
+	cmd.PersistentFlags().Bool("no-color", false, "Disable colored output")
+	cmd.PersistentFlags().StringP("output", "o", "text", "Output format")
+	require.NoError(t, cmd.PersistentFlags().Set("output", "yaml"))
+
+	// Load configuration
+	cfg, err := LoadWithCommand(cmd)
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	// Test precedence: flags > env > file > defaults
+	assert.Equal(t, "warn", cfg.LogLevel)         // env overrides file
+	assert.True(t, cfg.CLI.Verbose)               // env overrides file
+	assert.Equal(t, "yaml", cfg.CLI.OutputFormat) // flag overrides env/file
+
+	// Should track all sources
+	sources := cfg.GetLoadedSources()
+	// Check that file source exists (may have full path)
+	hasFileSource := false
+	for _, source := range sources {
+		if strings.HasPrefix(source, "file:") {
+			hasFileSource = true
+			break
+		}
+	}
+	assert.True(t, hasFileSource, "Should have a file source")
+	assert.Contains(t, sources, "environment")
+	assert.Contains(t, sources, "flags")
+}
+
+func TestValidationError(t *testing.T) {
+	err := &ValidationError{
+		Field:        "log_level",
+		Value:        "invalid",
+		ValidOptions: []string{"debug", "info", "warn"},
+		Message:      "invalid log level",
+	}
+
+	expectedMsg := "log_level: invalid log level (got \"invalid\", valid options: debug, info, warn)"
+	assert.Equal(t, expectedMsg, err.Error())
+	assert.True(t, IsValidationError(err))
+}
+
+func TestSensitiveFieldDetection(t *testing.T) {
+	tests := []struct {
+		fieldName string
+		expected  bool
+	}{
+		{"api_key", true},
+		{"token", true},
+		{"secret", true},
+		{"password", true},
+		{"oauth_token", true},
+		{"private_key", true},
+		{"log_level", false},
+		{"output_format", false},
+		{"verbose", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.fieldName, func(t *testing.T) {
+			result := IsSensitiveField(tt.fieldName)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestRedactSensitiveValue(t *testing.T) {
+	tests := []struct {
+		fieldName string
+		value     string
+		expected  string
+	}{
+		{"api_key", "secret123456", "se********56"},
+		{"token", "abc", "***"},
+		{"password", "verylongpassword", "ve************rd"},
+		{"log_level", "debug", "debug"},    // non-sensitive field
+		{"normal_field", "value", "value"}, // non-sensitive field
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.fieldName+"_"+tt.value, func(t *testing.T) {
+			result := RedactSensitiveValue(tt.fieldName, tt.value)
+			assert.Equal(t, tt.expected, result)
 		})
 	}
 }

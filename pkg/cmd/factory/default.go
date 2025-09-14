@@ -7,6 +7,7 @@ import (
 	"github.com/daddia/zen/internal/logging"
 	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/daddia/zen/pkg/iostreams"
+	"github.com/spf13/cobra"
 )
 
 // New creates a new factory with all dependencies configured
@@ -36,6 +37,20 @@ func configFunc() func() (*config.Config, error) {
 			return cachedConfig, configError
 		}
 		cachedConfig, configError = config.Load()
+		return cachedConfig, configError
+	}
+}
+
+// ConfigWithCommand creates a config function that binds to the provided command
+func ConfigWithCommand(cmd *cobra.Command) func() (*config.Config, error) {
+	var cachedConfig *config.Config
+	var configError error
+
+	return func() (*config.Config, error) {
+		if cachedConfig != nil || configError != nil {
+			return cachedConfig, configError
+		}
+		cachedConfig, configError = config.LoadWithCommand(cmd)
 		return cachedConfig, configError
 	}
 }

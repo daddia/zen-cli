@@ -3,55 +3,81 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
+	"github.com/daddia/zen/internal/config"
+	"github.com/daddia/zen/pkg/cmd/config/get"
+	"github.com/daddia/zen/pkg/cmd/config/list"
+	"github.com/daddia/zen/pkg/cmd/config/set"
 	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
 
-// NewCmdConfig creates the config command
+// NewCmdConfig creates the config command with subcommands
 func NewCmdConfig(f *cmdutil.Factory) *cobra.Command {
+	longDoc := strings.Builder{}
+	longDoc.WriteString("Display or change configuration settings for Zen CLI.\n\n")
+	longDoc.WriteString("Current configuration options:\n")
+	for _, co := range config.Options {
+		longDoc.WriteString(fmt.Sprintf("- `%s`: %s", co.Key, co.Description))
+		if len(co.AllowedValues) > 0 {
+			longDoc.WriteString(fmt.Sprintf(" `{%s}`", strings.Join(co.AllowedValues, " | ")))
+		}
+		if co.DefaultValue != "" {
+			longDoc.WriteString(fmt.Sprintf(" (default `%s`)", co.DefaultValue))
+		}
+		longDoc.WriteRune('\n')
+	}
+
 	cmd := &cobra.Command{
-		Use:   "config",
-		Short: "Display current configuration",
-		Long: `Display the current Zen configuration settings.
-
-This shows the effective configuration after loading from files,
-environment variables, and command-line flags.`,
-		Args: cobra.NoArgs,
+		Use:   "config <command>",
+		Short: "Manage configuration for Zen CLI",
+		Long:  longDoc.String(),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Get configuration
-			cfg, err := f.Config()
-			if err != nil {
-				return fmt.Errorf("failed to load configuration: %w", err)
-			}
-
-			// Get output format from parent command if available
-			outputFormat := "text"
-			if cmd.Parent() != nil && cmd.Parent().PersistentFlags().Changed("output") {
-				if val, err := cmd.Parent().PersistentFlags().GetString("output"); err == nil {
-					outputFormat = val
-				}
-			}
-
-			switch outputFormat {
-			case "json":
-				encoder := json.NewEncoder(f.IOStreams.Out)
-				encoder.SetIndent("", "  ")
-				return encoder.Encode(cfg)
-
-			case "yaml":
-				encoder := yaml.NewEncoder(f.IOStreams.Out)
-				defer encoder.Close()
-				return encoder.Encode(cfg)
-
-			default:
-				return displayTextConfig(f.IOStreams.Out, cfg, f.IOStreams)
-			}
+			// Default behavior when no subcommand is provided - show current config
+			return displayCurrentConfig(f, cmd)
 		},
 	}
 
+	// Add subcommands
+	cmd.AddCommand(get.NewCmdConfigGet(f, nil))
+	cmd.AddCommand(set.NewCmdConfigSet(f, nil))
+	cmd.AddCommand(list.NewCmdConfigList(f, nil))
+
 	return cmd
+}
+
+// displayCurrentConfig shows the current configuration (default behavior)
+func displayCurrentConfig(f *cmdutil.Factory, cmd *cobra.Command) error {
+	// Get configuration
+	cfg, err := f.Config()
+	if err != nil {
+		return fmt.Errorf("failed to load configuration: %w", err)
+	}
+
+	// Get output format from parent command if available
+	outputFormat := "text"
+	if cmd.Parent() != nil && cmd.Parent().PersistentFlags().Changed("output") {
+		if val, err := cmd.Parent().PersistentFlags().GetString("output"); err == nil {
+			outputFormat = val
+		}
+	}
+
+	switch outputFormat {
+	case "json":
+		encoder := json.NewEncoder(f.IOStreams.Out)
+		encoder.SetIndent("", "  ")
+		return encoder.Encode(cfg)
+
+	case "yaml":
+		encoder := yaml.NewEncoder(f.IOStreams.Out)
+		defer encoder.Close()
+		return encoder.Encode(cfg)
+
+	default:
+		return displayTextConfig(f.IOStreams.Out, cfg, f.IOStreams)
+	}
 }
 
 // displayTextConfig displays configuration in human-readable text format following design guide

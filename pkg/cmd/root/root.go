@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/daddia/zen/pkg/cmd/config"
+	"github.com/daddia/zen/pkg/cmd/factory"
 	cmdinit "github.com/daddia/zen/pkg/cmd/init"
 	"github.com/daddia/zen/pkg/cmd/status"
 	"github.com/daddia/zen/pkg/cmd/version"
@@ -55,29 +56,51 @@ Report Issues:  https://github.com/daddia/zen/issues`,
 	cmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Path to configuration file")
 	cmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Show what would be executed without making changes")
 
-	// Apply flag values
+	// Apply flag values and reload configuration with command context
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		// Update factory with flag values
 		if cmd.Flags().Changed("verbose") {
-			// Update logger level if verbose
 			f.Verbose = verbose
-			if verbose {
-				f.Logger = f.Logger.WithLevel("debug")
-			}
-		}
-		if cmd.Flags().Changed("no-color") {
-			f.IOStreams.SetColorEnabled(!noColor)
 		}
 		if cmd.Flags().Changed("config") {
-			// Store config file path for use by commands
 			f.ConfigFile = configFile
 		}
 		if cmd.Flags().Changed("dry-run") {
-			// Store dry-run flag for use by commands
 			f.DryRun = dryRun
-			if dryRun {
-				f.Logger.Info("dry-run mode enabled - no changes will be made")
+		}
+
+		// Reload configuration with command context to ensure flag binding
+		f.Config = factory.ConfigWithCommand(cmd)
+		
+		// Get updated configuration
+		cfg, err := f.Config()
+		if err != nil {
+			f.Logger.Error("failed to load configuration", "error", err)
+			return fmt.Errorf("failed to load configuration: %w", err)
+		}
+
+		// Apply configuration-based updates
+		if cfg.CLI.Verbose || verbose {
+			f.Logger = f.Logger.WithLevel("debug")
+		}
+		if cfg.CLI.NoColor || noColor {
+			f.IOStreams.SetColorEnabled(false)
+		}
+		if dryRun {
+			f.Logger.Info("dry-run mode enabled - no changes will be made")
+		}
+
+		// Log configuration sources for debugging
+		if cfg.CLI.Verbose {
+			sources := cfg.GetLoadedSources()
+			if len(sources) > 0 {
+				f.Logger.Debug("configuration loaded from sources", "sources", sources)
+			}
+			if configFile := cfg.GetConfigFile(); configFile != "" {
+				f.Logger.Debug("using configuration file", "file", configFile)
 			}
 		}
+
 		return nil
 	}
 
