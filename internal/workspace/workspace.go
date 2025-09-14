@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/daddia/zen/internal/logging"
-	"github.com/daddia/zen/pkg/types"
 	"gopkg.in/yaml.v3"
 )
 
@@ -275,14 +274,17 @@ func (m *Manager) Initialize(force bool) error {
 	})
 
 	// Check if already initialized
-	if !force {
-		if _, err := os.Stat(m.configFile); err == nil {
-			return &types.Error{
-				Code:    types.ErrorCodeAlreadyExists,
-				Message: "Workspace already initialized",
-				Details: fmt.Sprintf("Configuration file exists at %s (use --force to overwrite)", m.configFile),
-			}
-		}
+	configExists := false
+	if _, err := os.Stat(m.configFile); err == nil {
+		configExists = true
+	}
+
+	// If already initialized and not forcing, just reinitialize (idempotent behavior)
+	if configExists && !force {
+		m.logger.Debug("Workspace already initialized, reinitializing", map[string]interface{}{
+			"config_file": m.configFile,
+		})
+		// Don't return an error - just proceed with reinitialization
 	}
 
 	// Create backup if overwriting

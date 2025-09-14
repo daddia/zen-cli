@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/daddia/zen/internal/logging"
-	"github.com/daddia/zen/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -241,17 +240,12 @@ func TestInitialize_ExistingWorkspace_NoForce(t *testing.T) {
 	require.NoError(t, os.WriteFile(configFile, []byte("existing"), 0644))
 
 	err := manager.Initialize(false)
-	require.Error(t, err)
+	require.NoError(t, err) // Should succeed (idempotent behavior)
 
-	// Check it's the right type of error
-	var zenErr *types.Error
-	assert.ErrorAs(t, err, &zenErr)
-	assert.Equal(t, types.ErrorCodeAlreadyExists, zenErr.Code)
-
-	// Check original file is unchanged
+	// Check that config file was reinitialized with new content
 	data, err := os.ReadFile(configFile)
 	require.NoError(t, err)
-	assert.Equal(t, "existing", string(data))
+	assert.Contains(t, string(data), "version: \"1.0\"") // New config should be written
 }
 
 func TestInitialize_ExistingWorkspace_WithForce(t *testing.T) {

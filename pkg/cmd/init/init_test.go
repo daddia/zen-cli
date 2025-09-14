@@ -127,14 +127,12 @@ func TestInitCommand_ExistingWorkspaceWithoutForce(t *testing.T) {
 
 	err = cmd.Execute()
 
-	// Should fail without force flag
-	require.Error(t, err)
+	// Should succeed without force flag (idempotent behavior)
+	require.NoError(t, err)
 
-	// Check that it's the right error type
-	if err != cmdutil.ErrSilent {
-		// If not silent error, check for workspace already exists error
-		assert.Contains(t, stderr.String(), "Error:")
-	}
+	// Should show reinitialized message
+	output := stdout.String()
+	assert.Contains(t, output, "Reinitialized existing Zen workspace")
 }
 
 func TestInitCommand_WithCustomConfigFile(t *testing.T) {
@@ -278,7 +276,7 @@ func TestInitCommand_ErrorHandling(t *testing.T) {
 		initialized   bool
 	}{
 		{
-			name: "workspace already exists",
+			name: "workspace already exists (now succeeds with reinitialization)",
 			setupFunc: func(dir string) error {
 				zenDir := filepath.Join(dir, ".zen")
 				if err := os.MkdirAll(zenDir, 0755); err != nil {
@@ -287,8 +285,8 @@ func TestInitCommand_ErrorHandling(t *testing.T) {
 				configFile := filepath.Join(zenDir, "config.yaml")
 				return os.WriteFile(configFile, []byte("existing"), 0644)
 			},
-			expectedError: "Error:",
-			wantSilent:    true,
+			expectedError: "", // No error expected
+			wantSilent:    false,
 			initialized:   true,
 		},
 	}
@@ -323,8 +321,10 @@ func TestInitCommand_ErrorHandling(t *testing.T) {
 
 			if tt.wantSilent {
 				assert.Equal(t, cmdutil.ErrSilent, err)
-			} else {
+			} else if tt.expectedError != "" {
 				require.Error(t, err)
+			} else {
+				require.NoError(t, err) // Should succeed for reinitialization
 			}
 
 			if tt.expectedError != "" {

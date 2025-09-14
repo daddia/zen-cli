@@ -24,6 +24,9 @@ This command creates a .zen/ directory structure and a zen.yaml configuration fi
 with default settings based on your project type. It automatically detects common
 project types like Git repositories, Node.js, Go, Python, Rust, and Java projects.
 
+Running 'zen init' in an existing workspace is safe and will reinitialize the workspace
+without errors, similar to 'git init' behavior.
+
 The .zen/ directory contains:
   - Configuration files
   - Cache directory
@@ -32,8 +35,8 @@ The .zen/ directory contains:
   - Backups directory
 
 Examples:
-  zen init                    # Initialize in current directory
-  zen init --force           # Overwrite existing configuration
+  zen init                    # Initialize in current directory (safe to run multiple times)
+  zen init --force           # Force reinitialize with backup of existing configuration
   zen init --config ./config/zen.yaml  # Use custom config path`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -71,17 +74,18 @@ Examples:
 				fmt.Fprintf(f.IOStreams.Out, "Analyzing project in %s...\n", cwd)
 			}
 
+			// Check if workspace already exists before initialization
+			status, err := ws.Status()
+			var wasInitialized bool
+			if err == nil {
+				wasInitialized = status.Initialized
+			}
+
 			// Initialize workspace with force flag
 			if err := ws.InitializeWithForce(force); err != nil {
 				// Handle typed errors
 				if zenErr, ok := err.(*types.Error); ok {
 					switch zenErr.Code {
-					case types.ErrorCodeAlreadyExists:
-						fmt.Fprintf(f.IOStreams.ErrOut, "Error: %s\n", zenErr.Message)
-						if zenErr.Details != "" {
-							fmt.Fprintf(f.IOStreams.ErrOut, "  %s\n", zenErr.Details)
-						}
-						return cmdutil.ErrSilent
 					case types.ErrorCodePermissionDenied:
 						fmt.Fprintf(f.IOStreams.ErrOut, "Error: Permission denied: %s\n", zenErr.Message)
 						fmt.Fprintf(f.IOStreams.ErrOut, "  Try running with appropriate permissions or choose a different directory.\n")
@@ -93,20 +97,22 @@ Examples:
 				return fmt.Errorf("failed to initialize workspace: %w", err)
 			}
 
-			// Get status to show results
-			status, err := ws.Status()
-			if err != nil {
-				return fmt.Errorf("failed to get workspace status: %w", err)
-			}
-
 			// Get current working directory for output
 			cwd, err2 := os.Getwd()
 			if err2 != nil {
-				cwd = status.Root
+				if status, err := ws.Status(); err == nil {
+					cwd = status.Root
+				} else {
+					cwd, _ = os.Getwd() // fallback
+				}
 			}
 
-			// Success message - match git's professional format
-			fmt.Fprintf(f.IOStreams.Out, "Initialized empty Zen workspace in %s/.zen/\n", cwd)
+			// Success message - match git's professional format with reinitialize behavior
+			if wasInitialized {
+				fmt.Fprintf(f.IOStreams.Out, "Reinitialized existing Zen workspace in %s/.zen/\n", cwd)
+			} else {
+				fmt.Fprintf(f.IOStreams.Out, "Initialized empty Zen workspace in %s/.zen/\n", cwd)
+			}
 
 			return nil
 		},

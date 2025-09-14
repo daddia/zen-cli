@@ -5,6 +5,7 @@ import (
 
 	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/internal/logging"
+	"github.com/daddia/zen/internal/workspace"
 	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -136,6 +137,7 @@ type workspaceManager struct {
 	root       string
 	configFile string
 	logger     logging.Logger
+	manager    *workspace.Manager
 }
 
 func (w *workspaceManager) Root() string {
@@ -147,23 +149,36 @@ func (w *workspaceManager) ConfigFile() string {
 }
 
 func (w *workspaceManager) Initialize() error {
-	// Placeholder implementation
-	return nil
+	if w.manager == nil {
+		w.manager = workspace.New(w.root, w.configFile, w.logger)
+	}
+	return w.manager.Initialize(false)
 }
 
 func (w *workspaceManager) InitializeWithForce(force bool) error {
-	// Placeholder implementation
-	return nil
+	if w.manager == nil {
+		w.manager = workspace.New(w.root, w.configFile, w.logger)
+	}
+	return w.manager.Initialize(force)
 }
 
 func (w *workspaceManager) Status() (cmdutil.WorkspaceStatus, error) {
+	if w.manager == nil {
+		w.manager = workspace.New(w.root, w.configFile, w.logger)
+	}
+
+	status, err := w.manager.Status()
+	if err != nil {
+		return cmdutil.WorkspaceStatus{}, err
+	}
+
 	return cmdutil.WorkspaceStatus{
-		Initialized: true,
-		ConfigPath:  w.configFile,
-		Root:        w.root,
+		Initialized: status.Initialized,
+		ConfigPath:  status.ConfigPath,
+		Root:        status.Root,
 		Project: cmdutil.ProjectInfo{
-			Type: "unknown",
-			Name: "workspace",
+			Type: string(status.Project.Type),
+			Name: status.Project.Name,
 		},
 	}, nil
 }

@@ -1,19 +1,20 @@
-# Zen CLI User Guide
+# Zen CLI Reference
 
-Zen CLI, or zen, is a command-line interface
+Command-line reference documentation for Zen CLI.
 
-* [Zen Commands](/commands)
+## Core Commands
 
-## Installation
+### [zen](zen.md)
+Main command and overview
 
-// TODO - brief install instructuctions
+### [zen init](zen-init.md)
+Initialize a new Zen workspace
 
-## Setup and Configuration
+### [zen config](zen-config.md)
+Manage configuration settings
 
-// TODO - brief configuration
+### [zen status](zen-status.md)
+Display workspace and system status
 
-For advanced configuration, see [Configuration](/configuration)
-
-## 
-
-// TODO - brief configuration
+### [zen version](zen-version.md)
+Show version information
