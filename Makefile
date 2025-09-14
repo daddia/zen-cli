@@ -1,5 +1,13 @@
 # Zen CLI Makefile
 # AI-Powered Productivity Suite
+#
+# Design Guidelines:
+# - Use ✓ for success messages (green when colored)
+# - Use ✗ for failure messages (red when colored)
+# - Use ! for alerts/warnings (yellow when colored)
+# - Use - for neutral messages (default color)
+# - Use proper indentation for hierarchical output
+# - Use sentence case for consistency with Zen brand
 
 .PHONY: help build build-all test test-unit test-integration test-e2e lint security deps clean install docker-build release dev-setup
 
@@ -62,12 +70,12 @@ build-all: deps ## Build binaries for all supported platforms
 		arch=$$(echo $$platform | cut -d'/' -f2); \
 		output=$(BINARY_DIR)/$(BINARY_NAME)-$$os-$$arch; \
 		if [ "$$os" = "windows" ]; then output=$$output.exe; fi; \
-		echo "Building for $$os/$$arch..."; \
+		echo "  Building for $$os/$$arch..."; \
 		GOOS=$$os GOARCH=$$arch $(GOBUILD) $(LDFLAGS) -tags "$(BUILD_TAGS)" -o $$output ./cmd/zen; \
 		if [ $$? -eq 0 ]; then \
-			echo "✓ Built: $$output"; \
+			echo "  ✓ Built: $$output"; \
 		else \
-			echo "✗ Failed to build for $$os/$$arch"; \
+			echo "  ✗ Failed to build for $$os/$$arch"; \
 			exit 1; \
 		fi; \
 	done
@@ -75,29 +83,115 @@ build-all: deps ## Build binaries for all supported platforms
 
 ## Test targets
 
-test: test-unit ## Run all tests (alias for test-unit)
+test: test-pyramid ## Run complete test pyramid (unit + integration + e2e)
 
-test-unit: ## Run unit tests with coverage
-	@echo "Running unit tests..."
+test-pyramid: ## Run test pyramid with proper distribution (70% unit, 20% integration, 10% e2e)
+	@echo "🔺 Running test pyramid..."
+	@echo "📊 Target distribution: 70% unit, 20% integration, 10% e2e"
+	@echo ""
+	@$(MAKE) test-unit
+	@$(MAKE) test-integration
+	@$(MAKE) test-e2e
+	@echo ""
+	@echo "✓ Test pyramid completed"
+	@$(MAKE) test-coverage-report
+
+test-unit: ## Run unit tests with coverage (70% of test suite)
+	@echo "🧪 Running unit tests..."
 	@mkdir -p $(COVERAGE_DIR)
-	$(GOTEST) -v -race -coverprofile=$(COVERAGE_DIR)/coverage.out -covermode=atomic ./...
-	@echo "✓ Unit tests completed"
+	$(GOTEST) -v -race -coverprofile=$(COVERAGE_DIR)/coverage.out -covermode=atomic \
+		-timeout=30s \
+		./internal/... ./pkg/...
+	@echo "✓ Unit tests completed (target: <30s execution)"
 	@echo "- Coverage report: $(COVERAGE_DIR)/coverage.out"
 
-test-integration: ## Run integration tests
-	@echo "Running integration tests..."
-	$(GOTEST) -v -tags=integration ./test/integration/...
-	@echo "✓ Integration tests completed"
+test-integration: ## Run integration tests (20% of test suite)
+	@echo "🔗 Running integration tests..."
+	@mkdir -p $(COVERAGE_DIR)
+	$(GOTEST) -v -tags=integration -timeout=60s \
+		-coverprofile=$(COVERAGE_DIR)/integration-coverage.out \
+		-covermode=atomic \
+		./test/integration/...
+	@echo "✓ Integration tests completed (target: <1min execution)"
 
-test-e2e: build ## Run end-to-end tests
-	@echo "Running end-to-end tests..."
-	$(GOTEST) -v -tags=e2e ./test/e2e/...
-	@echo "✓ End-to-end tests completed"
+test-e2e: build ## Run end-to-end tests (10% of test suite)
+	@echo "🎯 Running end-to-end tests..."
+	@mkdir -p $(COVERAGE_DIR)
+	$(GOTEST) -v -tags=e2e -timeout=120s \
+		./test/e2e/...
+	@echo "✓ End-to-end tests completed (target: <2min execution)"
+
+test-unit-fast: ## Run unit tests without race detection (for development)
+	@echo "⚡ Running fast unit tests..."
+	@mkdir -p $(COVERAGE_DIR)
+	$(GOTEST) -v -coverprofile=$(COVERAGE_DIR)/coverage-fast.out -covermode=atomic ./internal/... ./pkg/...
 
 test-coverage: test-unit ## Generate HTML coverage report
-	@echo "Generating coverage report..."
+	@echo "📈 Generating coverage report..."
 	$(GOCMD) tool cover -html=$(COVERAGE_DIR)/coverage.out -o $(COVERAGE_DIR)/coverage.html
 	@echo "✓ Coverage report generated: $(COVERAGE_DIR)/coverage.html"
+
+test-coverage-report: ## Generate comprehensive coverage report with targets
+	@echo "📊 Coverage analysis:"
+	@if [ -f $(COVERAGE_DIR)/coverage.out ]; then \
+		COVERAGE=$$($(GOCMD) tool cover -func=$(COVERAGE_DIR)/coverage.out | tail -1 | awk '{print $$3}' | sed 's/%//'); \
+		echo "  Overall coverage: $$COVERAGE%"; \
+		if [ $$(echo "$$COVERAGE >= 80" | bc -l) -eq 1 ]; then \
+			echo "  ✓ Meets 80% overall target"; \
+		else \
+			echo "  ✗ Below 80% overall target"; \
+		fi; \
+		BUSINESS_COVERAGE=$$($(GOCMD) tool cover -func=$(COVERAGE_DIR)/coverage.out | grep -E "(internal/|pkg/)" | awk '{sum += $$3; count++} END {if (count > 0) print sum/count; else print 0}' | sed 's/%//'); \
+		if [ $$(echo "$$BUSINESS_COVERAGE >= 90" | bc -l) -eq 1 ]; then \
+			echo "  ✓ Business logic meets 90% target"; \
+		else \
+			echo "  ✗ Business logic below 90% target"; \
+		fi; \
+	else \
+		echo "  ✗ No coverage data found - run 'make test-unit' first"; \
+	fi
+
+test-coverage-ci: ## Generate coverage report for CI with strict validation
+	@echo "🔍 CI coverage validation..."
+	@mkdir -p $(COVERAGE_DIR)
+	$(GOTEST) -v -race -coverprofile=$(COVERAGE_DIR)/coverage.out -covermode=atomic ./internal/... ./pkg/...
+	@COVERAGE=$$($(GOCMD) tool cover -func=$(COVERAGE_DIR)/coverage.out | tail -1 | awk '{print $$3}' | sed 's/%//'); \
+	echo "Overall coverage: $$COVERAGE%"; \
+	if [ $$(echo "$$COVERAGE < 80" | bc -l) -eq 1 ]; then \
+		echo "✗ Coverage $$COVERAGE% is below required 80%"; \
+		exit 1; \
+	fi; \
+	echo "✓ Coverage target met: $$COVERAGE% >= 80%"
+
+test-watch: ## Watch for changes and run unit tests
+	@echo "👀 Watching for changes..."
+	@if command -v fswatch >/dev/null 2>&1; then \
+		fswatch -o . -e ".*" -i "\\.go$$" | xargs -n1 -I{} make test-unit-fast; \
+	else \
+		echo "Install fswatch for file watching: brew install fswatch"; \
+	fi
+
+test-parallel: ## Run tests with maximum parallelization
+	@echo "⚡ Running parallel tests..."
+	@$(GOTEST) -v -race -parallel 4 -timeout=60s ./internal/... ./pkg/...
+
+test-benchmarks: ## Run benchmark tests for performance validation
+	@echo "🏁 Running benchmark tests..."
+	@mkdir -p $(COVERAGE_DIR)
+	$(GOTEST) -bench=. -benchmem -benchtime=1s ./internal/... ./pkg/... > $(COVERAGE_DIR)/benchmarks.txt
+	@echo "✓ Benchmark results: $(COVERAGE_DIR)/benchmarks.txt"
+
+test-race: ## Run tests with race detection only
+	@echo "🏃 Running race condition tests..."
+	$(GOTEST) -race -timeout=60s ./internal/... ./pkg/...
+
+test-verbose: ## Run tests with verbose output
+	@echo "📝 Running verbose tests..."
+	$(GOTEST) -v -race ./internal/... ./pkg/...
+
+test-short: ## Run short tests only (skip long-running tests)
+	@echo "⏱️  Running short tests..."
+	$(GOTEST) -short ./internal/... ./pkg/...
 
 ## Quality targets
 

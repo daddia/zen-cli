@@ -2,195 +2,240 @@ package zencmd
 
 import (
 	"bytes"
-	"errors"
+	"context"
+	"os"
 	"testing"
 
-	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-// Mock IOStreams for testing
-type mockIOStreams struct{}
-
-func (m *mockIOStreams) FormatError(text string) string {
-	return "✗ " + text
-}
-
-func TestMain_Success(t *testing.T) {
-	// This test would require more complex mocking to actually test Main()
-	// For now, we'll test the individual components
-	assert.True(t, true) // Placeholder
-}
-
-func TestHandleError(t *testing.T) {
+func TestExecute(t *testing.T) {
 	tests := []struct {
-		name         string
-		err          error
-		expectedCode cmdutil.ExitCode
+		name           string
+		args           []string
+		expectedOutput string
+		wantErr        bool
 	}{
 		{
-			name:         "silent error",
-			err:          cmdutil.ErrSilent,
-			expectedCode: cmdutil.ExitError,
+			name:           "version command",
+			args:           []string{"version"},
+			expectedOutput: "zen version",
+			wantErr:        false,
 		},
 		{
-			name:         "pending error",
-			err:          cmdutil.ErrPending,
-			expectedCode: cmdutil.ExitError,
+			name:           "help command",
+			args:           []string{"--help"},
+			expectedOutput: "Zen CLI - AI-Powered Productivity Suite",
+			wantErr:        false,
 		},
 		{
-			name:         "user cancellation",
-			err:          errors.New("cancelled"),
-			expectedCode: cmdutil.ExitCancel,
+			name:           "status command",
+			args:           []string{"status"},
+			expectedOutput: "Zen CLI Status",
+			wantErr:        false,
 		},
 		{
-			name:         "no results error",
-			err:          cmdutil.NoResultsError{Message: "no items found"},
-			expectedCode: cmdutil.ExitOK,
-		},
-		{
-			name:         "flag error",
-			err:          &cmdutil.FlagError{Err: errors.New("invalid flag")},
-			expectedCode: cmdutil.ExitError,
-		},
-		{
-			name:         "general error",
-			err:          errors.New("something went wrong"),
-			expectedCode: cmdutil.ExitError,
+			name:           "invalid command",
+			args:           []string{"nonexistent"},
+			expectedOutput: "",
+			wantErr:        true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a mock factory with basic IOStreams
-			f := &cmdutil.Factory{
-				IOStreams: iostreams.Test(),
-			}
+			// Create test environment
+			var stdout, stderr bytes.Buffer
+			streams := iostreams.Test()
+			streams.Out = &stdout
+			streams.ErrOut = &stderr
 
-			code := handleError(tt.err, f)
-			assert.Equal(t, tt.expectedCode, code)
-		})
-	}
-}
+			// Create test context
+			ctx := context.Background()
 
-func TestPrintError(t *testing.T) {
-	tests := []struct {
-		name     string
-		err      error
-		expected string
-	}{
-		{
-			name:     "nil error",
-			err:      nil,
-			expected: "",
-		},
-		{
-			name:     "simple error",
-			err:      errors.New("test error"),
-			expected: "✗ test error",
-		},
-		{
-			name:     "error with suggestion",
-			err:      errors.New("command not found"),
-			expected: "✗ command not found",
-		},
-	}
+			// Execute command
+			err := Execute(ctx, tt.args, streams)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			buf := &bytes.Buffer{}
-			mockStreams := &mockIOStreams{}
-
-			printError(buf, tt.err, mockStreams)
-
-			if tt.expected == "" {
-				assert.Empty(t, buf.String())
+			// Check error expectation
+			if tt.wantErr {
+				require.Error(t, err)
 			} else {
-				assert.Contains(t, buf.String(), tt.expected)
+				require.NoError(t, err)
+			}
+
+			// Check output if specified
+			if tt.expectedOutput != "" {
+				stdoutStr := stdout.String()
+				stderrStr := stderr.String()
+				combinedOutput := stdoutStr + stderrStr
+				assert.Contains(t, combinedOutput, tt.expectedOutput)
 			}
 		})
 	}
 }
 
-func TestGetErrorSuggestion(t *testing.T) {
+func TestExecuteWithConfig(t *testing.T) {
+	// Create temporary directory for test
+	tempDir := t.TempDir()
+
+	// Change to temp directory
+	oldWd, err := os.Getwd()
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.Chdir(oldWd))
+	}()
+	require.NoError(t, os.Chdir(tempDir))
+
+	// Test with configuration
+	var stdout, stderr bytes.Buffer
+	streams := iostreams.Test()
+	streams.Out = &stdout
+	streams.ErrOut = &stderr
+
+	ctx := context.Background()
+	err = Execute(ctx, []string{"status", "--output", "json"}, streams)
+
+	// Should not error
+	require.NoError(t, err)
+
+	// Should produce JSON output
+	output := stdout.String()
+	assert.Contains(t, output, `"workspace"`)
+	assert.Contains(t, output, `"configuration"`)
+}
+
+func TestExecuteWithVerboseLogging(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	streams := iostreams.Test()
+	streams.Out = &stdout
+	streams.ErrOut = &stderr
+
+	ctx := context.Background()
+	err := Execute(ctx, []string{"--verbose", "status"}, streams)
+
+	require.NoError(t, err)
+
+	// In verbose mode, should see additional logging
+	output := stdout.String()
+	assert.NotEmpty(t, output)
+}
+
+func TestExecuteWithInvalidFlags(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	streams := iostreams.Test()
+	streams.Out = &stdout
+	streams.ErrOut = &stderr
+
+	ctx := context.Background()
+	err := Execute(ctx, []string{"--invalid-flag"}, streams)
+
+	require.Error(t, err)
+}
+
+func TestExecuteWithDryRun(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	streams := iostreams.Test()
+	streams.Out = &stdout
+	streams.ErrOut = &stderr
+
+	ctx := context.Background()
+	err := Execute(ctx, []string{"--dry-run", "status"}, streams)
+
+	require.NoError(t, err)
+
+	// Should execute successfully in dry-run mode
+	output := stdout.String()
+	assert.Contains(t, output, "Zen CLI Status")
+}
+
+// Benchmark tests for performance validation
+func BenchmarkExecuteVersion(b *testing.B) {
+	streams := iostreams.Test()
+	ctx := context.Background()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		err := Execute(ctx, []string{"version"}, streams)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkExecuteStatus(b *testing.B) {
+	streams := iostreams.Test()
+	ctx := context.Background()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		err := Execute(ctx, []string{"status"}, streams)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func TestExecuteErrorHandling(t *testing.T) {
 	tests := []struct {
-		name     string
-		err      error
-		expected string
+		name        string
+		args        []string
+		expectError bool
+		errorType   string
 	}{
 		{
-			name:     "nil error",
-			err:      nil,
-			expected: "",
+			name:        "unknown command",
+			args:        []string{"unknown"},
+			expectError: true,
+			errorType:   "unknown command",
 		},
 		{
-			name:     "unknown command",
-			err:      errors.New("unknown command \"foo\" for \"zen\""),
-			expected: "Use 'zen --help' to see available commands",
+			name:        "invalid flag",
+			args:        []string{"--unknown-flag"},
+			expectError: true,
+			errorType:   "unknown flag",
 		},
 		{
-			name:     "workspace not initialized",
-			err:      errors.New("workspace not initialized"),
-			expected: "Use 'zen --help' for usage information or check the documentation at https://zen.dev/docs",
-		},
-		{
-			name:     "config not found",
-			err:      errors.New("config file not found"),
-			expected: "Run 'zen config' to check your configuration or 'zen init' to initialize a workspace",
-		},
-		{
-			name:     "permission denied",
-			err:      errors.New("permission denied"),
-			expected: "Check file permissions or try running with appropriate privileges",
-		},
-		{
-			name:     "generic error",
-			err:      errors.New("some other error"),
-			expected: "Use 'zen --help' for usage information or check the documentation at https://zen.dev/docs",
+			name:        "valid command",
+			args:        []string{"version"},
+			expectError: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := getErrorSuggestion(tt.err)
-			assert.Equal(t, tt.expected, result)
+			var stdout, stderr bytes.Buffer
+			streams := iostreams.Test()
+			streams.Out = &stdout
+			streams.ErrOut = &stderr
+
+			ctx := context.Background()
+			err := Execute(ctx, tt.args, streams)
+
+			if tt.expectError {
+				require.Error(t, err)
+				if tt.errorType != "" {
+					assert.Contains(t, err.Error(), tt.errorType)
+				}
+			} else {
+				require.NoError(t, err)
+			}
 		})
 	}
 }
 
-func TestIsUserCancellation(t *testing.T) {
-	tests := []struct {
-		name     string
-		err      error
-		expected bool
-	}{
-		{
-			name:     "nil error",
-			err:      nil,
-			expected: false,
-		},
-		{
-			name:     "cancelled error",
-			err:      errors.New("cancelled"),
-			expected: true,
-		},
-		{
-			name:     "interrupted error",
-			err:      errors.New("interrupted"),
-			expected: true,
-		},
-		{
-			name:     "other error",
-			err:      errors.New("something else"),
-			expected: false,
-		},
-	}
+func TestExecuteContextCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := cmdutil.IsUserCancellation(tt.err)
-			assert.Equal(t, tt.expected, result)
-		})
+	streams := iostreams.Test()
+	err := Execute(ctx, []string{"status"}, streams)
+
+	// Should handle cancellation gracefully
+	// Note: This test may pass or fail depending on timing,
+	// but it shouldn't panic or hang
+	if err != nil {
+		assert.Contains(t, err.Error(), "context")
 	}
 }

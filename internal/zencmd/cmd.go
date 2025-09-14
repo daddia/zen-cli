@@ -12,6 +12,7 @@ import (
 	"github.com/daddia/zen/pkg/cmd/factory"
 	"github.com/daddia/zen/pkg/cmd/root"
 	"github.com/daddia/zen/pkg/cmdutil"
+	"github.com/daddia/zen/pkg/iostreams"
 )
 
 // Main is the main entry point for the Zen CLI
@@ -41,6 +42,34 @@ func Main() cmdutil.ExitCode {
 	}
 
 	return cmdutil.ExitOK
+}
+
+// Execute runs a command with the given arguments and streams for testing
+func Execute(ctx context.Context, args []string, streams *iostreams.IOStreams) error {
+	// Create factory
+	cmdFactory := factory.New()
+	if streams != nil {
+		cmdFactory.IOStreams = streams
+	}
+
+	// Create root command
+	rootCmd, err := root.NewCmdRoot(cmdFactory)
+	if err != nil {
+		return err
+	}
+
+	// Set context and args
+	rootCmd.SetContext(ctx)
+	rootCmd.SetArgs(args)
+
+	// Set output streams for Cobra
+	if streams != nil {
+		rootCmd.SetOut(streams.Out)
+		rootCmd.SetErr(streams.ErrOut)
+	}
+
+	// Execute command
+	return rootCmd.Execute()
 }
 
 func handleError(err error, f *cmdutil.Factory) cmdutil.ExitCode {

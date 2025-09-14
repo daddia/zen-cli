@@ -426,3 +426,26 @@ func RedactSensitiveValue(fieldName, value string) string {
 	}
 	return value
 }
+
+// LoadDefaults returns a configuration with default values
+func LoadDefaults() *Config {
+	cfg := &Config{
+		LogLevel:  "info",
+		LogFormat: "text",
+		CLI: CLIConfig{
+			NoColor:      false,
+			Verbose:      false,
+			OutputFormat: "text",
+		},
+		Workspace: WorkspaceConfig{
+			Root:       ".",
+			ConfigFile: "zen.yaml",
+		},
+		Development: DevelopmentConfig{
+			Debug:   false,
+			Profile: false,
+		},
+	}
+	cfg.loadedFrom = []string{"defaults"}
+	return cfg
+}

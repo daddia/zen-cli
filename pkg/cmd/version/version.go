@@ -69,7 +69,12 @@ func NewCmdVersion(f *cmdutil.Factory) *cobra.Command {
 
 // displayTextVersion displays version in human-readable text format
 func displayTextVersion(out interface{ Write([]byte) (int, error) }, info BuildInfo) error {
-	// Simple format: zen version X.X.X (like git version)
+	// Comprehensive format with all build information
 	fmt.Fprintf(out, "zen version %s\n", info.Version)
+	fmt.Fprintf(out, "Build: %s\n", info.BuildDate)
+	fmt.Fprintf(out, "Commit: %s\n", info.GitCommit)
+	fmt.Fprintf(out, "Built: %s\n", info.BuildDate)
+	fmt.Fprintf(out, "Go: %s\n", info.GoVersion)
+	fmt.Fprintf(out, "Platform: %s\n", info.Platform)
 	return nil
 }
