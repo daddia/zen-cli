@@ -318,14 +318,14 @@ func BenchmarkVersionCommand_JSONOutput(b *testing.B) {
 }
 
 func BenchmarkGetVersionInfo(b *testing.B) {
-	streams := iostreams.Test()
-	factory := cmdutil.NewTestFactory(streams)
-	cmd := NewCmdVersion(factory)
-
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		var stdout bytes.Buffer
-		cmd.SetOut(&stdout)
+		streams := iostreams.Test()
+		streams.Out = &stdout
+		factory := cmdutil.NewTestFactory(streams)
+
+		cmd := NewCmdVersion(factory)
 		cmd.SetArgs([]string{})
 
 		err := cmd.Execute()
@@ -334,8 +334,8 @@ func BenchmarkGetVersionInfo(b *testing.B) {
 		}
 
 		output := stdout.String()
-		if !strings.Contains(output, "zen version") {
-			b.Fatal("version output is invalid")
+		if !strings.HasPrefix(output, "zen version") {
+			b.Fatalf("version output is invalid, got: %q", output)
 		}
 	}
 }
