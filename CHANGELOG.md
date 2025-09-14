@@ -8,41 +8,31 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/), and this 
 
 ## [Unreleased]
 
-### Added
-- **ZEN-003**: Enhanced `zen init` command with comprehensive workspace detection
-  - Automatic project type detection (Git, Node.js, Go, Python, Rust, Java)
-  - Creates `.zen/` directory structure similar to `.git/`
-  - Generates project-specific configuration with detected metadata
-  - Framework detection (React, Vue, Angular, Express, Maven, Gradle, etc.)
-  - Language detection (TypeScript, JavaScript, Go, Python, Rust, Java)
-  - Force flag (`--force`) with automatic backup creation
-  - Automatic `.gitignore` updates
-  - Comprehensive error handling with user-friendly messages
-
 ---
 
-## [v0.1.0] - YYYY-MM-DD
+## [v0.1.0] - 2025-09-14
 
 ### Added
-- Describe new features or functionalities.
-- Example: Added support for feature XYZ.
+- **Core CLI Framework**: Implemented root command with Cobra framework and comprehensive help system
+- **Workspace Initialization**: Added `zen init` command with automatic project type detection (Git, Node.js, Go, Python, Rust, Java)
+- **Configuration Management**: Multi-source configuration system with Viper (CLI flags > environment > config file > defaults)
+- **Version Command**: Added `zen version` with detailed build information and multiple output formats (text, JSON, YAML)
+- **Status Command**: Added `zen status` for workspace health checking and system information
+- **Configuration Commands**: Added `zen config get/set/list` for managing configuration keys with validation
+- **Structured Logging**: Implemented logrus-based logging with security-aware field filtering
+- **Cross-Platform Support**: Native binaries for Linux (amd64/arm64), macOS (amd64/arm64), and Windows (amd64)
+- **Docker Support**: Multi-stage Dockerfile for containerized deployments
+- **Comprehensive Testing**: Unit, integration, and end-to-end tests with >80% coverage
+- **CI/CD Pipeline**: GitHub Actions workflow with automated testing, linting, and security scanning
+- **GoReleaser Configuration**: Automated release pipeline with checksums and multi-platform builds
 
 ### Changed
-- Detail updates to existing functionality.
-- Example: Updated dependency ABC to version 1.2.3.
-
-### Fixed
-- List bug fixes.
-- Example: Fixed issue with module loading on startup.
-
-### Deprecated
-- Mention any soon-to-be removed features.
-- Example: Deprecated legacy API endpoints.
-
-### Removed
-- Document features that have been removed.
-- Example: Removed support for legacy configuration files.
+- Enhanced error handling with user-friendly messages and actionable suggestions
+- Improved CLI help text with consistent formatting and examples
+- Streamlined project structure following Go best practices
 
 ### Security
-- Note any security-related changes.
-- Example: Patched vulnerability in dependency DEF.
+- Implemented secure defaults with no hardcoded secrets
+- Added input validation at all boundaries
+- Configured Dependabot for automated security updates
+- Added security scanning in CI pipeline
