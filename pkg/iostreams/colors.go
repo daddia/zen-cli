@@ -8,9 +8,9 @@ import (
 // ANSI color codes following the design guide's 8 basic colors
 const (
 	// Basic ANSI colors (design guide compliant)
-	ColorReset  = "\033[0m"
-	ColorBold   = "\033[1m"
-	
+	ColorReset = "\033[0m"
+	ColorBold  = "\033[1m"
+
 	// Foreground colors
 	ColorBlack   = "\033[30m"
 	ColorRed     = "\033[31m"
@@ -20,7 +20,7 @@ const (
 	ColorMagenta = "\033[35m"
 	ColorCyan    = "\033[36m"
 	ColorWhite   = "\033[37m"
-	
+
 	// Bright variants (less reliable but available)
 	ColorBrightBlack   = "\033[90m"
 	ColorBrightRed     = "\033[91m"
@@ -34,11 +34,11 @@ const (
 
 // Unicode symbols following the design guide
 const (
-	SymbolSuccess = "✓"  // Success
-	SymbolNeutral = "-"  // Neutral
-	SymbolFailure = "✗"  // Failure
-	SymbolAlert   = "!"  // Alert
-	SymbolChange  = "+"  // Changes requested
+	SymbolSuccess = "✓" // Success
+	SymbolNeutral = "-" // Neutral
+	SymbolFailure = "✗" // Failure
+	SymbolAlert   = "!" // Alert
+	SymbolChange  = "+" // Changes requested
 )
 
 // ColorFunc represents a function that applies color to text
@@ -166,13 +166,13 @@ func (s *IOStreams) FormatTable(headers []string, rows [][]string) string {
 	if len(headers) == 0 || len(rows) == 0 {
 		return ""
 	}
-	
+
 	// Calculate column widths
 	colWidths := make([]int, len(headers))
 	for i, header := range headers {
 		colWidths[i] = len(header)
 	}
-	
+
 	for _, row := range rows {
 		for i, cell := range row {
 			if i < len(colWidths) && len(cell) > colWidths[i] {
@@ -180,9 +180,9 @@ func (s *IOStreams) FormatTable(headers []string, rows [][]string) string {
 			}
 		}
 	}
-	
+
 	var result strings.Builder
-	
+
 	// Format headers
 	for i, header := range headers {
 		if i > 0 {
@@ -191,7 +191,7 @@ func (s *IOStreams) FormatTable(headers []string, rows [][]string) string {
 		result.WriteString(s.FormatBold(fmt.Sprintf("%-*s", colWidths[i], header)))
 	}
 	result.WriteString("\n")
-	
+
 	// Format rows
 	for _, row := range rows {
 		for i, cell := range row {
@@ -206,7 +206,7 @@ func (s *IOStreams) FormatTable(headers []string, rows [][]string) string {
 		}
 		result.WriteString("\n")
 	}
-	
+
 	return result.String()
 }
 
@@ -215,9 +215,9 @@ func (s *IOStreams) FormatMachineTable(headers []string, rows [][]string) string
 	if len(rows) == 0 {
 		return ""
 	}
-	
+
 	var result strings.Builder
-	
+
 	// No headers in machine output
 	// Use tabs as delimiters for cut compatibility
 	for _, row := range rows {
@@ -229,7 +229,7 @@ func (s *IOStreams) FormatMachineTable(headers []string, rows [][]string) string
 		}
 		result.WriteString("\n")
 	}
-	
+
 	return result.String()
 }
 

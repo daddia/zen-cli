@@ -1,4 +1,4 @@
-name: Test Pyramid
+name: Test
 
 on:
   push:
@@ -15,7 +15,7 @@ env:
   GO_VERSION: '1.25'
 
 jobs:
-  # Unit Tests (70% of test suite) - Fast execution, high coverage
+  # Unit Tests
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -69,7 +69,7 @@ jobs:
         path: coverage/
         retention-days: 30
 
-  # Integration Tests (20% of test suite) - Component interactions
+  # Integration Tests
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
@@ -108,7 +108,7 @@ jobs:
         flags: integration
         name: integration-tests
 
-  # End-to-End Tests (10% of test suite) - Critical user journeys
+  # End-to-End Tests
   e2e-tests:
     name: E2E Tests
     strategy:
@@ -184,9 +184,9 @@ jobs:
         path: coverage/benchmarks.txt
         retention-days: 30
 
-  # Test Pyramid Validation
-  test-pyramid-validation:
-    name: Test Pyramid Validation
+  # Test Validation
+  test-validation:
+    name: Test Validation
     runs-on: ubuntu-latest
     needs: [unit-tests, integration-tests, e2e-tests]
 
@@ -212,8 +212,8 @@ jobs:
     - name: Download dependencies
       run: make deps
 
-    - name: Run complete test pyramid
-      run: make test-pyramid
+    - name: Run complete test
+      run: make test-all
 
     - name: Validate test pyramid distribution
       run: |
@@ -297,7 +297,7 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [unit-tests, integration-tests, e2e-tests, performance-tests, test-pyramid-validation, race-tests]
+    needs: [unit-tests, integration-tests, e2e-tests, performance-tests, test-all-validation, race-tests]
     if: always()
 
     steps:

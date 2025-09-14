@@ -83,21 +83,20 @@ build-all: deps ## Build binaries for all supported platforms
 
 ## Test targets
 
-test: test-pyramid ## Run complete test pyramid (unit + integration + e2e)
+test: test-all ## Run complete test (unit + integration + e2e)
 
-test-pyramid: ## Run test pyramid with proper distribution (70% unit, 20% integration, 10% e2e)
-	@echo "🔺 Running test pyramid..."
-	@echo "📊 Target distribution: 70% unit, 20% integration, 10% e2e"
+test-all: ## Run all tests with proper distribution
+	@echo "Running all tests..."
 	@echo ""
 	@$(MAKE) test-unit
 	@$(MAKE) test-integration
 	@$(MAKE) test-e2e
 	@echo ""
-	@echo "✓ Test pyramid completed"
+	@echo "✓ All tests completed"
 	@$(MAKE) test-coverage-report
 
 test-unit: ## Run unit tests with coverage (70% of test suite)
-	@echo "🧪 Running unit tests..."
+	@echo "Running unit tests..."
 	@mkdir -p $(COVERAGE_DIR)
 	$(GOTEST) -v -race -coverprofile=$(COVERAGE_DIR)/coverage.out -covermode=atomic \
 		-timeout=30s \
@@ -115,14 +114,14 @@ test-integration: ## Run integration tests (20% of test suite)
 	@echo "✓ Integration tests completed (target: <1min execution)"
 
 test-e2e: build ## Run end-to-end tests (10% of test suite)
-	@echo "🎯 Running end-to-end tests..."
+	@echo "Running end-to-end tests..."
 	@mkdir -p $(COVERAGE_DIR)
 	$(GOTEST) -v -tags=e2e -timeout=120s \
 		./test/e2e/...
 	@echo "✓ End-to-end tests completed (target: <2min execution)"
 
 test-unit-fast: ## Run unit tests without race detection (for development)
-	@echo "⚡ Running fast unit tests..."
+	@echo "Running fast unit tests..."
 	@mkdir -p $(COVERAGE_DIR)
 	$(GOTEST) -v -coverprofile=$(COVERAGE_DIR)/coverage-fast.out -covermode=atomic ./internal/... ./pkg/...
 
@@ -132,7 +131,7 @@ test-coverage: test-unit ## Generate HTML coverage report
 	@echo "✓ Coverage report generated: $(COVERAGE_DIR)/coverage.html"
 
 test-coverage-report: ## Generate comprehensive coverage report with targets
-	@echo "📊 Coverage analysis:"
+	@echo "Coverage analysis:"
 	@if [ -f $(COVERAGE_DIR)/coverage.out ]; then \
 		COVERAGE=$$($(GOCMD) tool cover -func=$(COVERAGE_DIR)/coverage.out | tail -1 | awk '{print $$3}' | sed 's/%//'); \
 		echo "  Overall coverage: $$COVERAGE%"; \
@@ -152,7 +151,7 @@ test-coverage-report: ## Generate comprehensive coverage report with targets
 	fi
 
 test-coverage-ci: ## Generate coverage report for CI with strict validation
-	@echo "🔍 CI coverage validation..."
+	@echo "CI coverage validation..."
 	@mkdir -p $(COVERAGE_DIR)
 	$(GOTEST) -v -race -coverprofile=$(COVERAGE_DIR)/coverage.out -covermode=atomic ./internal/... ./pkg/...
 	@COVERAGE=$$($(GOCMD) tool cover -func=$(COVERAGE_DIR)/coverage.out | tail -1 | awk '{print $$3}' | sed 's/%//'); \
@@ -164,7 +163,7 @@ test-coverage-ci: ## Generate coverage report for CI with strict validation
 	echo "✓ Coverage target met: $$COVERAGE% >= 80%"
 
 test-watch: ## Watch for changes and run unit tests
-	@echo "👀 Watching for changes..."
+	@echo "Watching for changes..."
 	@if command -v fswatch >/dev/null 2>&1; then \
 		fswatch -o . -e ".*" -i "\\.go$$" | xargs -n1 -I{} make test-unit-fast; \
 	else \
@@ -172,25 +171,25 @@ test-watch: ## Watch for changes and run unit tests
 	fi
 
 test-parallel: ## Run tests with maximum parallelization
-	@echo "⚡ Running parallel tests..."
+	@echo "Running parallel tests..."
 	@$(GOTEST) -v -race -parallel 4 -timeout=60s ./internal/... ./pkg/...
 
 test-benchmarks: ## Run benchmark tests for performance validation
-	@echo "🏁 Running benchmark tests..."
+	@echo "Running benchmark tests..."
 	@mkdir -p $(COVERAGE_DIR)
 	$(GOTEST) -bench=. -benchmem -benchtime=1s ./internal/... ./pkg/... > $(COVERAGE_DIR)/benchmarks.txt
 	@echo "✓ Benchmark results: $(COVERAGE_DIR)/benchmarks.txt"
 
 test-race: ## Run tests with race detection only
-	@echo "🏃 Running race condition tests..."
+	@echo "Running race condition tests..."
 	$(GOTEST) -race -timeout=60s ./internal/... ./pkg/...
 
 test-verbose: ## Run tests with verbose output
-	@echo "📝 Running verbose tests..."
+	@echo "Running verbose tests..."
 	$(GOTEST) -v -race ./internal/... ./pkg/...
 
 test-short: ## Run short tests only (skip long-running tests)
-	@echo "⏱️  Running short tests..."
+	@echo "Running short tests..."
 	$(GOTEST) -short ./internal/... ./pkg/...
 
 ## Quality targets
@@ -199,6 +198,7 @@ lint: ## Run linting checks
 	@echo "Running linter..."
 	@if command -v golangci-lint >/dev/null 2>&1; then \
 		golangci-lint run --timeout=5m; \
+		echo "✓ Linter completed"; \
 	else \
 		echo "! golangci-lint not installed, running basic checks..."; \
 		$(GOFMT) -d -s .; \
@@ -219,7 +219,7 @@ security: ## Run security analysis
 fmt: ## Format Go code
 	@echo "Formatting code..."
 	$(GOFMT) -w -s .
-	@echo "Code formatted"
+	@echo "✓ Code formatted"
 
 ## Dependency targets
 

@@ -159,7 +159,7 @@ func displayTextStatus(out interface{ Write([]byte) (int, error) }, status Statu
 
 	// Workspace status with proper formatting and indentation
 	fmt.Fprintln(out, iostreams.FormatBold("Workspace:"))
-	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Status:      %s\n", 
+	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Status:      %s\n",
 		iostreams.FormatBoolStatus(status.Workspace.Initialized, "Ready", "Not Initialized")), 1))
 	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Path:        %s\n", status.Workspace.Path), 1))
 	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Config File: %s\n", status.Workspace.ConfigFile), 1))
@@ -167,7 +167,7 @@ func displayTextStatus(out interface{ Write([]byte) (int, error) }, status Statu
 
 	// Configuration status
 	fmt.Fprintln(out, iostreams.FormatBold("Configuration:"))
-	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Status:    %s\n", 
+	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Status:    %s\n",
 		iostreams.FormatBoolStatus(status.Configuration.Loaded, "Loaded", "Not Loaded")), 1))
 	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Source:    %s\n", status.Configuration.Source), 1))
 	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Log Level: %s\n", status.Configuration.LogLevel), 1))
@@ -187,12 +187,4 @@ func displayTextStatus(out interface{ Write([]byte) (int, error) }, status Statu
 	fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Active:    %v\n", status.Integrations.Active), 1))
 
 	return nil
-}
-
-// getStatusText returns status text
-func getStatusText(ok bool) string {
-	if ok {
-		return "Ready"
-	}
-	return "Not Ready"
 }

@@ -71,7 +71,7 @@ Report Issues:  https://github.com/daddia/zen/issues`,
 
 		// Reload configuration with command context to ensure flag binding
 		f.Config = factory.ConfigWithCommand(cmd)
-		
+
 		// Get updated configuration
 		cfg, err := f.Config()
 		if err != nil {

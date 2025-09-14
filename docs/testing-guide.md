@@ -52,7 +52,7 @@ pkg/
 
 ### Complete Test Pyramid
 ```bash
-make test-pyramid
+make test-all
 ```
 
 ### Individual Test Types

@@ -94,7 +94,7 @@ func (opt ConfigOption) GetCurrentValue(cfg *Config) string {
 func (opt ConfigOption) getValueFromConfig(cfg *Config) string {
 	parts := strings.Split(opt.Key, ".")
 
-	var current reflect.Value = reflect.ValueOf(cfg).Elem()
+	current := reflect.ValueOf(cfg).Elem()
 
 	for i, part := range parts {
 		// Handle nested structs

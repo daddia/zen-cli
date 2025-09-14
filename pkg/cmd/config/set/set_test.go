@@ -75,7 +75,6 @@ func TestSetRun(t *testing.T) {
 
 			ios := iostreams.Test()
 			out := ios.Out.(*bytes.Buffer)
-			errOut := ios.ErrOut.(*bytes.Buffer)
 
 			testConfig := &config.Config{
 				LogLevel:  "info",
@@ -97,12 +96,8 @@ func TestSetRun(t *testing.T) {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedError)
 			} else {
-				if strings.Contains(errOut.String(), "warning") {
-					// Key validation warning is acceptable
-					require.NoError(t, err)
-				} else {
-					require.NoError(t, err)
-				}
+				// Key validation warning is acceptable
+				require.NoError(t, err)
 
 				// Check success message
 				output := out.String()

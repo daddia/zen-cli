@@ -149,10 +149,9 @@ func LoadWithOptions(opts LoadOptions) (*Config, error) {
 
 	// Log configuration loading performance
 	loadDuration := time.Since(start)
-	if loadDuration > 50*time.Millisecond {
-		// This would normally use the logger, but we don't have it yet
-		// The factory will handle performance logging
-	}
+	// Note: Performance logging is handled by the factory layer
+	// to avoid circular dependencies with the logger
+	_ = loadDuration // Suppress unused variable warning
 
 	return &config, nil
 }
