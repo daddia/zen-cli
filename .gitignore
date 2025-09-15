@@ -72,7 +72,3 @@ plugins/**/*.dylib
 .local/
 dev/
 scratch/
-
-
-# Zen CLI workspace directory
-.zen/
