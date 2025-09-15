@@ -30,7 +30,13 @@
    **Windows**
 
    ```pwsh
-   # build the `bin\gh.exe` binary
+   # PowerShell - build the `bin\zen.exe` binary
+   > .\script\build.ps1
+   
+   # or use the batch file in Command Prompt
+   > script\build.bat
+   
+   # or run directly with Go
    > go run script\build.go
    ```
 
@@ -55,7 +61,9 @@ $ GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 make clean bin/zen
 
 ```pwsh
 # on Windows, pass environment variables as arguments to the build script:
-> go run script\build.go clean bin\gh GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0
+> .\script\build.ps1 clean bin\zen GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0
+# or
+> go run script\build.go clean bin\zen GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0
 ```
 
 Run `zen tool dist list` to list all supported values of GOOS/GOARCH.
