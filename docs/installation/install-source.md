@@ -29,15 +29,14 @@
 
    **Windows**
 
+   **Note:** Use one of these alternatives, if `make` is not available.  
+
    ```pwsh
-   # PowerShell - build the `bin\zen.exe` binary
-   > .\script\build.ps1
+   # build the bin\zen.exe binary (recommended)
+   $ go run script\build.go
    
-   # or use the batch file in Command Prompt
-   > script\build.bat
-   
-   # or run directly with Go
-   > go run script\build.go
+   # Or if you prefer:
+   $ script\build.bat
    ```
 
    There is no install step available on Windows.

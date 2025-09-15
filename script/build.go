@@ -58,207 +58,211 @@ import (
 	"time"
 )
 
-var tasks = map[string]func(string) error{
-	"bin/zen": func(exe string) error {
-		info, err := os.Stat(exe)
-		if err == nil && !sourceFilesLaterThan(info.ModTime()) {
-			fmt.Printf("%s: `%s` is up to date.\n", self, exe)
-			return nil
-		}
+var tasks map[string]func(string) error
 
-		ldflags := os.Getenv("GO_LDFLAGS")
-		ldflags = fmt.Sprintf("-X github.com/daddia/zen/pkg/cmd/factory.version=%s %s", version(), ldflags)
-		ldflags = fmt.Sprintf("-X github.com/daddia/zen/pkg/cmd/factory.commit=%s %s", commit(), ldflags)
-		ldflags = fmt.Sprintf("-X github.com/daddia/zen/pkg/cmd/factory.buildTime=%s %s", buildTime(), ldflags)
-
-		buildTags := os.Getenv("ZEN_BUILD_TAGS")
-
-		args := []string{"go", "build", "-trimpath"}
-		if buildTags != "" {
-			args = append(args, "-tags", buildTags)
-		}
-		args = append(args, "-ldflags", ldflags, "-o", exe, "./cmd/zen")
-
-		return run(args...)
-	},
-	"build-all": func(_ string) error {
-		platforms := []string{
-			"linux/amd64", "linux/arm64",
-			"darwin/amd64", "darwin/arm64",
-			"windows/amd64",
-		}
-
-		if err := os.MkdirAll("bin", 0755); err != nil {
-			return err
-		}
-
-		fmt.Println("Building zen binaries for all platforms...")
-		for _, platform := range platforms {
-			parts := strings.Split(platform, "/")
-			goos, goarch := parts[0], parts[1]
-			
-			output := fmt.Sprintf("bin/zen-%s-%s", goos, goarch)
-			if goos == "windows" {
-				output += ".exe"
+func init() {
+	tasks = map[string]func(string) error{
+		"bin/zen": func(exe string) error {
+			info, err := os.Stat(exe)
+			if err == nil && !sourceFilesLaterThan(info.ModTime()) {
+				fmt.Printf("%s: `%s` is up to date.\n", self, exe)
+				return nil
 			}
 
-			fmt.Printf("  Building for %s/%s...\n", goos, goarch)
-			
 			ldflags := os.Getenv("GO_LDFLAGS")
 			ldflags = fmt.Sprintf("-X github.com/daddia/zen/pkg/cmd/factory.version=%s %s", version(), ldflags)
 			ldflags = fmt.Sprintf("-X github.com/daddia/zen/pkg/cmd/factory.commit=%s %s", commit(), ldflags)
 			ldflags = fmt.Sprintf("-X github.com/daddia/zen/pkg/cmd/factory.buildTime=%s %s", buildTime(), ldflags)
 
 			buildTags := os.Getenv("ZEN_BUILD_TAGS")
-			
+
 			args := []string{"go", "build", "-trimpath"}
 			if buildTags != "" {
 				args = append(args, "-tags", buildTags)
 			}
-			args = append(args, "-ldflags", ldflags, "-o", output, "./cmd/zen")
+			args = append(args, "-ldflags", ldflags, "-o", exe, "./cmd/zen")
 
-			cmd := exec.Command(args[0], args[1:]...)
-			cmd.Env = append(os.Environ(),
-				"GOOS="+goos,
-				"GOARCH="+goarch,
-			)
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			
-			if err := cmd.Run(); err != nil {
-				fmt.Printf("  ✗ Failed to build for %s/%s\n", goos, goarch)
+			return run(args...)
+		},
+		"build-all": func(_ string) error {
+			platforms := []string{
+				"linux/amd64", "linux/arm64",
+				"darwin/amd64", "darwin/arm64",
+				"windows/amd64",
+			}
+
+			if err := os.MkdirAll("bin", 0755); err != nil {
 				return err
 			}
-			fmt.Printf("  ✓ Built: %s\n", output)
-		}
-		fmt.Println("✓ All binaries built successfully")
-		return nil
-	},
-	"test": func(_ string) error {
-		fmt.Println("Running all tests...")
-		if err := tasks["test-unit"](""); err != nil {
-			return err
-		}
-		if err := tasks["test-integration"](""); err != nil {
-			return err
-		}
-		if err := tasks["test-e2e"](""); err != nil {
-			return err
-		}
-		fmt.Println("✓ All tests completed")
-		return nil
-	},
-	"test-unit": func(_ string) error {
-		fmt.Println("Running unit tests...")
-		if err := os.MkdirAll("coverage", 0755); err != nil {
-			return err
-		}
-		args := []string{"go", "test", "-v", "-race", 
-			"-coverprofile=coverage/coverage.out", "-covermode=atomic",
-			"-timeout=30s", "./internal/...", "./pkg/..."}
-		if err := run(args...); err != nil {
-			return err
-		}
-		fmt.Println("✓ Unit tests completed")
-		return nil
-	},
-	"test-integration": func(_ string) error {
-		fmt.Println("Running integration tests...")
-		if err := os.MkdirAll("coverage", 0755); err != nil {
-			return err
-		}
-		args := []string{"go", "test", "-v", "-tags=integration", "-timeout=60s",
-			"-coverprofile=coverage/integration-coverage.out", "-covermode=atomic",
-			"./test/integration/..."}
-		return run(args...)
-	},
-	"test-e2e": func(_ string) error {
-		fmt.Println("Running end-to-end tests...")
-		// Build first
-		if err := tasks["bin/zen"]("bin/zen" + exeSuffix()); err != nil {
-			return err
-		}
-		args := []string{"go", "test", "-v", "-tags=e2e", "-timeout=120s", "./test/e2e/..."}
-		if err := run(args...); err != nil {
-			return err
-		}
-		fmt.Println("✓ End-to-end tests completed")
-		return nil
-	},
-	"lint": func(_ string) error {
-		fmt.Println("Running linter...")
-		if _, err := exec.LookPath("golangci-lint"); err == nil {
-			return run("golangci-lint", "run", "--timeout=5m")
-		}
-		
-		fmt.Println("! golangci-lint not installed, running basic checks...")
-		if err := run("gofmt", "-d", "-s", "."); err != nil {
-			return err
-		}
-		if err := run("go", "vet", "./..."); err != nil {
-			return err
-		}
-		fmt.Println("✓ Basic checks completed")
-		return nil
-	},
-	"security": func(_ string) error {
-		fmt.Println("Running security analysis...")
-		if _, err := exec.LookPath("gosec"); err == nil {
-			if err := run("gosec", "-quiet", "./..."); err != nil {
+
+			fmt.Println("Building zen binaries for all platforms...")
+			for _, platform := range platforms {
+				parts := strings.Split(platform, "/")
+				goos, goarch := parts[0], parts[1]
+
+				output := fmt.Sprintf("bin/zen-%s-%s", goos, goarch)
+				if goos == "windows" {
+					output += ".exe"
+				}
+
+				fmt.Printf("  Building for %s/%s...\n", goos, goarch)
+
+				ldflags := os.Getenv("GO_LDFLAGS")
+				ldflags = fmt.Sprintf("-X github.com/daddia/zen/pkg/cmd/factory.version=%s %s", version(), ldflags)
+				ldflags = fmt.Sprintf("-X github.com/daddia/zen/pkg/cmd/factory.commit=%s %s", commit(), ldflags)
+				ldflags = fmt.Sprintf("-X github.com/daddia/zen/pkg/cmd/factory.buildTime=%s %s", buildTime(), ldflags)
+
+				buildTags := os.Getenv("ZEN_BUILD_TAGS")
+
+				args := []string{"go", "build", "-trimpath"}
+				if buildTags != "" {
+					args = append(args, "-tags", buildTags)
+				}
+				args = append(args, "-ldflags", ldflags, "-o", output, "./cmd/zen")
+
+				cmd := exec.Command(args[0], args[1:]...)
+				cmd.Env = append(os.Environ(),
+					"GOOS="+goos,
+					"GOARCH="+goarch,
+				)
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+
+				if err := cmd.Run(); err != nil {
+					fmt.Printf("  ✗ Failed to build for %s/%s\n", goos, goarch)
+					return err
+				}
+				fmt.Printf("  ✓ Built: %s\n", output)
+			}
+			fmt.Println("✓ All binaries built successfully")
+			return nil
+		},
+		"test": func(_ string) error {
+			fmt.Println("Running all tests...")
+			if err := tasks["test-unit"](""); err != nil {
 				return err
 			}
-			fmt.Println("✓ Security analysis completed")
-		} else {
-			fmt.Println("! gosec not installed, skipping security analysis")
-			fmt.Println("  Install with: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest")
-		}
-		return nil
-	},
-	"deps": func(_ string) error {
-		fmt.Println("Downloading dependencies...")
-		if err := run("go", "mod", "download"); err != nil {
-			return err
-		}
-		if err := run("go", "mod", "tidy"); err != nil {
-			return err
-		}
-		fmt.Println("✓ Dependencies updated")
-		return nil
-	},
-	"clean": func(_ string) error {
-		fmt.Println("Cleaning build artifacts...")
-		if err := run("go", "clean"); err != nil {
-			return err
-		}
-		dirs := []string{"bin", "coverage", "dist"}
-		for _, dir := range dirs {
-			if err := os.RemoveAll(dir); err != nil && !os.IsNotExist(err) {
+			if err := tasks["test-integration"](""); err != nil {
 				return err
 			}
-		}
-		fmt.Println("✓ Clean completed")
-		return nil
-	},
-	"dev-setup": func(_ string) error {
-		fmt.Println("Setting up development environment...")
-		
-		tools := map[string]string{
-			"golangci-lint": "github.com/golangci/golangci-lint/cmd/golangci-lint@latest",
-			"gosec":         "github.com/securecodewarrior/gosec/v2/cmd/gosec@latest",
-		}
-		
-		for tool, pkg := range tools {
-			if _, err := exec.LookPath(tool); err != nil {
-				fmt.Printf("Installing %s...\n", tool)
-				if err := run("go", "install", pkg); err != nil {
-					return fmt.Errorf("failed to install %s: %w", tool, err)
+			if err := tasks["test-e2e"](""); err != nil {
+				return err
+			}
+			fmt.Println("✓ All tests completed")
+			return nil
+		},
+		"test-unit": func(_ string) error {
+			fmt.Println("Running unit tests...")
+			if err := os.MkdirAll("coverage", 0755); err != nil {
+				return err
+			}
+			args := []string{"go", "test", "-v", "-race",
+				"-coverprofile=coverage/coverage.out", "-covermode=atomic",
+				"-timeout=30s", "./internal/...", "./pkg/..."}
+			if err := run(args...); err != nil {
+				return err
+			}
+			fmt.Println("✓ Unit tests completed")
+			return nil
+		},
+		"test-integration": func(_ string) error {
+			fmt.Println("Running integration tests...")
+			if err := os.MkdirAll("coverage", 0755); err != nil {
+				return err
+			}
+			args := []string{"go", "test", "-v", "-tags=integration", "-timeout=60s",
+				"-coverprofile=coverage/integration-coverage.out", "-covermode=atomic",
+				"./test/integration/..."}
+			return run(args...)
+		},
+		"test-e2e": func(_ string) error {
+			fmt.Println("Running end-to-end tests...")
+			// Build first
+			if err := tasks["bin/zen"]("bin/zen" + exeSuffix()); err != nil {
+				return err
+			}
+			args := []string{"go", "test", "-v", "-tags=e2e", "-timeout=120s", "./test/e2e/..."}
+			if err := run(args...); err != nil {
+				return err
+			}
+			fmt.Println("✓ End-to-end tests completed")
+			return nil
+		},
+		"lint": func(_ string) error {
+			fmt.Println("Running linter...")
+			if _, err := exec.LookPath("golangci-lint"); err == nil {
+				return run("golangci-lint", "run", "--timeout=5m")
+			}
+
+			fmt.Println("! golangci-lint not installed, running basic checks...")
+			if err := run("gofmt", "-d", "-s", "."); err != nil {
+				return err
+			}
+			if err := run("go", "vet", "./..."); err != nil {
+				return err
+			}
+			fmt.Println("✓ Basic checks completed")
+			return nil
+		},
+		"security": func(_ string) error {
+			fmt.Println("Running security analysis...")
+			if _, err := exec.LookPath("gosec"); err == nil {
+				if err := run("gosec", "-quiet", "./..."); err != nil {
+					return err
+				}
+				fmt.Println("✓ Security analysis completed")
+			} else {
+				fmt.Println("! gosec not installed, skipping security analysis")
+				fmt.Println("  Install with: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest")
+			}
+			return nil
+		},
+		"deps": func(_ string) error {
+			fmt.Println("Downloading dependencies...")
+			if err := run("go", "mod", "download"); err != nil {
+				return err
+			}
+			if err := run("go", "mod", "tidy"); err != nil {
+				return err
+			}
+			fmt.Println("✓ Dependencies updated")
+			return nil
+		},
+		"clean": func(_ string) error {
+			fmt.Println("Cleaning build artifacts...")
+			if err := run("go", "clean"); err != nil {
+				return err
+			}
+			dirs := []string{"bin", "coverage", "dist"}
+			for _, dir := range dirs {
+				if err := os.RemoveAll(dir); err != nil && !os.IsNotExist(err) {
+					return err
 				}
 			}
-		}
-		
-		fmt.Println("✓ Development environment setup completed")
-		return nil
-	},
+			fmt.Println("✓ Clean completed")
+			return nil
+		},
+		"dev-setup": func(_ string) error {
+			fmt.Println("Setting up development environment...")
+
+			tools := map[string]string{
+				"golangci-lint": "github.com/golangci/golangci-lint/cmd/golangci-lint@latest",
+				"gosec":         "github.com/securecodewarrior/gosec/v2/cmd/gosec@latest",
+			}
+
+			for tool, pkg := range tools {
+				if _, err := exec.LookPath(tool); err != nil {
+					fmt.Printf("Installing %s...\n", tool)
+					if err := run("go", "install", pkg); err != nil {
+						return fmt.Errorf("failed to install %s: %w", tool, err)
+					}
+				}
+			}
+
+			fmt.Println("✓ Development environment setup completed")
+			return nil
+		},
+	}
 }
 
 var self string
