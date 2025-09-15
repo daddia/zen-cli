@@ -1,5 +1,65 @@
 # Proposed Approach
 
+### 1. **Create standardized DoR/DoD templates**
+```bash
+docs/templates/
+├── story-dor-dod.md          # Standard checklists for all stories
+├── story-brief.md            # Simplified story template (like store-9-alt.md)
+├── technical-requirements.md  # For Stage 4 (Architecture)
+├── test-strategy.md          # For Stage 8 (QA)
+├── release-plan.md           # For Stage 10 (Release)
+└── review-checklist.md       # Already exists - good!
+```
+
+### 2. **Simplified story template should include:**
+```markdown
+# Story Title
+
+## User Story
+As a **[role]**, I want **[capability]** so that **[benefit]**.
+
+## Context & Problem
+Brief context (2-3 sentences)
+
+## Acceptance Criteria
+**Scenario: [Name]**
+- Given [context]
+- When [action] 
+- Then [outcome]
+
+## Success Metrics (MUST)
+- Measurable outcomes
+
+## Scope
+**In-scope:** Core features
+**Out-of-scope:** Future enhancements
+```
+
+### 3. **Store additional content by workflow stage:**
+
+**In Jira Custom Fields:**
+- Story points, sprint, status
+- DoR/DoD checklist status (boolean fields)
+- Links to stage-specific artifacts
+
+**In Git/Docs:**
+- Technical specs → `docs/design/STORE-X-technical-spec.md`
+- Architecture decisions → `docs/architecture/decisions/ADR-STORE-X.md` 
+- Test plans → `docs/testing/STORE-X-test-strategy.md`
+- Release plans → `docs/release/STORE-X-release-plan.md`
+
+### 4. **Automate the workflow:**
+Since you have an agentic workflow, create stage-specific prompts that reference the standardized templates:
+
+```bash
+01-Discover/discover.md         # Uses simplified story template
+03-Design/design.md            # Creates technical-requirements.md
+04-Architect/architect-adr.md  # Creates ADR with standard format
+08-QA/qa-test.md              # Creates test-strategy.md
+10-Release/release-management.md # Creates release-plan.md
+```
+
+
 ## **Key Strengths of This Approach**
 
 ### 1. **Clear Separation of Concerns**
