@@ -32,12 +32,21 @@ The .zen/ directory contains:
   - Cache directory
   - Log directory
   - Templates directory (for future use)
-  - Backups directory
-
-Examples:
-  zen init                    # Initialize in current directory (safe to run multiple times)
-  zen init --force           # Force reinitialize with backup of existing configuration
-  zen init --config ./config/zen.yaml  # Use custom config path`,
+  - Backups directory`,
+		Example: `  # Initialize in current directory (safe to run multiple times)
+  zen init
+  
+  # Reinitialize existing workspace (safe operation like git init)
+  zen init
+  
+  # Force reinitialize with backup of existing configuration
+  zen init --force
+  
+  # Initialize with custom config file location
+  zen init --config ./config/zen.yaml
+  
+  # Initialize with verbose output to see project detection
+  zen init --verbose`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Get workspace manager

@@ -1,20 +1,67 @@
+---
+title: "Zen CLI Reference"
+slug: "/cli"
+description: "Command-line reference documentation for Zen CLI"
+section: "CLI Reference"
+date: 2025-09-16
+keywords:
+  - zen
+  - cli
+  - reference
+  - documentation
+---
+
 # Zen CLI Reference
 
 Command-line reference documentation for Zen CLI.
 
-## Core Commands
+## Main Command
 
 ### [zen](zen.md)
-Main command and overview
+AI-Powered Productivity Suite
 
-### [zen init](zen-init.md)
+## Core Commands
+
+### [zen config](zen_config.md)
+Manage configuration for Zen CLI
+
+### [zen init](zen_init.md)
 Initialize a new Zen workspace
 
-### [zen config](zen-config.md)
-Manage configuration settings
-
-### [zen status](zen-status.md)
+### [zen status](zen_status.md)
 Display workspace and system status
 
-### [zen version](zen-version.md)
-Show version information
+### [zen version](zen_version.md)
+Display version information
+
+## Future Commands
+
+_These commands are planned for future implementation:_
+
+### [zen agents](zen_agents.md)
+AI agent management
+
+### [zen help](zen_help.md)
+Help about any command
+
+### [zen integrations](zen_integrations.md)
+Manage external integrations
+
+### [zen product](zen_product.md)
+Product management commands
+
+### [zen templates](zen_templates.md)
+Template management
+
+### [zen workflow](zen_workflow.md)
+Manage engineering workflows
+
+## Shell Completion
+
+### [zen completion](zen_completion.md)
+Generate shell completion scripts
+
+---
+
+_This documentation is automatically generated from the Cobra command definitions._
+_Last updated: 2025-09-16_

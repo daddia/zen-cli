@@ -9,3 +9,6 @@ Welcome to the comprehensive documentation for the Zen AI-Powered Productivity S
 - [**Architecture Decisions**](architecture/decisions/register.md) - ADR register and decision history
 
 ### **User Documentation**
+
+
+

@@ -53,7 +53,21 @@ func NewCmdStatus(f *cmdutil.Factory) *cobra.Command {
 		Use:   "status",
 		Short: "Display workspace and system status",
 		Long: `Display comprehensive status information about your Zen workspace,
-configuration, system environment, and available integrations.`,
+configuration, system environment, and available integrations.
+
+This command provides a detailed overview of the current state of your Zen installation
+and workspace, helping you troubleshoot issues and understand your environment.`,
+		Example: `  # Display status overview
+  zen status
+  
+  # Output status as JSON for scripting
+  zen status --output json
+  
+  # Output status as YAML
+  zen status --output yaml
+  
+  # Check status with verbose output
+  zen status --verbose`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Get configuration

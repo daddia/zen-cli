@@ -39,6 +39,23 @@ Getting Started:
 
 Documentation: https://zen.dev/docs
 Report Issues:  https://github.com/daddia/zen/issues`,
+		Example: `  # Initialize a new workspace
+  zen init
+  
+  # Check workspace status
+  zen status
+  
+  # Configure Zen settings
+  zen config set log_level debug
+  
+  # Display version information
+  zen version
+  
+  # Get help for any command
+  zen <command> --help
+  
+  # Generate shell completion
+  zen completion bash > /usr/local/etc/bash_completion.d/zen`,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
@@ -135,6 +152,13 @@ Report Issues:  https://github.com/daddia/zen/issues`,
 	cmd.AddCommand(newCompletionCommand(f))
 
 	return cmd, nil
+}
+
+// Root exposes the root command for documentation generators and external tools
+// This creates a default factory and returns a fully configured root command
+func Root() (*cobra.Command, error) {
+	f := factory.New()
+	return NewCmdRoot(f)
 }
 
 // newPlaceholderCommand creates a placeholder command for future implementation

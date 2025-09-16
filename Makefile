@@ -242,7 +242,7 @@ deps-upgrade: ## Upgrade all dependencies
 
 ## Utility targets
 
-clean: ## Clean build artifacts and cache
+clean: docs-clean ## Clean build artifacts and cache
 	@echo "Cleaning build artifacts..."
 	$(GOCLEAN)
 	rm -rf $(BINARY_DIR)/
@@ -290,6 +290,51 @@ run: build ## Build and run zen with arguments (use ARGS="...")
 debug: ## Build and run zen with debug logging
 	@echo "Running zen in debug mode..."
 	ZEN_DEBUG=true ./$(BINARY_DIR)/$(BINARY_NAME) $(ARGS)
+
+## Documentation targets
+
+docs: docs-markdown ## Generate all documentation formats
+
+docs-markdown: ## Generate Markdown documentation
+	@echo "Generating Markdown documentation..."
+	@go run internal/tools/docgen/main.go \
+		-out ./docs/zen \
+		-format markdown \
+		-frontmatter
+	@echo "✓ Markdown documentation generated in docs/zen/"
+
+docs-man: ## Generate Man page documentation
+	@echo "Generating Man pages..."
+	@go run internal/tools/docgen/main.go \
+		-out ./man \
+		-format man
+	@echo "✓ Man pages generated in man/"
+
+docs-rest: ## Generate ReStructuredText documentation
+	@echo "Generating ReStructuredText documentation..."
+	@go run internal/tools/docgen/main.go \
+		-out ./docs/rest \
+		-format rest
+	@echo "✓ ReStructuredText documentation generated in docs/rest/"
+
+docs-all: docs-markdown docs-man docs-rest ## Generate all documentation formats
+	@echo "✓ All documentation formats generated"
+
+docs-check: docs-markdown ## Regenerate docs and check for changes
+	@echo "Checking if documentation is up-to-date..."
+	@if git diff --exit-code docs/zen/; then \
+		echo "✓ Documentation is up-to-date"; \
+	else \
+		echo "✗ Documentation needs to be regenerated"; \
+		echo "Run 'make docs' to update documentation"; \
+		exit 1; \
+	fi
+
+docs-clean: ## Remove generated documentation
+	@echo "Cleaning generated documentation..."
+	@rm -f docs/zen/zen_*.md docs/zen/zen.md docs/zen/index.md
+	@rm -rf man/ docs/rest/
+	@echo "✓ Generated documentation removed (README.md preserved)"
 
 ## Docker targets
 

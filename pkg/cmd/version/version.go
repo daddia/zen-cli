@@ -26,7 +26,22 @@ func NewCmdVersion(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Display version information",
-		Long:  `Display the version, build information, and platform details for Zen CLI.`,
+		Long:  `Display the version, build information, and platform details for Zen CLI.
+
+This command shows comprehensive version information including the release version,
+build details, Git commit hash, build date, Go version used for compilation,
+and target platform.`,
+		Example: `  # Display version information
+  zen version
+  
+  # Output as JSON for scripting
+  zen version --output json
+  
+  # Output as YAML
+  zen version --output yaml
+  
+  # Check version in scripts
+  zen version --output json | jq -r '.version'`,
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			info := BuildInfo{
