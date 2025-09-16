@@ -28,6 +28,18 @@ The following ADRs document the architectural decisions made todate:
 | [ADR-0005](ADR-0005-structured-logging.md)       | Structured Logging Implementation       | Accepted | 2025-09-12 | —          | ADR-0004           |
 | [ADR-0006](ADR-0006-factory-pattern.md)          | Factory Pattern Implementation          | Accepted | 2025-09-13 | —          | ADR-0003, ADR-0007 |
 | [ADR-0007](ADR-0007-command-orchestration.md)    | Command Orchestration Design            | Accepted | 2025-09-13 | —          | ADR-0006, ADR-0002 |
+| [ADR-0008](ADR-0008-plugin-architecture.md)      | Plugin Architecture Design              | Accepted | 2025-09-13 | —          | ADR-0003, ADR-0006 |
+| [ADR-0014](ADR-0014-quality-gates.md)            | Quality Gates Framework                 | Accepted | 2025-09-13 | —          | ADR-0015           |
+| [ADR-0015](ADR-0015-security-model.md)           | Security Model Implementation           | Accepted | 2025-09-13 | —          | ADR-0004, ADR-0005 |
+| [ADR-0018](ADR-0018-configuration-validation.md) | Configuration Validation Framework      | Accepted | 2025-09-13 | —          | ADR-0004, ADR-0015 |
+| [ADR-0009](ADR-0009-agent-orchestration.md)      | AI Agent Orchestration                  | Accepted | 2025-09-16 | —          | ADR-0010           |
+| [ADR-0010](ADR-0010-llm-abstraction.md)          | LLM Provider Abstraction                | Accepted | 2025-09-16 | —          | ADR-0009           |
+| [ADR-0011](ADR-0011-workflow-management.md)      | Workflow State Management               | Accepted | 2025-09-16 | —          | ADR-0012           |
+| [ADR-0012](ADR-0012-integration-architecture.md) | External Integration Architecture       | Accepted | 2025-09-16 | —          | ADR-0013           |
+| [ADR-0013](ADR-0013-template-engine.md)          | Template Engine Design                  | Accepted | 2025-09-16 | —          | ADR-0014           |
+| [ADR-0019](ADR-0019-mcp-server.md)               | Model Context Protocol Server           | Accepted | 2025-09-16 | —          | ADR-0009, ADR-0010 |
+| [ADR-0020](ADR-0020-library-first.md)            | Library-First Development Approach     | Accepted | 2025-09-16 | —          | ADR-0001, ADR-0021 |
+| [ADR-0021](ADR-0021-cobra-maximization.md)       | Cobra CLI Framework Maximization       | Accepted | 2025-09-16 | —          | ADR-0002, ADR-0020 |
 
 ## Planned Architecture Decisions
 
@@ -35,17 +47,9 @@ The following ADRs are planned for future implementation phases:
 
 | ID                                               | Title                                   | Status   | Date       | Supersedes | Related ADRs       |
 | ------------------------------------------------ | --------------------------------------- | -------- | ---------- | ---------- | ------------------ |
-| [ADR-0008](ADR-0008-plugin-architecture.md)      | Plugin Architecture Design              | Proposed | 2025-09-13 | —          | ADR-0003, ADR-0006 |
-| [ADR-0009](ADR-0009-agent-orchestration.md)      | AI Agent Orchestration                  | Proposed | TBD        | —          | ADR-0010           |
-| [ADR-0010](ADR-0010-llm-abstraction.md)          | LLM Provider Abstraction                | Proposed | TBD        | —          | ADR-0009           |
-| [ADR-0011](ADR-0011-workflow-management.md)      | Workflow State Management               | Proposed | TBD        | —          | ADR-0012           |
-| [ADR-0012](ADR-0012-integration-architecture.md) | External Integration Architecture       | Proposed | TBD        | —          | ADR-0013           |
-| [ADR-0013](ADR-0013-template-engine.md)          | Template Engine Design                  | Proposed | TBD        | —          | ADR-0014           |
-| [ADR-0014](ADR-0014-quality-gates.md)            | Quality Gates Framework                 | Proposed | 2025-09-13 | —          | ADR-0015           |
-| [ADR-0015](ADR-0015-security-model.md)           | Security Model Implementation           | Proposed | 2025-09-13 | —          | ADR-0004, ADR-0005 |
-| [ADR-0016](ADR-0016-deployment-strategy.md)      | Deployment Distribution Strategy        | Proposed | TBD        | —          | ADR-0001, ADR-0003 |
-| [ADR-0017](ADR-0017-observability-strategy.md)   | Observability Monitoring Strategy       | Proposed | TBD        | —          | ADR-0005           |
-| [ADR-0018](ADR-0018-configuration-validation.md) | Configuration Validation Framework      | Proposed | 2025-09-13 | —          | ADR-0004, ADR-0015 |
+| [ADR-0016](ADR-0016-deployment-strategy.md)      | Deployment Distribution Strategy        | Planned  | TBD        | —          | ADR-0001, ADR-0003 |
+| [ADR-0017](ADR-0017-observability-strategy.md)   | Observability Monitoring Strategy       | Planned  | TBD        | —          | ADR-0005           |
+
 
 ---
 
