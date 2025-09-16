@@ -27,6 +27,28 @@ Zen is architected as a modern, extensible CLI platform built with Go 1.25, desi
 
 ## System Architecture
 
+```
+┌─────────────────────────────────────────┐
+│            CLI Interface                │
+│           (Zen Commands)                │
+└─────────────────────────────────────────┘
+                    │
+┌─────────────────────────────────────────┐
+│           Command Layer                 │
+│      (Business Logic & Validation)      │
+└─────────────────────────────────────────┘
+                    │
+┌─────────────────────────────────────────┐
+│           Core Services                 │
+│  (Config, Workspace, Logging, Errors)   │
+└─────────────────────────────────────────┘
+                    │
+┌─────────────────────────────────────────┐
+│          Integration Layer              │
+│   (LLM, Git, External APIs, Plugins)    │
+└─────────────────────────────────────────┘
+```
+
 ### **Technology Stack**
 
 | Layer | Technology | Version | Purpose |
