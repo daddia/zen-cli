@@ -11,7 +11,7 @@ Zen CLI can be installed using package managers, pre-built binaries, or from sou
 - **Network**: Internet connection for AI features
 
 ### Optional Requirements
-- **Go 1.23+**: Only needed for building from source
+- **Go 1.25+**: Only needed for building from source
 - **Docker**: For containerized deployments
 - **Git**: For version control integration
 
@@ -110,7 +110,7 @@ alias zen='docker run --rm -it -v $(pwd):/workspace zen:latest'
 For developers or users who need the latest development version:
 
 ```bash
-# Requirements: Go 1.23+
+# Requirements: Go 1.25+
 go install github.com/zen-org/zen/cmd/zen@latest
 
 # Or clone and build
