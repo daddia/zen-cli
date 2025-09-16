@@ -4,7 +4,7 @@ This directory contains detailed installation instructions for specific scenario
 
 ## Primary Installation Guide
 
-For most users, see the main **[Installation Guide](../user-guide/installation.md)** which covers:
+For most users, see the main **[Installation Guide](../getting-started/installation.md)** which covers:
 - Package manager installation (Homebrew, Scoop, Snap)
 - Pre-built binary installation
 - Docker installation
@@ -47,7 +47,7 @@ sudo snap install zen
 
 If you encounter installation issues:
 
-1. Check the [Troubleshooting section](../user-guide/installation.md#troubleshooting) in the main guide
+1. Check the [Troubleshooting section](../getting-started/installation.md#troubleshooting) in the main guide
 2. Search [existing issues](https://github.com/zen-org/zen/issues)
 3. Open a [new issue](https://github.com/zen-org/zen/issues/new) with:
    - Your operating system and version
@@ -64,4 +64,4 @@ To improve installation documentation:
 
 ---
 
-Return to [User Guide](../user-guide/README.md) | [Documentation Index](../README.md)
+Return to [User Guide](../getting-started/README.md) | [Documentation Index](../README.md)

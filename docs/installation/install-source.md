@@ -207,6 +207,6 @@ chcon -t bin_t ./bin/zen
 
 ## Next Steps
 
-- Return to the main [Installation Guide](../user-guide/installation.md)
-- Continue with [Quick Start](../user-guide/quick-start.md)
+- Return to the main [Installation Guide](../getting-started/installation.md)
+- Continue with [Quick Start](../getting-started/quick-start.md)
 - Set up your [Development Environment](../contributing/getting-started.md)
