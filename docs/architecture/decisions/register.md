@@ -40,6 +40,8 @@ The following ADRs document the architectural decisions made todate:
 | [ADR-0019](ADR-0019-mcp-server.md)               | Model Context Protocol Server           | Accepted | 2025-09-16 | —          | ADR-0009, ADR-0010 |
 | [ADR-0020](ADR-0020-library-first.md)            | Library-First Development Approach     | Accepted | 2025-09-16 | —          | ADR-0001, ADR-0021 |
 | [ADR-0021](ADR-0021-cobra-maximization.md)       | Cobra CLI Framework Maximization       | Accepted | 2025-09-16 | —          | ADR-0002, ADR-0020 |
+| [ADR-0022](ADR-0022-automatic-documentation.md)  | Automatic Documentation Generation     | Accepted | 2025-09-16 | —          | ADR-0021, ADR-0002 |
+| [ADR-0023](ADR-0023-git-library-selection.md)    | Git Library Selection for Asset Client | Proposed | 2025-09-16 | —          | ADR-0006, ADR-0013 |
 
 ## Planned Architecture Decisions
 
