@@ -10,11 +10,11 @@ informed: DevOps Team, QA Team
 
 ## Context and Problem Statement
 
-The Zen CLI platform orchestrates complex multi-stage workflows across the product lifecycle, including a 12-stage engineering workflow (Discover → Prioritize → Design → Architect → Plan → Build → Review → Test → Secure → Release → Validate → Feedback) and product management workflows. These workflows require persistent state management, progress tracking, rollback capabilities, and coordination between human decisions and AI-powered automation. The state management system must support concurrent workflows, branching scenarios, and integration with external systems while maintaining consistency and auditability.
+The Zen CLI platform orchestrates complex multi-stage workflows across the product lifecycle through Zenflow, a 7-stage unified workflow (Align → Discover → Prioritize → Design → Build → Ship → Learn) that serves product managers, designers, engineers, and analysts. These workflows require persistent state management, progress tracking, quality gates, rollback capabilities, and coordination between human decisions and AI-powered automation. The state management system must support concurrent workflows, specialized workflow streams (I2D, C2M, D2S), and integration with external systems while maintaining consistency and auditability.
 
 ## Decision Drivers
 
-* **Workflow Complexity**: Support for 12-stage engineering workflows with conditional branching and parallel execution
+* **Workflow Complexity**: Support for Zenflow's 7-stage unified workflow with quality gates, workflow streams, and parallel execution
 * **State Persistence**: Reliable state storage with transaction support and crash recovery capabilities
 * **Concurrency**: Support for multiple concurrent workflows without conflicts or race conditions
 * **Integration**: Seamless state synchronization with external systems (Jira, GitHub, CI/CD pipelines)
@@ -119,5 +119,5 @@ A file-based system that stores workflow state in version-controlled files, leve
 
 - Related ADRs: [ADR-0009](ADR-0009-agent-orchestration.md), [ADR-0012](ADR-0012-integration-architecture.md)
 - Implementation Location: `internal/workflow/`
-- State Management Documentation: 12-stage engineering workflow specification
-- Follow-ups: Workflow analytics and reporting, external state synchronization patterns
+- Workflow Documentation: [Zenflow User Guide](../../zen-workflow/)
+- Follow-ups: Workflow analytics and reporting, external state synchronization patterns, stream-specific optimizations

@@ -72,7 +72,7 @@ graph TB
 
 ### Business Logic
 - **[AI Agents](views/components.md#ai-agent-system)** - LLM orchestration and management
-- **[Workflow Engine](views/components.md#workflow-engine)** - 12-stage engineering workflow
+- **[Zenflow Engine](views/components.md#zenflow-engine)** - 7-stage unified workflow (see [Zenflow documentation](../zen-workflow/))
 - **[Template Engine](views/components.md#template-engine)** - Dynamic content generation
 - **[Quality Gates](views/components.md#component-details)** - Validation and testing
 
@@ -127,7 +127,7 @@ zen/
 ├── internal/             # Private implementation
 │   ├── agents/          # AI orchestration
 │   ├── config/          # Configuration
-│   ├── workflow/        # Workflow engine
+│   ├── workflow/        # Zenflow engine
 │   └── integrations/    # External systems
 ├── pkg/                  # Public APIs
 │   └── cmd/            # Command implementations

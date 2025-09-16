@@ -22,7 +22,7 @@ graph TB
         
         subgraph "Business Logic"
             Agents[AI Agent System<br/>LLM Orchestration]
-            Workflow[Workflow Engine<br/>State Management]
+            Workflow[Zenflow Engine<br/>7-Stage Workflow]
             Templates[Template Engine<br/>Content Generation]
             Quality[Quality Gates<br/>Validation & Testing]
         end
@@ -96,10 +96,11 @@ graph TB
 - **Key Features**: Multi-provider support, token management, cost tracking
 - **Location**: `internal/agents`
 
-#### Workflow Engine
-- **Responsibility**: 12-stage engineering workflow state management
-- **Pattern**: State machine with persistent storage
+#### Zenflow Engine
+- **Responsibility**: 7-stage unified workflow management (Align → Discover → Prioritize → Design → Build → Ship → Learn)
+- **Pattern**: State machine with quality gates and persistent storage
 - **Location**: `internal/workflow`
+- **Documentation**: [Zenflow User Guide](../../zen-workflow/)
 
 #### Template Engine
 - **Technology**: Go Templates
@@ -166,7 +167,7 @@ sequenceDiagram
 | Configuration | Viper | Config management |
 | Logging | Logrus | Structured logs |
 | AI Agents | Custom + SDKs | LLM orchestration |
-| Workflow | State Machine | Workflow management |
+| Zenflow | State Machine | 7-stage workflow management |
 | Templates | Go Templates | Content generation |
 | Storage | File System | Local persistence |
 | Cache | In-memory | Performance |

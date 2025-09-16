@@ -147,39 +147,42 @@ type Conversation struct {
 }
 ```
 
-### Workflow Engine (`internal/workflow/`)
+### Zenflow Engine (`internal/workflow/`)
+
+The Zenflow Engine orchestrates the 7-stage unified workflow that standardizes how teams move from strategy to shipped value. For detailed documentation, see the [Zenflow Guide](../../zen-workflow/).
 
 ```mermaid
 graph LR
-    subgraph "Workflow Components"
+    subgraph "Zenflow Components"
         StateMachine[State Machine<br/>Transition Logic]
         StateStore[State Store<br/>Persistence]
         Executor[Stage Executor<br/>Stage Processing]
-        Validator[Stage Validator<br/>Preconditions]
+        Validator[Quality Gates<br/>Stage Validation]
     end
     
-    subgraph "Workflow Stages"
-        S1[1. Discover]
-        S2[2. Prioritize]
-        S3[3. Design]
-        S4[4. Architect]
-        S5[5. Plan]
-        S6[6. Build]
-        S7[7. Review]
-        S8[8. Test]
-        S9[9. Secure]
-        S10[10. Release]
-        S11[11. Verify]
-        S12[12. Feedback]
+    subgraph "Zenflow Stages"
+        S1[1. Align<br/>Define Success]
+        S2[2. Discover<br/>Gather Evidence]
+        S3[3. Prioritize<br/>Rank by Value]
+        S4[4. Design<br/>Specify Solution]
+        S5[5. Build<br/>Implement]
+        S6[6. Ship<br/>Deploy Safely]
+        S7[7. Learn<br/>Measure Outcomes]
     end
     
     StateMachine --> StateStore
     StateMachine --> Executor
     Executor --> Validator
     
-    S1 --> S2 --> S3 --> S4 --> S5 --> S6
-    S6 --> S7 --> S8 --> S9 --> S10 --> S11 --> S12
+    S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7
+    S7 -.-> S1
 ```
+
+#### Key Features
+- **Cross-functional support**: Product managers, designers, engineers, and analysts use the same workflow
+- **Quality gates**: Automated and manual checkpoints ensure standards before progression
+- **Workflow streams**: Specialized implementations (I2D, C2M, D2S) for different work types
+- **State persistence**: Reliable state storage with crash recovery capabilities
 
 ### Integration Components (`internal/integrations/`)
 

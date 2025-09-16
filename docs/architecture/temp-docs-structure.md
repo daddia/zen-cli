@@ -12,7 +12,7 @@ docs/architecture/
 ├── components/                  # Detailed component documentation
 │   ├── cli-layer.md           # CLI interface details
 │   ├── agent-system.md        # AI agent architecture
-│   ├── workflow-engine.md     # Workflow management
+│   ├── zenflow-engine.md      # Zenflow 7-stage workflow
 │   └── integration-layer.md   # External integrations
 ├── patterns/                    # Architectural patterns & principles
 │   ├── design-patterns.md     # Patterns used (Factory, Command, etc.)
