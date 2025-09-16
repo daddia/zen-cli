@@ -1,51 +1,96 @@
-# Install zen from source
+# Building Zen from Source
 
-1. Verify that you have Go 1.25+ installed
+This guide provides detailed instructions for building Zen CLI from source code.
 
-   ```sh
-   $ go version
-   ```
+## Prerequisites
 
-   If `go` is not installed, follow instructions on [the Go website](https://golang.org/doc/install).
+### Required Tools
 
-2. Clone this repository
+- **Go 1.25+** - Required for building
+- **Git 2.30+** - For cloning the repository  
+- **Make** (optional) - For using build automation
 
-   ```sh
-   $ git clone https://github.com/daddia/zen.git zen
-   $ cd zen
-   ```
+### Verify Prerequisites
 
-3. Build and install
+```bash
+# Check Go version
+go version
 
-   **Unix-like systems**
+# Check Git version  
+git version
 
-   ```sh
-   # installs to '/usr/local' by default; sudo may be required, or sudo -E for configured go environments
-   $ make install
+# Check Make (optional)
+make --version
+```
 
-   # or, install to a different location
-   $ make install prefix=/path/to/gh
-   ```
+If any tools are missing, install them:
+- **Go**: Follow instructions on [the Go website](https://golang.org/doc/install)
+- **Git**: Visit [Git downloads](https://git-scm.com/downloads)
+- **Make**: Install via your package manager
 
-   **Windows**
+## Building from Source
 
-   **Note:** Use one of these alternatives, if `make` is not available.  
+### 1. Clone the Repository
 
-   ```pwsh
-   # build the bin\zen.exe binary (recommended)
-   $ go run script\build.go
-   
-   # Or if you prefer:
-   $ script\build.bat
-   ```
+```bash
+# Clone the official repository
+git clone https://github.com/zen-org/zen.git
+cd zen
 
-   There is no install step available on Windows.
+# Or clone your fork
+git clone https://github.com/YOUR_USERNAME/zen.git
+cd zen
+```
 
-4. Run `zen version` to check if it worked.
+### 2. Build and Install
 
-   **Windows**
+#### Unix-like Systems (Linux/macOS)
 
-   Run `bin\zen version` to check if it worked.
+```bash
+# Build using Make (recommended)
+make build
+
+# Install to /usr/local/bin (may require sudo)
+sudo make install
+
+# Or install to custom location
+make install prefix=$HOME/.local
+
+# Or build directly with Go
+go build -o bin/zen ./cmd/zen
+```
+
+#### Windows
+
+```powershell
+# Build using the build script (recommended)
+go run script\build.go
+
+# Or use the batch script
+.\script\build.bat
+
+# Or build directly with Go
+go build -o bin\zen.exe .\cmd\zen
+
+# Add to PATH manually
+# Copy zen.exe to a directory in your PATH, or
+# Add the bin directory to your PATH environment variable
+```
+
+### 3. Verify Installation
+
+```bash
+# Unix-like systems
+zen version
+
+# Windows (if not in PATH)
+.\bin\zen.exe version
+
+# Expected output
+# Zen CLI version 1.0.0
+# Build: abc1234
+# Date: 2024-03-15
+```
 
 ## Cross-compiling binaries for different platforms
 
@@ -65,6 +110,103 @@ $ GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 make clean bin/zen
 > go run script\build.go clean bin\zen GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0
 ```
 
-Run `zen tool dist list` to list all supported values of GOOS/GOARCH.
+Run `go tool dist list` to see all supported GOOS/GOARCH combinations.
 
-Tip: to reduce the size of the resulting binary, you can use `GO_LDFLAGS="-s -w"`. This omits symbol tables used for debugging. See the list of [supported linker flags](https://golang.org/cmd/link/).
+### Build Optimization
+
+Reduce binary size and add version information:
+
+```bash
+# Optimize for size
+go build -ldflags="-s -w" -o bin/zen ./cmd/zen
+
+# Include version information
+go build -ldflags="-X main.version=1.0.0 -X main.commit=$(git rev-parse HEAD)" -o bin/zen ./cmd/zen
+
+# Full production build
+make build-prod
+```
+
+See [Go linker documentation](https://golang.org/cmd/link/) for all available flags.
+
+## Development Builds
+
+### Fast Development Build
+
+```bash
+# Quick build for testing
+go build -o bin/zen ./cmd/zen
+
+# Run without installing
+./bin/zen --help
+```
+
+### Debug Build
+
+```bash
+# Build with debug symbols
+go build -gcflags="all=-N -l" -o bin/zen ./cmd/zen
+
+# Use with debugger
+gdb ./bin/zen
+# or
+dlv exec ./bin/zen
+```
+
+## Troubleshooting
+
+### Common Build Issues
+
+#### Module Download Errors
+```bash
+# Clear module cache
+go clean -modcache
+
+# Download dependencies again
+go mod download
+```
+
+#### Build Errors
+```bash
+# Ensure dependencies are up to date
+go mod tidy
+
+# Verify module integrity
+go mod verify
+```
+
+#### Permission Errors on Install
+```bash
+# Use sudo for system-wide installation
+sudo make install
+
+# Or install to user directory
+make install prefix=$HOME/.local
+# Add $HOME/.local/bin to PATH
+```
+
+### Platform-Specific Issues
+
+#### macOS Code Signing
+```bash
+# Remove quarantine attribute
+xattr -d com.apple.quarantine ./bin/zen
+
+# Or sign the binary
+codesign -s - ./bin/zen
+```
+
+#### Windows Antivirus
+Windows Defender may flag the new binary. Add an exception or wait for the scan to complete.
+
+#### Linux SELinux
+```bash
+# Set correct context
+chcon -t bin_t ./bin/zen
+```
+
+## Next Steps
+
+- Return to the main [Installation Guide](../user-guide/installation.md)
+- Continue with [Quick Start](../user-guide/quick-start.md)
+- Set up your [Development Environment](../contributing/getting-started.md)
