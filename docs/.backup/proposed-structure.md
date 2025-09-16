@@ -2,7 +2,7 @@
 
 ## Root Directory Structure
 
-```
+```sh
 zen/
 ├── .github/                    # GitHub workflows and templates
 ├── .vscode/                    # VS Code workspace configuration
