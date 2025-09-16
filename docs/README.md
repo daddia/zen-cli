@@ -1,6 +1,6 @@
 # Zen CLI Documentation
 
-Welcome to the comprehensive documentation for the Zen AI-Powered Productivity Suite.
+Welcome to Zen docs! The comprehensive guide to the Zen AI-Powered Productivity Suite.
 
 ## Quick Start
 
