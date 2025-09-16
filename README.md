@@ -1,5 +1,7 @@
 # Zen: AI-Powered Productivity Suite
 
+Zen is the unified control plane for product & engineering.
+
 **Zen** is the definitive platform for AI-assisted productivity, enabling teams to build better products faster through intelligent automation and seamless workflow orchestration.
 
 ## Key Features
