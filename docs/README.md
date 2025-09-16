@@ -12,11 +12,11 @@ New to Zen? Start here:
 
 ## Documentation Sections
 
-### User Guide
+### Getting Started
 
 Complete guide for using Zen CLI:
 
-- **[User Guide Index](getting-started/README.md)** - Full user documentation
+- **[Getting Started Index](getting-started/README.md)** - Full user documentation
 - **[Installation](getting-started/installation.md)** - Installation methods and troubleshooting
 - **[Quick Start](getting-started/quick-start.md)** - Get started quickly
 - **[Configuration](getting-started/configuration.md)** - Configuration reference
@@ -78,7 +78,7 @@ Detailed installation instructions:
 1. Start with [Installation](getting-started/installation.md)
 2. Follow the [Quick Start](getting-started/quick-start.md) guide
 3. Learn about [Configuration](getting-started/configuration.md)
-4. Explore the [User Guide](getting-started/README.md)
+4. Explore all [Getting Started](getting-started/README.md) guides
 
 ### For Developers
 
@@ -155,4 +155,4 @@ This documentation covers Zen CLI version 1.0.0 and later.
 
 ---
 
-**Quick Links**: [User Guide](getting-started/README.md) | [Contributing](contributing/README.md) | [Commands](zen/index.md) | [GitHub](https://github.com/zen-org/zen)
+**Quick Links**: [Getting Started](getting-started/README.md) | [Contributing](contributing/README.md) | [Commands](zen/index.md) | [GitHub](https://github.com/zen-org/zen)
