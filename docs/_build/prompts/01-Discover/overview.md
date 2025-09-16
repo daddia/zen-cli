@@ -9,12 +9,11 @@ Generate a comprehensive yet concise README.md for the project specified in <inp
 
 <policies>
 - **MUST** follow the <output_contract> exactly.
-- **MUST** use simple, plain language with minimal jargon.
 - **MUST** provide 6-8 items for each feature/use case section.
 - **SHOULD** focus on benefits over technical implementation details.
 - **SHOULD** make quick start steps immediately actionable.
 - **MAY** use TBD for unknown information.
-- **MUST NOT** use marketing hype or emojis [[memory:6478893]].
+- **MUST NOT** use marketing hype or emojis.
 - **MUST** maintain professional, helpful tone.
 </policies>
 
