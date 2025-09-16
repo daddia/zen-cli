@@ -144,16 +144,16 @@ zen/
 │   │   ├── decisions/       # Architecture Decision Records
 │   │   └── overview.md      # Architecture overview
 │   ├── cli-structure.md      # Project structure guide
-│   └── roadmap.md           # Development roadmap
-├── scripts/                    # Build and Development Scripts (future)
-├── test/                       # Additional Test Data (future)
+│   └── roadmap.md            # Development roadmap
+├── script/                   # Build and Development Scripts
+├── test/                     # Test Data
 │   ├── fixtures/             # Test fixtures
 │   ├── integration/          # Integration tests
 │   └── e2e/                  # End-to-end tests
 ├── .github/                    # GitHub-specific Files
 │   └── workflows/            # CI/CD Workflows
-├── build/                      # Build Artifacts (future)
-├── tools/                      # Development Tools (future)
+├── build/                      # Build Artifacts
+├── tools/                      # Development Tools
 ├── Makefile                    # Build Automation
 ├── Dockerfile                  # Container Definition
 ├── go.mod                      # Go Module Definition
