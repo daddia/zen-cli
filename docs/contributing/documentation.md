@@ -158,7 +158,7 @@ Use lists for clarity:
 
 ```markdown
 Requirements:
-- Go 1.23 or higher
+- Go 1.25 or higher
 - Git 2.30 or higher
 - 4GB RAM minimum
 

@@ -5,7 +5,7 @@ This guide helps you set up your development environment for contributing to Zen
 ## Prerequisites
 
 ### Required Tools
-- **Go 1.23+** - Primary development language
+- **Go 1.25+** - Primary development language
 - **Git 2.30+** - Version control
 - **Make** - Build automation (optional but recommended)
 - **Docker** - For containerized testing (optional)
