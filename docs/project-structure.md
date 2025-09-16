@@ -24,13 +24,12 @@ zen/
 **Key Packages**
 
 At a high level, these areas make up the `zen` project:
-- [`cmd/`](../cmd) - `main` packages for building binaries such as the `zen` executable
+- [`cmd/zen/`](../cmd/zen/) - `main` packages for building binaries such as the `zen` executable
 - [`pkg/`](../pkg) - most other packages, including the implementation of individual zen commands
 - [`docs/`](../docs) - documentation for maintainers and contributors
 - [`scripts/`](../scripts) - build and release scripts
 - [`internal/`](../internal) - Go packages hizenly specific to our needs and thus internal
 - [`go.mod`](../go.mod) - external Go dependencies for this project, automatically fetched by Go at build time
-
 
 ## Command-line help text
 
