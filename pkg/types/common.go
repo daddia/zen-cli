@@ -24,6 +24,15 @@ const (
 	// Workspace error codes
 	ErrorCodeWorkspaceNotInit ErrorCode = "WORKSPACE_NOT_INITIALIZED"
 	ErrorCodeInvalidWorkspace ErrorCode = "INVALID_WORKSPACE"
+
+	// Asset error codes
+	ErrorCodeAssetNotFound        ErrorCode = "ASSET_NOT_FOUND"
+	ErrorCodeAuthenticationFailed ErrorCode = "AUTHENTICATION_FAILED"
+	ErrorCodeNetworkError         ErrorCode = "NETWORK_ERROR"
+	ErrorCodeCacheError           ErrorCode = "CACHE_ERROR"
+	ErrorCodeIntegrityError       ErrorCode = "INTEGRITY_ERROR"
+	ErrorCodeRateLimited          ErrorCode = "RATE_LIMITED"
+	ErrorCodeRepositoryError      ErrorCode = "REPOSITORY_ERROR"
 )
 
 // Error represents a standardized error response

@@ -2,10 +2,13 @@ package factory
 
 import (
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/internal/logging"
 	"github.com/daddia/zen/internal/workspace"
+	"github.com/daddia/zen/pkg/assets"
 	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -25,6 +28,7 @@ func New() *cmdutil.Factory {
 	f.Logger = loggerFunc(f)              // Depends on Config
 	f.WorkspaceManager = workspaceFunc(f) // Depends on Config, Logger
 	f.AgentManager = agentFunc(f)         // Depends on Config, Logger
+	f.AssetClient = assetClientFunc(f)    // Depends on Config, Logger
 
 	return f
 }
@@ -196,4 +200,76 @@ func (a *agentManager) List() ([]string, error) {
 func (a *agentManager) Execute(name string, input interface{}) (interface{}, error) {
 	// Placeholder implementation
 	return nil, nil
+}
+
+func assetClientFunc(f *cmdutil.Factory) func() (assets.AssetClientInterface, error) {
+	var cachedClient assets.AssetClientInterface
+	var clientError error
+
+	return func() (assets.AssetClientInterface, error) {
+		if cachedClient != nil || clientError != nil {
+			return cachedClient, clientError
+		}
+
+		cfg, err := f.Config()
+		if err != nil {
+			clientError = err
+			return nil, clientError
+		}
+
+		logger := f.Logger
+
+		// Get asset configuration from main config
+		assetConfig := getAssetConfig(cfg)
+
+		// Create components
+		auth := assets.NewTokenAuthProvider(logger)
+
+		// Set up cache path
+		cachePath := assetConfig.CachePath
+		if strings.HasPrefix(cachePath, "~/") {
+			home, err := os.UserHomeDir()
+			if err != nil {
+				clientError = err
+				return nil, clientError
+			}
+			cachePath = filepath.Join(home, cachePath[2:])
+		}
+
+		cache := assets.NewFileCacheManager(
+			cachePath,
+			assetConfig.CacheSizeMB,
+			assetConfig.DefaultTTL,
+			logger,
+		)
+
+		// Set up repository path
+		repoPath := filepath.Join(cachePath, "repository")
+		git := assets.NewGitCLIRepository(repoPath, logger, auth, assetConfig.AuthProvider)
+
+		parser := assets.NewYAMLManifestParser(logger)
+
+		// Create client
+		cachedClient = assets.NewClient(assetConfig, logger, auth, cache, git, parser)
+
+		return cachedClient, nil
+	}
+}
+
+func getAssetConfig(cfg *config.Config) assets.AssetConfig {
+	// Extract asset configuration from main config
+	// This would be enhanced to read from cfg.Assets or similar
+	config := assets.DefaultAssetConfig()
+
+	// Override with configuration values if available
+	// For now, use environment variables and defaults
+	if repoURL := os.Getenv("ZEN_ASSET_REPOSITORY_URL"); repoURL != "" {
+		config.RepositoryURL = repoURL
+	}
+
+	if provider := os.Getenv("ZEN_AUTH_PROVIDER"); provider != "" {
+		config.AuthProvider = provider
+	}
+
+	return config
 }
