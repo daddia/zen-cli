@@ -218,11 +218,12 @@ func (c *Client) SyncRepository(ctx context.Context, req SyncRequest) (*SyncResu
 
 			// Calculate changes (simplified)
 			newCount := len(newManifest)
-			if newCount > oldCount {
+			switch {
+			case newCount > oldCount:
 				result.AssetsAdded = newCount - oldCount
-			} else if newCount < oldCount {
+			case newCount < oldCount:
 				result.AssetsRemoved = oldCount - newCount
-			} else {
+			default:
 				result.AssetsUpdated = newCount // Assume all updated if same count
 			}
 		}

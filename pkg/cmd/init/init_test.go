@@ -319,11 +319,12 @@ func TestInitCommand_ErrorHandling(t *testing.T) {
 
 			err = cmd.Execute()
 
-			if tt.wantSilent {
+			switch {
+			case tt.wantSilent:
 				assert.Equal(t, cmdutil.ErrSilent, err)
-			} else if tt.expectedError != "" {
+			case tt.expectedError != "":
 				require.Error(t, err)
-			} else {
+			default:
 				require.NoError(t, err) // Should succeed for reinitialization
 			}
 
