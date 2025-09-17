@@ -197,7 +197,7 @@ func TestPlaceholderCommands(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test placeholder commands exist
-	placeholderCommands := []string{"workflow", "product", "integrations", "templates", "agents"}
+	placeholderCommands := []string{"workflow", "product", "integrations", "agents"}
 
 	for _, cmdName := range placeholderCommands {
 		subcmd, _, err := cmd.Find([]string{cmdName})

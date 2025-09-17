@@ -159,7 +159,7 @@ func TestE2E_WorkspaceForceInit(t *testing.T) {
 	// Initialize with force flag (should succeed)
 	stdout, stderr, err = runZenCommand(t, tempDir, "init", "--force")
 	require.NoError(t, err, "force init failed: %s", stderr)
-	assert.Contains(t, stdout, "Initialized empty Zen workspace")
+	assert.Contains(t, stdout, "Reinitialized existing Zen workspace")
 
 	// For E2E tests, focus on command behavior rather than filesystem details
 	// The actual filesystem operations are tested in unit and integration tests

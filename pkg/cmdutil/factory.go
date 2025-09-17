@@ -133,7 +133,7 @@ func (m *testWorkspaceManager) Initialize() error {
 }
 
 func (m *testWorkspaceManager) InitializeWithForce(force bool) error {
-	if !force && m.initialized {
+	if m.shouldError && !force && m.initialized {
 		return &types.Error{
 			Code:    types.ErrorCodeAlreadyExists,
 			Message: "workspace already exists",

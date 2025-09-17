@@ -33,14 +33,16 @@ func TestAuthOptionsValidation(t *testing.T) {
 		errMsg   string
 	}{
 		{
-			name:     "valid github provider",
+			name:     "valid github provider without token",
 			provider: "github",
-			wantErr:  false,
+			wantErr:  true, // Should fail because no token provided and prompting disabled
+			errMsg:   "authentication token required but prompting is disabled",
 		},
 		{
-			name:     "valid gitlab provider",
+			name:     "valid gitlab provider without token",
 			provider: "gitlab",
-			wantErr:  false,
+			wantErr:  true, // Should fail because no token provided and prompting disabled
+			errMsg:   "authentication token required but prompting is disabled",
 		},
 		{
 			name:     "invalid provider",
@@ -80,12 +82,8 @@ func TestAuthOptionsValidation(t *testing.T) {
 				if tt.errMsg != "" {
 					assert.Contains(t, err.Error(), tt.errMsg)
 				}
-			} else if tt.provider != "" {
-				// Note: In real implementation, this would succeed with proper auth
-				// For now, we expect it to work with the mock implementation
-				// Should show the note about implementation
-				output := stderr.(*bytes.Buffer).String()
-				assert.Contains(t, output, "Authentication implementation requires interface updates")
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}

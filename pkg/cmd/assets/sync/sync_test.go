@@ -10,6 +10,7 @@ import (
 	"github.com/daddia/zen/pkg/assets"
 	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/daddia/zen/pkg/iostreams"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -180,11 +181,16 @@ func TestSyncJSONOutput(t *testing.T) {
 		}, nil
 	}
 
-	cmd := NewCmdAssetsSync(f)
-	cmd.SetArgs([]string{"--output", "json"})
-	cmd.SetOut(stdout)
+	// Create parent command to inherit persistent flags
+	parentCmd := &cobra.Command{Use: "assets"}
+	parentCmd.PersistentFlags().StringP("output", "o", "text", "Output format")
 
-	err := cmd.Execute()
+	cmd := NewCmdAssetsSync(f)
+	parentCmd.AddCommand(cmd)
+	parentCmd.SetArgs([]string{"sync", "--output", "json"})
+	parentCmd.SetOut(stdout)
+
+	err := parentCmd.Execute()
 	require.NoError(t, err)
 
 	output := stdout.(*bytes.Buffer).String()
@@ -219,11 +225,16 @@ func TestSyncYAMLOutput(t *testing.T) {
 		}, nil
 	}
 
-	cmd := NewCmdAssetsSync(f)
-	cmd.SetArgs([]string{"--output", "yaml"})
-	cmd.SetOut(stdout)
+	// Create parent command to inherit persistent flags
+	parentCmd := &cobra.Command{Use: "assets"}
+	parentCmd.PersistentFlags().StringP("output", "o", "text", "Output format")
 
-	err := cmd.Execute()
+	cmd := NewCmdAssetsSync(f)
+	parentCmd.AddCommand(cmd)
+	parentCmd.SetArgs([]string{"sync", "--output", "yaml"})
+	parentCmd.SetOut(stdout)
+
+	err := parentCmd.Execute()
 	require.NoError(t, err)
 
 	output := stdout.(*bytes.Buffer).String()
@@ -243,13 +254,15 @@ func TestSyncWithFlags(t *testing.T) {
 	stdout := io.Out
 	f := cmdutil.NewTestFactory(io)
 
+	mockClient := &mockSyncAssetClient{
+		captureRequest: true,
+		result: &assets.SyncResult{
+			Status: "success",
+		},
+	}
+
 	f.AssetClient = func() (assets.AssetClientInterface, error) {
-		return &mockSyncAssetClient{
-			captureRequest: true,
-			result: &assets.SyncResult{
-				Status: "success",
-			},
-		}, nil
+		return mockClient, nil
 	}
 
 	cmd := NewCmdAssetsSync(f)
@@ -265,9 +278,6 @@ func TestSyncWithFlags(t *testing.T) {
 	require.NoError(t, err)
 
 	// The mock client should have captured the sync request
-	client, _ := f.AssetClient()
-	mockClient := client.(*mockSyncAssetClient)
-
 	assert.True(t, mockClient.lastRequest.Force)
 	assert.True(t, mockClient.lastRequest.Shallow)
 	assert.Equal(t, "develop", mockClient.lastRequest.Branch)

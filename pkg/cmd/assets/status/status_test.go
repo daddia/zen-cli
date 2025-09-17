@@ -10,6 +10,7 @@ import (
 	"github.com/daddia/zen/pkg/assets"
 	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/daddia/zen/pkg/iostreams"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -83,11 +84,16 @@ func TestStatusJSONOutput(t *testing.T) {
 		}, nil
 	}
 
-	cmd := NewCmdAssetsStatus(f)
-	cmd.SetArgs([]string{"--output", "json"})
-	cmd.SetOut(stdout)
+	// Create parent command to inherit persistent flags
+	parentCmd := &cobra.Command{Use: "assets"}
+	parentCmd.PersistentFlags().StringP("output", "o", "text", "Output format")
 
-	err := cmd.Execute()
+	cmd := NewCmdAssetsStatus(f)
+	parentCmd.AddCommand(cmd)
+	parentCmd.SetArgs([]string{"status", "--output", "json"})
+	parentCmd.SetOut(stdout)
+
+	err := parentCmd.Execute()
 	require.NoError(t, err)
 
 	output := stdout.(*bytes.Buffer).String()
@@ -125,11 +131,16 @@ func TestStatusYAMLOutput(t *testing.T) {
 		}, nil
 	}
 
-	cmd := NewCmdAssetsStatus(f)
-	cmd.SetArgs([]string{"--output", "yaml"})
-	cmd.SetOut(stdout)
+	// Create parent command to inherit persistent flags
+	parentCmd := &cobra.Command{Use: "assets"}
+	parentCmd.PersistentFlags().StringP("output", "o", "text", "Output format")
 
-	err := cmd.Execute()
+	cmd := NewCmdAssetsStatus(f)
+	parentCmd.AddCommand(cmd)
+	parentCmd.SetArgs([]string{"status", "--output", "yaml"})
+	parentCmd.SetOut(stdout)
+
+	err := parentCmd.Execute()
 	require.NoError(t, err)
 
 	output := stdout.(*bytes.Buffer).String()
@@ -166,7 +177,7 @@ func TestStatusWithCacheError(t *testing.T) {
 	require.NoError(t, err) // Should not fail completely
 
 	output := stdout.(*bytes.Buffer).String()
-	assert.Contains(t, output, "unavailable")
+	assert.Contains(t, output, "Unavailable")
 }
 
 func TestFormatTime(t *testing.T) {
