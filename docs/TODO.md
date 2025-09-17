@@ -40,7 +40,7 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
   - **Deliverable**: Asset client with GitHub authentication and local caching
   - **Acceptance**: Can sync assets to `~/.zen/cache/assets/` with offline support
 
-- [ ] **[ZEN-008] Asset Commands** *(M)*
+- [x] **[ZEN-008] Asset Commands** *(M)*
   - **Deliverable**: `zen assets auth`, `zen assets sync`, `zen assets list`
   - **Acceptance**: Can authenticate, sync, and list available assets
 
