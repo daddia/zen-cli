@@ -219,13 +219,7 @@ func (p *YAMLManifestParser) convertManifestAsset(manifestAsset manifestAsset, a
 	// Convert variables
 	var variables []Variable
 	for _, v := range manifestAsset.Variables {
-		variables = append(variables, Variable{
-			Name:        v.Name,
-			Description: v.Description,
-			Required:    v.Required,
-			Type:        v.Type,
-			Default:     v.Default,
-		})
+		variables = append(variables, Variable(v))
 	}
 
 	return AssetMetadata{

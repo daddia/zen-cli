@@ -183,23 +183,153 @@ type CacheManager interface {
 
 // GitRepository represents Git repository operations interface
 type GitRepository interface {
-	// Clone clones the repository to local cache
+	// Basic repository operations
 	Clone(ctx context.Context, url, branch string, shallow bool) error
-
-	// Pull updates the local repository
 	Pull(ctx context.Context) error
-
-	// GetFile retrieves a file from the repository
 	GetFile(ctx context.Context, path string) ([]byte, error)
-
-	// ListFiles lists all files in the repository
 	ListFiles(ctx context.Context, pattern string) ([]string, error)
-
-	// GetLastCommit returns the last commit hash
 	GetLastCommit(ctx context.Context) (string, error)
-
-	// IsClean returns true if the repository has no uncommitted changes
 	IsClean(ctx context.Context) (bool, error)
+
+	// Generic Git command execution - access to ALL Git commands
+	ExecuteCommand(ctx context.Context, args ...string) (string, error)
+	ExecuteCommandWithOutput(ctx context.Context, args ...string) ([]byte, error)
+
+	// Branching operations
+	CreateBranch(ctx context.Context, name string) error
+	DeleteBranch(ctx context.Context, name string, force bool) error
+	ListBranches(ctx context.Context, remote bool) ([]Branch, error)
+	SwitchBranch(ctx context.Context, name string) error
+	GetCurrentBranch(ctx context.Context) (string, error)
+
+	// Commit operations
+	Commit(ctx context.Context, message string, files ...string) error
+	GetCommitHistory(ctx context.Context, limit int) ([]Commit, error)
+	ShowCommit(ctx context.Context, hash string) (CommitDetails, error)
+	AddFiles(ctx context.Context, files ...string) error
+
+	// Merge and Rebase
+	Merge(ctx context.Context, branch string, strategy string) error
+	Rebase(ctx context.Context, branch string, interactive bool) error
+
+	// Stashing
+	Stash(ctx context.Context, message string) error
+	StashPop(ctx context.Context, index int) error
+	ListStashes(ctx context.Context) ([]Stash, error)
+
+	// Remote operations
+	AddRemote(ctx context.Context, name, url string) error
+	ListRemotes(ctx context.Context) ([]Remote, error)
+	Fetch(ctx context.Context, remote string) error
+	Push(ctx context.Context, remote, branch string) error
+
+	// Configuration
+	GetConfig(ctx context.Context, key string) (string, error)
+	SetConfig(ctx context.Context, key, value string, global bool) error
+
+	// Advanced operations
+	Diff(ctx context.Context, options DiffOptions) (string, error)
+	Log(ctx context.Context, options LogOptions) ([]Commit, error)
+	Blame(ctx context.Context, file string) ([]BlameLine, error)
+	Tag(ctx context.Context, name, message string) error
+	ListTags(ctx context.Context) ([]Tag, error)
+	Status(ctx context.Context) (StatusInfo, error)
+}
+
+// Git data structures for enhanced operations
+
+// Branch represents a Git branch
+type Branch struct {
+	Name      string `json:"name"`
+	IsCurrent bool   `json:"is_current"`
+	IsRemote  bool   `json:"is_remote"`
+	Commit    string `json:"commit"`
+	Message   string `json:"message"`
+}
+
+// Commit represents a Git commit
+type Commit struct {
+	Hash      string    `json:"hash"`
+	Author    string    `json:"author"`
+	Email     string    `json:"email"`
+	Date      time.Time `json:"date"`
+	Message   string    `json:"message"`
+	ShortHash string    `json:"short_hash"`
+}
+
+// CommitDetails represents detailed commit information
+type CommitDetails struct {
+	Commit
+	Files     []string `json:"files"`
+	Insertions int     `json:"insertions"`
+	Deletions  int     `json:"deletions"`
+	Diff      string   `json:"diff"`
+}
+
+// Stash represents a Git stash
+type Stash struct {
+	Index   int       `json:"index"`
+	Message string    `json:"message"`
+	Date    time.Time `json:"date"`
+	Branch  string    `json:"branch"`
+}
+
+// Remote represents a Git remote
+type Remote struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
+}
+
+// Tag represents a Git tag
+type Tag struct {
+	Name    string    `json:"name"`
+	Commit  string    `json:"commit"`
+	Message string    `json:"message"`
+	Date    time.Time `json:"date"`
+}
+
+// BlameLine represents a line in git blame output
+type BlameLine struct {
+	Commit   string `json:"commit"`
+	Author   string `json:"author"`
+	Date     string `json:"date"`
+	LineNum  int    `json:"line_num"`
+	Content  string `json:"content"`
+	Filename string `json:"filename"`
+}
+
+// StatusInfo represents git status information
+type StatusInfo struct {
+	Branch         string            `json:"branch"`
+	Clean          bool              `json:"clean"`
+	StagedFiles    []string          `json:"staged_files"`
+	ModifiedFiles  []string          `json:"modified_files"`
+	UntrackedFiles []string          `json:"untracked_files"`
+	DeletedFiles   []string          `json:"deleted_files"`
+	RenamedFiles   map[string]string `json:"renamed_files"`
+}
+
+// DiffOptions represents options for git diff
+type DiffOptions struct {
+	Files     []string `json:"files,omitempty"`
+	Staged    bool     `json:"staged,omitempty"`
+	Unstaged  bool     `json:"unstaged,omitempty"`
+	Commit    string   `json:"commit,omitempty"`
+	BaseCommit string  `json:"base_commit,omitempty"`
+	Context   int      `json:"context,omitempty"`
+}
+
+// LogOptions represents options for git log
+type LogOptions struct {
+	Limit     int      `json:"limit,omitempty"`
+	Since     string   `json:"since,omitempty"`
+	Until     string   `json:"until,omitempty"`
+	Author    string   `json:"author,omitempty"`
+	Grep      string   `json:"grep,omitempty"`
+	Files     []string `json:"files,omitempty"`
+	Oneline   bool     `json:"oneline,omitempty"`
+	Graph     bool     `json:"graph,omitempty"`
+	All       bool     `json:"all,omitempty"`
 }
 
 // ManifestParser represents manifest parsing interface

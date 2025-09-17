@@ -118,6 +118,177 @@ func (m *mockGitRepository) IsClean(ctx context.Context) (bool, error) {
 	return args.Bool(0), args.Error(1)
 }
 
+// Enhanced Git operations - Mock implementations
+func (m *mockGitRepository) ExecuteCommand(ctx context.Context, args ...string) (string, error) {
+	mockArgs := m.Called(ctx, args)
+	return mockArgs.String(0), mockArgs.Error(1)
+}
+
+func (m *mockGitRepository) ExecuteCommandWithOutput(ctx context.Context, args ...string) ([]byte, error) {
+	mockArgs := m.Called(ctx, args)
+	if mockArgs.Get(0) == nil {
+		return nil, mockArgs.Error(1)
+	}
+	return mockArgs.Get(0).([]byte), mockArgs.Error(1)
+}
+
+func (m *mockGitRepository) CreateBranch(ctx context.Context, name string) error {
+	args := m.Called(ctx, name)
+	return args.Error(0)
+}
+
+func (m *mockGitRepository) DeleteBranch(ctx context.Context, name string, force bool) error {
+	args := m.Called(ctx, name, force)
+	return args.Error(0)
+}
+
+func (m *mockGitRepository) ListBranches(ctx context.Context, remote bool) ([]Branch, error) {
+	args := m.Called(ctx, remote)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]Branch), args.Error(1)
+}
+
+func (m *mockGitRepository) SwitchBranch(ctx context.Context, name string) error {
+	args := m.Called(ctx, name)
+	return args.Error(0)
+}
+
+func (m *mockGitRepository) GetCurrentBranch(ctx context.Context) (string, error) {
+	args := m.Called(ctx)
+	return args.String(0), args.Error(1)
+}
+
+func (m *mockGitRepository) Commit(ctx context.Context, message string, files ...string) error {
+	args := m.Called(ctx, message, files)
+	return args.Error(0)
+}
+
+func (m *mockGitRepository) GetCommitHistory(ctx context.Context, limit int) ([]Commit, error) {
+	args := m.Called(ctx, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]Commit), args.Error(1)
+}
+
+func (m *mockGitRepository) ShowCommit(ctx context.Context, hash string) (CommitDetails, error) {
+	args := m.Called(ctx, hash)
+	if args.Get(0) == nil {
+		return CommitDetails{}, args.Error(1)
+	}
+	return args.Get(0).(CommitDetails), args.Error(1)
+}
+
+func (m *mockGitRepository) AddFiles(ctx context.Context, files ...string) error {
+	args := m.Called(ctx, files)
+	return args.Error(0)
+}
+
+func (m *mockGitRepository) Merge(ctx context.Context, branch string, strategy string) error {
+	args := m.Called(ctx, branch, strategy)
+	return args.Error(0)
+}
+
+func (m *mockGitRepository) Rebase(ctx context.Context, branch string, interactive bool) error {
+	args := m.Called(ctx, branch, interactive)
+	return args.Error(0)
+}
+
+func (m *mockGitRepository) Stash(ctx context.Context, message string) error {
+	args := m.Called(ctx, message)
+	return args.Error(0)
+}
+
+func (m *mockGitRepository) StashPop(ctx context.Context, index int) error {
+	args := m.Called(ctx, index)
+	return args.Error(0)
+}
+
+func (m *mockGitRepository) ListStashes(ctx context.Context) ([]Stash, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]Stash), args.Error(1)
+}
+
+func (m *mockGitRepository) AddRemote(ctx context.Context, name, url string) error {
+	args := m.Called(ctx, name, url)
+	return args.Error(0)
+}
+
+func (m *mockGitRepository) ListRemotes(ctx context.Context) ([]Remote, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]Remote), args.Error(1)
+}
+
+func (m *mockGitRepository) Fetch(ctx context.Context, remote string) error {
+	args := m.Called(ctx, remote)
+	return args.Error(0)
+}
+
+func (m *mockGitRepository) Push(ctx context.Context, remote, branch string) error {
+	args := m.Called(ctx, remote, branch)
+	return args.Error(0)
+}
+
+func (m *mockGitRepository) GetConfig(ctx context.Context, key string) (string, error) {
+	args := m.Called(ctx, key)
+	return args.String(0), args.Error(1)
+}
+
+func (m *mockGitRepository) SetConfig(ctx context.Context, key, value string, global bool) error {
+	args := m.Called(ctx, key, value, global)
+	return args.Error(0)
+}
+
+func (m *mockGitRepository) Diff(ctx context.Context, options DiffOptions) (string, error) {
+	args := m.Called(ctx, options)
+	return args.String(0), args.Error(1)
+}
+
+func (m *mockGitRepository) Log(ctx context.Context, options LogOptions) ([]Commit, error) {
+	args := m.Called(ctx, options)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]Commit), args.Error(1)
+}
+
+func (m *mockGitRepository) Blame(ctx context.Context, file string) ([]BlameLine, error) {
+	args := m.Called(ctx, file)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]BlameLine), args.Error(1)
+}
+
+func (m *mockGitRepository) Tag(ctx context.Context, name, message string) error {
+	args := m.Called(ctx, name, message)
+	return args.Error(0)
+}
+
+func (m *mockGitRepository) ListTags(ctx context.Context) ([]Tag, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]Tag), args.Error(1)
+}
+
+func (m *mockGitRepository) Status(ctx context.Context) (StatusInfo, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return StatusInfo{}, args.Error(1)
+	}
+	return args.Get(0).(StatusInfo), args.Error(1)
+}
+
 type mockManifestParser struct {
 	mock.Mock
 }
