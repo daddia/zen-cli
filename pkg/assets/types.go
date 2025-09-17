@@ -260,10 +260,10 @@ type Commit struct {
 // CommitDetails represents detailed commit information
 type CommitDetails struct {
 	Commit
-	Files     []string `json:"files"`
-	Insertions int     `json:"insertions"`
-	Deletions  int     `json:"deletions"`
-	Diff      string   `json:"diff"`
+	Files      []string `json:"files"`
+	Insertions int      `json:"insertions"`
+	Deletions  int      `json:"deletions"`
+	Diff       string   `json:"diff"`
 }
 
 // Stash represents a Git stash
@@ -311,25 +311,25 @@ type StatusInfo struct {
 
 // DiffOptions represents options for git diff
 type DiffOptions struct {
-	Files     []string `json:"files,omitempty"`
-	Staged    bool     `json:"staged,omitempty"`
-	Unstaged  bool     `json:"unstaged,omitempty"`
-	Commit    string   `json:"commit,omitempty"`
-	BaseCommit string  `json:"base_commit,omitempty"`
-	Context   int      `json:"context,omitempty"`
+	Files      []string `json:"files,omitempty"`
+	Staged     bool     `json:"staged,omitempty"`
+	Unstaged   bool     `json:"unstaged,omitempty"`
+	Commit     string   `json:"commit,omitempty"`
+	BaseCommit string   `json:"base_commit,omitempty"`
+	Context    int      `json:"context,omitempty"`
 }
 
 // LogOptions represents options for git log
 type LogOptions struct {
-	Limit     int      `json:"limit,omitempty"`
-	Since     string   `json:"since,omitempty"`
-	Until     string   `json:"until,omitempty"`
-	Author    string   `json:"author,omitempty"`
-	Grep      string   `json:"grep,omitempty"`
-	Files     []string `json:"files,omitempty"`
-	Oneline   bool     `json:"oneline,omitempty"`
-	Graph     bool     `json:"graph,omitempty"`
-	All       bool     `json:"all,omitempty"`
+	Limit   int      `json:"limit,omitempty"`
+	Since   string   `json:"since,omitempty"`
+	Until   string   `json:"until,omitempty"`
+	Author  string   `json:"author,omitempty"`
+	Grep    string   `json:"grep,omitempty"`
+	Files   []string `json:"files,omitempty"`
+	Oneline bool     `json:"oneline,omitempty"`
+	Graph   bool     `json:"graph,omitempty"`
+	All     bool     `json:"all,omitempty"`
 }
 
 // ManifestParser represents manifest parsing interface

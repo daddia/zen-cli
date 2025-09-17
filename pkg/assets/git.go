@@ -265,7 +265,7 @@ func (g *GitCLIRepository) CreateBranch(ctx context.Context, name string) error 
 // DeleteBranch deletes a branch
 func (g *GitCLIRepository) DeleteBranch(ctx context.Context, name string, force bool) error {
 	g.logger.Debug("deleting branch", "name", name, "force", force)
-	
+
 	args := []string{"branch"}
 	if force {
 		args = append(args, "-D")
@@ -273,32 +273,32 @@ func (g *GitCLIRepository) DeleteBranch(ctx context.Context, name string, force 
 		args = append(args, "-d")
 	}
 	args = append(args, name)
-	
+
 	return g.executeGitCommand(ctx, g.repoPath, args...)
 }
 
 // ListBranches lists all branches
 func (g *GitCLIRepository) ListBranches(ctx context.Context, remote bool) ([]Branch, error) {
 	g.logger.Debug("listing branches", "remote", remote)
-	
+
 	args := []string{"branch"}
 	if remote {
 		args = append(args, "-r")
 	}
 	args = append(args, "--format", "%(refname:short)|%(objectname)|%(contents:subject)")
-	
+
 	output, err := g.executeGitCommandWithOutput(ctx, g.repoPath, args...)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var branches []Branch
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 	for _, line := range lines {
 		if line == "" {
 			continue
 		}
-		
+
 		parts := strings.Split(line, "|")
 		if len(parts) >= 3 {
 			branch := Branch{
@@ -310,7 +310,7 @@ func (g *GitCLIRepository) ListBranches(ctx context.Context, remote bool) ([]Bra
 			branches = append(branches, branch)
 		}
 	}
-	
+
 	return branches, nil
 }
 
@@ -323,12 +323,12 @@ func (g *GitCLIRepository) SwitchBranch(ctx context.Context, name string) error 
 // GetCurrentBranch returns the current branch name
 func (g *GitCLIRepository) GetCurrentBranch(ctx context.Context) (string, error) {
 	g.logger.Debug("getting current branch")
-	
+
 	output, err := g.executeGitCommandWithOutput(ctx, g.repoPath, "rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
 		return "", err
 	}
-	
+
 	return strings.TrimSpace(output), nil
 }
 
@@ -337,7 +337,7 @@ func (g *GitCLIRepository) GetCurrentBranch(ctx context.Context) (string, error)
 // Commit commits changes to the repository
 func (g *GitCLIRepository) Commit(ctx context.Context, message string, files ...string) error {
 	g.logger.Debug("committing changes", "message", message, "files", files)
-	
+
 	// Add files if specified
 	if len(files) > 0 {
 		args := append([]string{"add"}, files...)
@@ -345,7 +345,7 @@ func (g *GitCLIRepository) Commit(ctx context.Context, message string, files ...
 			return err
 		}
 	}
-	
+
 	// Commit with message
 	return g.executeGitCommand(ctx, g.repoPath, "commit", "-m", message)
 }
@@ -353,7 +353,7 @@ func (g *GitCLIRepository) Commit(ctx context.Context, message string, files ...
 // AddFiles adds files to the staging area
 func (g *GitCLIRepository) AddFiles(ctx context.Context, files ...string) error {
 	g.logger.Debug("adding files to staging", "files", files)
-	
+
 	args := append([]string{"add"}, files...)
 	return g.executeGitCommand(ctx, g.repoPath, args...)
 }
@@ -361,24 +361,24 @@ func (g *GitCLIRepository) AddFiles(ctx context.Context, files ...string) error 
 // GetCommitHistory returns commit history
 func (g *GitCLIRepository) GetCommitHistory(ctx context.Context, limit int) ([]Commit, error) {
 	g.logger.Debug("getting commit history", "limit", limit)
-	
+
 	args := []string{"log", "--format=%H|%an|%ae|%ad|%s", "--date=iso"}
 	if limit > 0 {
 		args = append(args, fmt.Sprintf("-%d", limit))
 	}
-	
+
 	output, err := g.executeGitCommandWithOutput(ctx, g.repoPath, args...)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var commits []Commit
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 	for _, line := range lines {
 		if line == "" {
 			continue
 		}
-		
+
 		parts := strings.Split(line, "|")
 		if len(parts) >= 5 {
 			date, _ := time.Parse("2006-01-02 15:04:05 -0700", parts[3])
@@ -393,20 +393,20 @@ func (g *GitCLIRepository) GetCommitHistory(ctx context.Context, limit int) ([]C
 			commits = append(commits, commit)
 		}
 	}
-	
+
 	return commits, nil
 }
 
 // ShowCommit shows detailed commit information
 func (g *GitCLIRepository) ShowCommit(ctx context.Context, hash string) (CommitDetails, error) {
 	g.logger.Debug("showing commit details", "hash", hash)
-	
+
 	// Get basic commit info
 	output, err := g.executeGitCommandWithOutput(ctx, g.repoPath, "show", "--stat", "--format=%H|%an|%ae|%ad|%s", hash)
 	if err != nil {
 		return CommitDetails{}, err
 	}
-	
+
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 	if len(lines) == 0 {
 		return CommitDetails{}, &AssetClientError{
@@ -414,7 +414,7 @@ func (g *GitCLIRepository) ShowCommit(ctx context.Context, hash string) (CommitD
 			Message: "commit not found",
 		}
 	}
-	
+
 	// Parse commit info
 	parts := strings.Split(lines[0], "|")
 	if len(parts) < 5 {
@@ -423,7 +423,7 @@ func (g *GitCLIRepository) ShowCommit(ctx context.Context, hash string) (CommitD
 			Message: "invalid commit format",
 		}
 	}
-	
+
 	date, _ := time.Parse("2006-01-02 15:04:05 -0700", parts[3])
 	commit := Commit{
 		Hash:      parts[0],
@@ -433,18 +433,18 @@ func (g *GitCLIRepository) ShowCommit(ctx context.Context, hash string) (CommitD
 		Message:   parts[4],
 		ShortHash: parts[0][:8],
 	}
-	
+
 	// Get diff
 	diffOutput, err := g.executeGitCommandWithOutput(ctx, g.repoPath, "show", "--format=", hash)
 	if err != nil {
 		diffOutput = ""
 	}
-	
+
 	// Parse file changes from stat output
 	var files []string
 	insertions := 0
 	deletions := 0
-	
+
 	for _, line := range lines[1:] {
 		if strings.Contains(line, "|") && strings.Contains(line, "file") {
 			// Parse file change stats
@@ -452,7 +452,7 @@ func (g *GitCLIRepository) ShowCommit(ctx context.Context, hash string) (CommitD
 			if len(parts) >= 2 {
 				filename := strings.TrimSpace(parts[0])
 				files = append(files, filename)
-				
+
 				// Parse insertions/deletions from stat
 				stats := strings.TrimSpace(parts[1])
 				if strings.Contains(stats, "insertion") {
@@ -465,7 +465,7 @@ func (g *GitCLIRepository) ShowCommit(ctx context.Context, hash string) (CommitD
 			}
 		}
 	}
-	
+
 	return CommitDetails{
 		Commit:     commit,
 		Files:      files,
@@ -480,26 +480,26 @@ func (g *GitCLIRepository) ShowCommit(ctx context.Context, hash string) (CommitD
 // Merge merges a branch into current branch
 func (g *GitCLIRepository) Merge(ctx context.Context, branch string, strategy string) error {
 	g.logger.Debug("merging branch", "branch", branch, "strategy", strategy)
-	
+
 	args := []string{"merge"}
 	if strategy != "" {
 		args = append(args, "-s", strategy)
 	}
 	args = append(args, branch)
-	
+
 	return g.executeGitCommand(ctx, g.repoPath, args...)
 }
 
 // Rebase rebases current branch onto another branch
 func (g *GitCLIRepository) Rebase(ctx context.Context, branch string, interactive bool) error {
 	g.logger.Debug("rebasing branch", "branch", branch, "interactive", interactive)
-	
+
 	args := []string{"rebase"}
 	if interactive {
 		args = append(args, "-i")
 	}
 	args = append(args, branch)
-	
+
 	return g.executeGitCommand(ctx, g.repoPath, args...)
 }
 
@@ -508,43 +508,43 @@ func (g *GitCLIRepository) Rebase(ctx context.Context, branch string, interactiv
 // Stash stashes current changes
 func (g *GitCLIRepository) Stash(ctx context.Context, message string) error {
 	g.logger.Debug("stashing changes", "message", message)
-	
+
 	args := []string{"stash", "push"}
 	if message != "" {
 		args = append(args, "-m", message)
 	}
-	
+
 	return g.executeGitCommand(ctx, g.repoPath, args...)
 }
 
 // StashPop applies and removes a stash
 func (g *GitCLIRepository) StashPop(ctx context.Context, index int) error {
 	g.logger.Debug("applying stash", "index", index)
-	
+
 	args := []string{"stash", "pop"}
 	if index > 0 {
 		args = append(args, fmt.Sprintf("stash@{%d}", index))
 	}
-	
+
 	return g.executeGitCommand(ctx, g.repoPath, args...)
 }
 
 // ListStashes lists all stashes
 func (g *GitCLIRepository) ListStashes(ctx context.Context) ([]Stash, error) {
 	g.logger.Debug("listing stashes")
-	
+
 	output, err := g.executeGitCommandWithOutput(ctx, g.repoPath, "stash", "list", "--format=%gd|%gs|%gd|%gs")
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var stashes []Stash
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 	for i, line := range lines {
 		if line == "" {
 			continue
 		}
-		
+
 		parts := strings.Split(line, "|")
 		if len(parts) >= 2 {
 			stash := Stash{
@@ -555,7 +555,7 @@ func (g *GitCLIRepository) ListStashes(ctx context.Context) ([]Stash, error) {
 			stashes = append(stashes, stash)
 		}
 	}
-	
+
 	return stashes, nil
 }
 
@@ -570,19 +570,19 @@ func (g *GitCLIRepository) AddRemote(ctx context.Context, name, url string) erro
 // ListRemotes lists all remotes
 func (g *GitCLIRepository) ListRemotes(ctx context.Context) ([]Remote, error) {
 	g.logger.Debug("listing remotes")
-	
+
 	output, err := g.executeGitCommandWithOutput(ctx, g.repoPath, "remote", "-v")
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var remotes []Remote
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 	for _, line := range lines {
 		if line == "" {
 			continue
 		}
-		
+
 		parts := strings.Fields(line)
 		if len(parts) >= 2 {
 			remote := Remote{
@@ -592,26 +592,26 @@ func (g *GitCLIRepository) ListRemotes(ctx context.Context) ([]Remote, error) {
 			remotes = append(remotes, remote)
 		}
 	}
-	
+
 	return remotes, nil
 }
 
 // Fetch fetches from a remote
 func (g *GitCLIRepository) Fetch(ctx context.Context, remote string) error {
 	g.logger.Debug("fetching from remote", "remote", remote)
-	
+
 	args := []string{"fetch"}
 	if remote != "" {
 		args = append(args, remote)
 	}
-	
+
 	return g.executeGitCommand(ctx, g.repoPath, args...)
 }
 
 // Push pushes to a remote
 func (g *GitCLIRepository) Push(ctx context.Context, remote, branch string) error {
 	g.logger.Debug("pushing to remote", "remote", remote, "branch", branch)
-	
+
 	args := []string{"push"}
 	if remote != "" {
 		args = append(args, remote)
@@ -619,7 +619,7 @@ func (g *GitCLIRepository) Push(ctx context.Context, remote, branch string) erro
 	if branch != "" {
 		args = append(args, branch)
 	}
-	
+
 	return g.executeGitCommand(ctx, g.repoPath, args...)
 }
 
@@ -628,25 +628,25 @@ func (g *GitCLIRepository) Push(ctx context.Context, remote, branch string) erro
 // GetConfig gets a Git configuration value
 func (g *GitCLIRepository) GetConfig(ctx context.Context, key string) (string, error) {
 	g.logger.Debug("getting config", "key", key)
-	
+
 	output, err := g.executeGitCommandWithOutput(ctx, g.repoPath, "config", "--get", key)
 	if err != nil {
 		return "", err
 	}
-	
+
 	return strings.TrimSpace(output), nil
 }
 
 // SetConfig sets a Git configuration value
 func (g *GitCLIRepository) SetConfig(ctx context.Context, key, value string, global bool) error {
 	g.logger.Debug("setting config", "key", key, "global", global)
-	
+
 	args := []string{"config"}
 	if global {
 		args = append(args, "--global")
 	}
 	args = append(args, key, value)
-	
+
 	return g.executeGitCommand(ctx, g.repoPath, args...)
 }
 
@@ -655,9 +655,9 @@ func (g *GitCLIRepository) SetConfig(ctx context.Context, key, value string, glo
 // Diff shows differences
 func (g *GitCLIRepository) Diff(ctx context.Context, options DiffOptions) (string, error) {
 	g.logger.Debug("showing diff", "options", options)
-	
+
 	args := []string{"diff"}
-	
+
 	if options.Staged {
 		args = append(args, "--cached")
 	}
@@ -674,16 +674,16 @@ func (g *GitCLIRepository) Diff(ctx context.Context, options DiffOptions) (strin
 		args = append(args, "--")
 		args = append(args, options.Files...)
 	}
-	
+
 	return g.executeGitCommandWithOutput(ctx, g.repoPath, args...)
 }
 
 // Log shows commit log
 func (g *GitCLIRepository) Log(ctx context.Context, options LogOptions) ([]Commit, error) {
 	g.logger.Debug("showing log", "options", options)
-	
+
 	args := []string{"log", "--format=%H|%an|%ae|%ad|%s", "--date=iso"}
-	
+
 	if options.Limit > 0 {
 		args = append(args, fmt.Sprintf("-%d", options.Limit))
 	}
@@ -712,19 +712,19 @@ func (g *GitCLIRepository) Log(ctx context.Context, options LogOptions) ([]Commi
 		args = append(args, "--")
 		args = append(args, options.Files...)
 	}
-	
+
 	output, err := g.executeGitCommandWithOutput(ctx, g.repoPath, args...)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var commits []Commit
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 	for _, line := range lines {
 		if line == "" {
 			continue
 		}
-		
+
 		parts := strings.Split(line, "|")
 		if len(parts) >= 5 {
 			date, _ := time.Parse("2006-01-02 15:04:05 -0700", parts[3])
@@ -739,26 +739,26 @@ func (g *GitCLIRepository) Log(ctx context.Context, options LogOptions) ([]Commi
 			commits = append(commits, commit)
 		}
 	}
-	
+
 	return commits, nil
 }
 
 // Blame shows blame information for a file
 func (g *GitCLIRepository) Blame(ctx context.Context, file string) ([]BlameLine, error) {
 	g.logger.Debug("showing blame", "file", file)
-	
+
 	output, err := g.executeGitCommandWithOutput(ctx, g.repoPath, "blame", "-l", file)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var blameLines []BlameLine
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 	for i, line := range lines {
 		if line == "" {
 			continue
 		}
-		
+
 		// Parse blame line format: commit author date line_num content
 		parts := strings.Split(line, " ")
 		if len(parts) >= 4 {
@@ -773,40 +773,40 @@ func (g *GitCLIRepository) Blame(ctx context.Context, file string) ([]BlameLine,
 			blameLines = append(blameLines, blameLine)
 		}
 	}
-	
+
 	return blameLines, nil
 }
 
 // Tag creates a tag
 func (g *GitCLIRepository) Tag(ctx context.Context, name, message string) error {
 	g.logger.Debug("creating tag", "name", name, "message", message)
-	
+
 	args := []string{"tag"}
 	if message != "" {
 		args = append(args, "-a", name, "-m", message)
 	} else {
 		args = append(args, name)
 	}
-	
+
 	return g.executeGitCommand(ctx, g.repoPath, args...)
 }
 
 // ListTags lists all tags
 func (g *GitCLIRepository) ListTags(ctx context.Context) ([]Tag, error) {
 	g.logger.Debug("listing tags")
-	
+
 	output, err := g.executeGitCommandWithOutput(ctx, g.repoPath, "tag", "-l", "--format=%(refname:short)|%(objectname)|%(contents:subject)|%(creatordate:iso)")
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var tags []Tag
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 	for _, line := range lines {
 		if line == "" {
 			continue
 		}
-		
+
 		parts := strings.Split(line, "|")
 		if len(parts) >= 4 {
 			date, _ := time.Parse("2006-01-02 15:04:05 -0700", parts[3])
@@ -819,24 +819,24 @@ func (g *GitCLIRepository) ListTags(ctx context.Context) ([]Tag, error) {
 			tags = append(tags, tag)
 		}
 	}
-	
+
 	return tags, nil
 }
 
 // Status shows repository status
 func (g *GitCLIRepository) Status(ctx context.Context) (StatusInfo, error) {
 	g.logger.Debug("showing status")
-	
+
 	output, err := g.executeGitCommandWithOutput(ctx, g.repoPath, "status", "--porcelain", "-b")
 	if err != nil {
 		return StatusInfo{}, err
 	}
-	
+
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 	if len(lines) == 0 {
 		return StatusInfo{}, nil
 	}
-	
+
 	status := StatusInfo{
 		Clean:          true,
 		StagedFiles:    []string{},
@@ -845,7 +845,7 @@ func (g *GitCLIRepository) Status(ctx context.Context) (StatusInfo, error) {
 		DeletedFiles:   []string{},
 		RenamedFiles:   make(map[string]string),
 	}
-	
+
 	// Parse branch info from first line
 	if strings.HasPrefix(lines[0], "## ") {
 		branchInfo := strings.TrimPrefix(lines[0], "## ")
@@ -854,23 +854,23 @@ func (g *GitCLIRepository) Status(ctx context.Context) (StatusInfo, error) {
 		}
 		lines = lines[1:]
 	}
-	
+
 	// Parse file status
 	for _, line := range lines {
 		if len(line) < 3 {
 			continue
 		}
-		
+
 		statusCode := line[:2]
 		filename := line[3:]
-		
+
 		status.Clean = false
-		
+
 		switch statusCode[0] {
 		case 'A', 'M', 'D':
 			status.StagedFiles = append(status.StagedFiles, filename)
 		}
-		
+
 		switch statusCode[1] {
 		case 'M':
 			status.ModifiedFiles = append(status.ModifiedFiles, filename)
@@ -879,7 +879,7 @@ func (g *GitCLIRepository) Status(ctx context.Context) (StatusInfo, error) {
 		case '?':
 			status.UntrackedFiles = append(status.UntrackedFiles, filename)
 		}
-		
+
 		if statusCode[0] == 'R' {
 			// Renamed file
 			parts := strings.Split(filename, " -> ")
@@ -888,7 +888,7 @@ func (g *GitCLIRepository) Status(ctx context.Context) (StatusInfo, error) {
 			}
 		}
 	}
-	
+
 	return status, nil
 }
 
