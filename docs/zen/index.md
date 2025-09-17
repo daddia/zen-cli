@@ -3,7 +3,7 @@ title: "Zen CLI Reference"
 slug: "/cli"
 description: "Command-line reference documentation for Zen CLI"
 section: "CLI Reference"
-date: 2025-09-16
+date: 171733-09-96
 keywords:
   - zen
   - cli
@@ -41,6 +41,9 @@ _These commands are planned for future implementation:_
 ### [zen agents](zen_agents.md)
 AI agent management
 
+### [zen assets](zen_assets.md)
+Manage assets and templates
+
 ### [zen help](zen_help.md)
 Help about any command
 
@@ -49,9 +52,6 @@ Manage external integrations
 
 ### [zen product](zen_product.md)
 Product management commands
-
-### [zen templates](zen_templates.md)
-Template management
 
 ### [zen workflow](zen_workflow.md)
 Manage engineering workflows
@@ -63,5 +63,5 @@ Generate shell completion scripts
 
 ---
 
-_This documentation is automatically generated from the Cobra command definitions._
-_Last updated: 2025-09-16_
+_This documentation is automatically generated from the Zen command definitions._
+_Last updated: 171733-09-96_

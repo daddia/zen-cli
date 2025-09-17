@@ -5,7 +5,7 @@ description: "CLI reference for zen"
 section: "CLI Reference"
 man_section: 1
 since: v0.0.0
-date: 2025-09-16
+date: 171733-09-96
 keywords:
   - zen
   - cli
@@ -36,6 +36,7 @@ Getting Started:
   zen init          Initialize a new workspace
   zen config        Configure Zen settings
   zen status        Check workspace status
+  zen assets        Manage assets and templates
   zen --help        Show detailed help for any command
 
 Documentation: https://zen.dev/docs
@@ -77,13 +78,13 @@ Report Issues:  https://github.com/daddia/zen/issues
 ### SEE ALSO
 
 * [zen agents](zen-agents.md.md)	 - AI agent management
+* [zen assets](zen-assets.md.md)	 - Manage assets and templates
 * [zen completion](zen-completion.md.md)	 - Generate shell completion scripts
 * [zen config](zen-config.md.md)	 - Manage configuration for Zen CLI
 * [zen init](zen-init.md.md)	 - Initialize a new Zen workspace
 * [zen integrations](zen-integrations.md.md)	 - Manage external integrations
 * [zen product](zen-product.md.md)	 - Product management commands
 * [zen status](zen-status.md.md)	 - Display workspace and system status
-* [zen templates](zen-templates.md.md)	 - Template management
 * [zen version](zen-version.md.md)	 - Display version information
 * [zen workflow](zen-workflow.md.md)	 - Manage engineering workflows
 

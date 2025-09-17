@@ -3,6 +3,7 @@ package root
 import (
 	"fmt"
 
+	"github.com/daddia/zen/pkg/cmd/assets"
 	"github.com/daddia/zen/pkg/cmd/config"
 	"github.com/daddia/zen/pkg/cmd/factory"
 	cmdinit "github.com/daddia/zen/pkg/cmd/init"
@@ -35,25 +36,26 @@ Getting Started:
   zen init          Initialize a new workspace
   zen config        Configure Zen settings
   zen status        Check workspace status
+  zen assets        Manage assets and templates
   zen --help        Show detailed help for any command
 
 Documentation: https://zen.dev/docs
 Report Issues:  https://github.com/daddia/zen/issues`,
 		Example: `  # Initialize a new workspace
   zen init
-  
+
   # Check workspace status
   zen status
-  
+
   # Configure Zen settings
   zen config set log_level debug
-  
+
   # Display version information
   zen version
-  
+
   # Get help for any command
   zen <command> --help
-  
+
   # Generate shell completion
   zen completion bash > /usr/local/etc/bash_completion.d/zen`,
 		SilenceUsage:  true,
@@ -140,12 +142,12 @@ Report Issues:  https://github.com/daddia/zen/issues`,
 	cmd.AddCommand(cmdinit.NewCmdInit(f))
 	cmd.AddCommand(config.NewCmdConfig(f))
 	cmd.AddCommand(status.NewCmdStatus(f))
+	cmd.AddCommand(assets.NewCmdAssets(f))
 
 	// Add placeholder commands for future development
 	cmd.AddCommand(newPlaceholderCommand("workflow", "Manage engineering workflows", f))
 	cmd.AddCommand(newPlaceholderCommand("product", "Product management commands", f))
 	cmd.AddCommand(newPlaceholderCommand("integrations", "Manage external integrations", f))
-	cmd.AddCommand(newPlaceholderCommand("templates", "Template management", f))
 	cmd.AddCommand(newPlaceholderCommand("agents", "AI agent management", f))
 
 	// Add shell completion command
