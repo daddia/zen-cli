@@ -80,14 +80,12 @@ func TestAuthOptionsValidation(t *testing.T) {
 				if tt.errMsg != "" {
 					assert.Contains(t, err.Error(), tt.errMsg)
 				}
-			} else {
+			} else if tt.provider != "" {
 				// Note: In real implementation, this would succeed with proper auth
 				// For now, we expect it to work with the mock implementation
-				if tt.provider != "" {
-					// Should show the note about implementation
-					output := stderr.(*bytes.Buffer).String()
-					assert.Contains(t, output, "Authentication implementation requires interface updates")
-				}
+				// Should show the note about implementation
+				output := stderr.(*bytes.Buffer).String()
+				assert.Contains(t, output, "Authentication implementation requires interface updates")
 			}
 		})
 	}

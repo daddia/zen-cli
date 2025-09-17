@@ -41,13 +41,8 @@ func TestNewCmdAssets(t *testing.T) {
 
 			err := cmd.Execute()
 
-			if tt.name == "no subcommand shows help" {
-				// No subcommand should show help and exit with success
-				assert.NoError(t, err)
-			} else {
-				// Help flag should show help and exit with success
-				assert.NoError(t, err)
-			}
+			// Both cases should show help and exit with success
+			assert.NoError(t, err)
 
 			output := stdout.(*bytes.Buffer).String()
 			assert.Contains(t, output, tt.want)

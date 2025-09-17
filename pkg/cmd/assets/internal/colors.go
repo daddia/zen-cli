@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/daddia/zen/pkg/iostreams"
 )
@@ -97,4 +98,12 @@ func PromptForPassword(io *iostreams.IOStreams, prompt string) (string, error) {
 // GetEnvVar gets an environment variable
 func GetEnvVar(name string) string {
 	return os.Getenv(name)
+}
+
+// Capitalize capitalizes the first letter of a string
+func Capitalize(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + strings.ToLower(s[1:])
 }

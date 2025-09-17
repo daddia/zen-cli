@@ -123,7 +123,7 @@ func authRun(opts *AuthOptions) error {
 	// Success message
 	cs := internal.NewColorScheme(opts.IO)
 	fmt.Fprintf(opts.IO.Out, "%s Successfully authenticated with %s\n",
-		cs.SuccessIcon(), strings.Title(opts.Provider))
+		cs.SuccessIcon(), internal.Capitalize(opts.Provider))
 
 	// Show additional info if verbose
 	if opts.IO.IsStdoutTTY() {
@@ -208,13 +208,13 @@ func promptForToken(opts *AuthOptions) (string, error) {
 
 	cs := internal.NewColorScheme(opts.IO)
 	fmt.Fprintf(opts.IO.Out, "%s Authentication required for %s\n",
-		cs.WarningIcon(), strings.Title(opts.Provider))
+		cs.WarningIcon(), internal.Capitalize(opts.Provider))
 
 	// Show instructions for getting token
 	showTokenInstructions(opts)
 
 	// Prompt for token
-	prompt := fmt.Sprintf("Enter your %s token", strings.Title(opts.Provider))
+	prompt := fmt.Sprintf("Enter your %s token", internal.Capitalize(opts.Provider))
 	token, err := internal.PromptForPassword(opts.IO, prompt)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to read token")
