@@ -163,7 +163,7 @@ jobs:
 
         # Test the binary
         if [ "${{ matrix.goos }}" = "$(go env GOOS)" ] && [ "${{ matrix.goarch }}" = "$(go env GOARCH)" ]; then
-          ./bin/${BINARY_NAME} --version
+          ./bin/${BINARY_NAME} version
           ./bin/${BINARY_NAME} --help
         fi
 
