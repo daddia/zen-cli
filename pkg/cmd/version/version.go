@@ -22,26 +22,29 @@ type BuildInfo struct {
 // NewCmdVersion creates the version command
 func NewCmdVersion(f *cmdutil.Factory) *cobra.Command {
 	var outputFormat string
+	var buildOptions bool
 
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Display version information",
-		Long: `Display the version, build information, and platform details for Zen CLI.
+		Long: `Display the version information for Zen CLI.
 
-This command shows comprehensive version information including the release version,
-build details, Git commit hash, build date, Go version used for compilation,
-and target platform.`,
-		Example: `  # Display version information
+By default, shows just the version number. Use --build-options to see detailed
+build information including Git commit, build date, Go version, and platform.`,
+		Example: `  # Display simple version
   zen version
-  
+
+  # Display detailed build information
+  zen version --build-options
+
   # Output as JSON for scripting
-  zen version --output json
-  
+  zen version --build-options --output json
+
   # Output as YAML
-  zen version --output yaml
-  
+  zen version --build-options --output yaml
+
   # Check version in scripts
-  zen version --output json | jq -r '.version'`,
+  zen version --build-options --output json | jq -r '.version'`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			info := BuildInfo{
@@ -59,6 +62,13 @@ and target platform.`,
 				}
 			}
 
+			// Simple version output (like git version)
+			if !buildOptions && outputFormat == "text" {
+				fmt.Fprintf(f.IOStreams.Out, "zen version %s\n", info.Version)
+				return nil
+			}
+
+			// Detailed output for --build-options or non-text formats
 			switch outputFormat {
 			case "json":
 				encoder := json.NewEncoder(f.IOStreams.Out)
@@ -71,25 +81,30 @@ and target platform.`,
 				return encoder.Encode(info)
 
 			default:
-				return displayTextVersion(f.IOStreams.Out, info)
+				return displayDetailedVersion(f.IOStreams.Out, info)
 			}
 		},
 	}
 
 	cmd.Flags().StringVarP(&outputFormat, "output", "o", "text",
 		"Output format (text, json, yaml)")
+	cmd.Flags().BoolVar(&buildOptions, "build-options", false,
+		"Show detailed build information")
 
 	return cmd
 }
 
-// displayTextVersion displays version in human-readable text format
-func displayTextVersion(out interface{ Write([]byte) (int, error) }, info BuildInfo) error {
-	// Comprehensive format with all build information
+// displayDetailedVersion displays detailed version and build information
+func displayDetailedVersion(out interface{ Write([]byte) (int, error) }, info BuildInfo) error {
+	// Format similar to git --build-options
 	fmt.Fprintf(out, "zen version %s\n", info.Version)
-	fmt.Fprintf(out, "Build: %s\n", info.BuildDate)
-	fmt.Fprintf(out, "Commit: %s\n", info.GitCommit)
-	fmt.Fprintf(out, "Built: %s\n", info.BuildDate)
-	fmt.Fprintf(out, "Go: %s\n", info.GoVersion)
-	fmt.Fprintf(out, "Platform: %s\n", info.Platform)
+	fmt.Fprintf(out, "platform: %s\n", info.Platform)
+	if info.GitCommit != "" {
+		fmt.Fprintf(out, "built from commit: %s\n", info.GitCommit)
+	}
+	if info.BuildDate != "" {
+		fmt.Fprintf(out, "build date: %s\n", info.BuildDate)
+	}
+	fmt.Fprintf(out, "go version: %s\n", info.GoVersion)
 	return nil
 }
