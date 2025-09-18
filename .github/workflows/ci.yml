@@ -106,30 +106,31 @@ jobs:
         sarif_file: results.sarif
 
   build:
-    name: Build
+    name: Build (${{ matrix.goos }}/${{ matrix.goarch }})
     needs: [test, lint, security]
 
     strategy:
       matrix:
         include:
-          # Linux builds
+          # Linux AMD64 - native testing
           - goos: linux
             goarch: amd64
             runs-on: ubuntu-latest
-          - goos: linux
-            goarch: arm64
-            runs-on: ubuntu-latest
-          # macOS builds
+          # macOS Intel - native testing
           - goos: darwin
             goarch: amd64
-            runs-on: macos-latest
-          - goos: darwin
-            goarch: arm64
-            runs-on: macos-latest
-          # Windows builds
+            runs-on: macos-13
+          # Windows AMD64 - native testing
           - goos: windows
             goarch: amd64
             runs-on: windows-latest
+          # Cross-compile only (no testing on these)
+          - goos: linux
+            goarch: arm64
+            runs-on: ubuntu-latest
+          - goos: darwin
+            goarch: arm64
+            runs-on: ubuntu-latest
 
     runs-on: ${{ matrix.runs-on }}
 
