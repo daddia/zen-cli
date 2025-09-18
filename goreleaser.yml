@@ -15,12 +15,9 @@ builds:
     binary: zen
     ldflags:
       - -s -w
-      - -X main.version={{.Version}}
-      - -X main.commit={{.Commit}}
-      - -X main.buildTime={{.Date}}
-      - -X github.com/daddia/zen/internal/cli.version={{.Version}}
-      - -X github.com/daddia/zen/internal/cli.commit={{.Commit}}
-      - -X github.com/daddia/zen/internal/cli.buildTime={{.Date}}
+      - -X github.com/daddia/zen/pkg/cmd/factory.version={{.Version}}
+      - -X github.com/daddia/zen/pkg/cmd/factory.commit={{.Commit}}
+      - -X github.com/daddia/zen/pkg/cmd/factory.buildTime={{.Date}}
     goos:
       - linux
       - darwin
