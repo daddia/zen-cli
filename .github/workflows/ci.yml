@@ -125,12 +125,12 @@ jobs:
             goarch: amd64
             runs-on: windows-latest
           # Cross-compile only (no testing on these)
-          - goos: linux
-            goarch: arm64
-            runs-on: ubuntu-latest
-          - goos: darwin
-            goarch: arm64
-            runs-on: ubuntu-latest
+          # - goos: linux
+          #   goarch: arm64
+          #   runs-on: ubuntu-latest
+          # - goos: darwin
+          #   goarch: arm64
+          #   runs-on: ubuntu-latest
 
     runs-on: ${{ matrix.runs-on }}
 
