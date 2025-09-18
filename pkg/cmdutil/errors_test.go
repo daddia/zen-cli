@@ -45,8 +45,8 @@ func TestIsUserCancellation(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "cancelled error",
-			err:      errors.New("cancelled"),
+			name:     "canceled error",
+			err:      errors.New("canceled"),
 			expected: true,
 		},
 		{

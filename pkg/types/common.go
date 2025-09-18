@@ -67,7 +67,7 @@ const (
 	StatusRunning   Status = "running"
 	StatusCompleted Status = "completed"
 	StatusFailed    Status = "failed"
-	StatusCancelled Status = "cancelled"
+	StatusCancelled Status = "canceled"
 )
 
 // Result represents a generic result with status and data

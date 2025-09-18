@@ -50,5 +50,5 @@ func IsUserCancellation(err error) bool {
 	if err == nil {
 		return false
 	}
-	return err.Error() == "cancelled" || err.Error() == "interrupted"
+	return err.Error() == "canceled" || err.Error() == "interrupted"
 }
