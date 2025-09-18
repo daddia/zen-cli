@@ -57,7 +57,7 @@ jobs:
         file: ./coverage/coverage.out
         flags: unittests
         name: unit-tests
-        fail_ci_if_error: true
+        fail_ci_if_error: false
 
     - name: Generate coverage report
       run: make test-coverage
