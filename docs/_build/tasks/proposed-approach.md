@@ -1,212 +1,211 @@
-# Proposed Approach
+# Zenflow Task Structure Specification
 
-### 1. **Create standardized DoR/DoD templates**
-```bash
-docs/templates/
-├── story-dor-dod.md          # Standard checklists for all stories
-├── story-brief.md            # Simplified story template (like store-9-alt.md)
-├── technical-requirements.md  # For Stage 4 (Architecture)
-├── test-strategy.md          # For Stage 8 (QA)
-├── release-plan.md           # For Stage 10 (Release)
-└── review-checklist.md       # Already exists - good!
+## Overview
+
+This specification defines how tasks and stories are organized within the Zenflow workflow to maximize Agile delivery while maintaining clear artifact management. The structure organizes work by **type** rather than **temporal sequence**, enabling flexible, iterative development while supporting the seven Zenflow stages.
+
+## Core Principles
+
+### Agile-First Design
+
+- Lightweight documentation that supports working software
+- Flexible artifact creation based on value and necessity
+- Cross-stage work types that don't constrain iteration
+- Just-in-time elaboration of details
+
+
+### Zenflow Integration
+
+- Clear progression through Align → Discover → Prioritize → Design → Build → Ship → Learn
+- Stage-agnostic artifact types that can be created when needed
+- Quality gates based on outcomes, not documentation completeness
+- Machine-readable workflow state tracking
+
+## Task Structure
+
+Each task is organized in a logical work-type hierarchy:
+
+```sh
+.zen/work/tasks/PROJ-123/
+├─ .workflow/                 # Zenflow state and progression tracking
+├─ index.md                   # Story brief (required)
+├─ manifest.yaml              # Machine-readable metadata
+├─ research/                  # Investigation and discovery work
+├─ spikes/                    # Technical exploration and prototyping  
+├─ design/                    # Specifications and planning artifacts
+├─ execution/                 # Implementation evidence and results
+└─ outcomes/                  # Learning, metrics, and retrospectives
 ```
 
-### 2. **Simplified story template should include:**
-```markdown
-# Story Title
-
-## User Story
-As a **[role]**, I want **[capability]** so that **[benefit]**.
-
-## Context & Problem
-Brief context (2-3 sentences)
-
-## Acceptance Criteria
-**Scenario: [Name]**
-- Given [context]
-- When [action] 
-- Then [outcome]
-
-## Success Metrics (MUST)
-- Measurable outcomes
-
-## Scope
-**In-scope:** Core features
-**Out-of-scope:** Future enhancements
-```
-
-### 3. **Store additional content by workflow stage:**
-
-**In Jira Custom Fields:**
-- Story points, sprint, status
-- DoR/DoD checklist status (boolean fields)
-- Links to stage-specific artifacts
-
-**In Git/Docs:**
-- Technical specs → `docs/design/STORE-X-technical-spec.md`
-- Architecture decisions → `docs/architecture/decisions/ADR-STORE-X.md` 
-- Test plans → `docs/testing/STORE-X-test-strategy.md`
-- Release plans → `docs/release/STORE-X-release-plan.md`
-
-### 4. **Automate the workflow:**
-Since you have an agentic workflow, create stage-specific prompts that reference the standardized templates:
-
-```bash
-01-Discover/discover.md         # Uses simplified story template
-03-Design/design.md            # Creates technical-requirements.md
-04-Architect/architect-adr.md  # Creates ADR with standard format
-08-QA/qa-test.md              # Creates test-strategy.md
-10-Release/release-management.md # Creates release-plan.md
-```
+## Work Type Definitions
 
 
-## **Key Strengths of This Approach**
+### Task/Story Brief (index.md)
+The foundational document that remains lightweight and user-focused throughout the task lifecycle. Contains user story, acceptance criteria, success metrics, and scope boundaries.
 
-### 1. **Clear Separation of Concerns**
-Instead of cramming everything into one massive story template, you now have:
-- **`index.md`** - Clean, focused story (like the Atlassian AI-simplified version)
-- **Stage-specific folders** - Technical details where they belong
-- **Curated vs. Raw data** - Human-readable vs. system dumps
+### Research Directory
+Contains all investigative work including user research, requirements gathering, competitive analysis, and assumption validation. Created during Discover stage but can be updated throughout the task lifecycle as new insights emerge.
 
-### 2. **Perfect Workflow Alignment**
-This structure maps beautifully to your 12 agentic stages:
+### Spikes Directory
+Houses technical exploration, proof-of-concepts, feasibility studies, and prototyping work. Can be created at any Zenflow stage when technical uncertainty needs resolution. Emphasizes learning over perfect documentation.
 
-| Workflow Stage | Task Folder | Agent Responsibility |
-|----------------|-------------|---------------------|
-| 01-Discover | `index.md` + `manifest.yaml` | Story definition & metadata |
-| 02-Prioritise | `manifest.yaml` (priority, risk) | WSJF/RICE scoring |
-| 03-Design | `design/` + `specs/` | Contracts & design artifacts |
-| 04-Architect | `docs/adr/` + `security/threat-model.md` | Architecture decisions |
-| 05-Plan | `code/` (spikes) + `scripts/` | Planning & scaffolding |
-| 06-Build | `code/` → actual repos | Development work |
-| 07-Code-Review | `reviews/` | Code review evidence |
-| 08-QA | `qa/` + `perf/` | Test plans & results |
-| 09-Security | `security/` | Threat models & scans |
-| 10-Release | `release/` | Feature flags & rollout |
-| 11-Post-Deploy | `ops/` | Operational handover |
-| 12-Roadmap-Feedback | `artifacts/` | Outcomes & learnings |
+### Design Directory  
+Holds technical specifications, architecture decisions (ADRs), API contracts, and implementation planning. Created primarily during Design stage but can evolve during Build as implementation details emerge.
 
-### 3. **Automation-Ready**
-The structure supports your agentic workflow with:
-- **Machine-readable metadata** (`manifest.yaml`)
-- **Sync scripts** for external systems  
-- **Validation in CI** for quality gates
-- **Template-driven** artifact generation
+### Execution Directory
+Contains implementation evidence including code reviews, test results, deployment logs, and monitoring setup. Populated during Build and Ship stages to provide audit trail of delivery quality.
 
-## **Recommendations for Integration**
+### Outcomes Directory
+Captures success measurements, user feedback, retrospectives, and learnings for future iterations. Primarily populated during Learn stage but can be updated throughout as insights emerge.
 
-### 1. **Enhance Agent Integration**
-Add agent-specific markers to the structure:
+## Zenflow Stage Mapping
 
-```yaml
-# manifest.yaml additions
-workflow:
-  current_stage: "03-Design"
-  completed_stages: ["01-Discover", "02-Prioritise"]
-  agent_outputs:
-    "01-Discover": 
-      - "index.md"
-      - "docs/meeting-notes/2025-09-13-kickoff.md"
-    "03-Design":
-      - "specs/storefront.cart.v1.openapi.yaml" 
-      - "design/links.md"
-```
+The work types support all seven Zenflow stages without constraining when artifacts are created:
 
-### 2. **Stage-Specific Validation Rules**
-Create `.taskrc.yaml` extensions for workflow stages:
+| Stage | Align | Discover | Prioritize | Design | Build | Ship | Learn |
+|-------|-------|----------|------------|--------|-------|------|-------|
+| **Goal** | Define success criteria and stakeholder alignment | Gather evidence and validate assumptions | Rank work by value vs effort | Specify implementation approach | Deliver working software increment | Deploy safely to production | Measure outcomes and iterate |
+| **Inputs** | Business requirements, stakeholder needs | **Story brief**, user hypotheses | **Research findings**, spike results | **Priority decisions**, technical constraints | **Technical specifications**, implementation plan | **Working software**, deployment strategy | **Production deployment**, success criteria |
+| **Key Activities** | Story definition, success metrics, stakeholder alignment | User research, requirements gathering, feasibility validation | WSJF/RICE scoring, value analysis, effort estimation | Technical planning, architecture decisions, contract definition | Code development, testing, peer review | Deployment execution, monitoring setup, rollback preparation | Metrics collection, user feedback, retrospective analysis |
+| **Required Outputs** | **index.md** (story brief) |  |  |  |  |  |  |
+| **Primary Outputs** | | user-interviews, requirements | manifest.yaml (priority rationale) | technical-spec, adrs | code-reviews, test-results | deployment-logs, monitoring | metrics, retrospective |
+| **Supporting Outputs** | assumptions, initial-exploration | feasibility-study, competitive-analysis | effort-estimates | architecture-exploration, api-contracts | implementation-poc, performance-tests | rollback-plan, deployment-validation | user-feedback, next-iteration |
 
-```yaml
-# .taskrc.yaml
-workflow:
-  stage_03_design:
-    required_artifacts: ["specs/*.yaml", "design/links.md"]
-    validation: ["spectral", "figma_link_check"]
-  stage_08_qa:
-    required_artifacts: ["qa/test-plan.md", "qa/results/"]
-    validation: ["test_coverage_check"]
-```
+## Quality Gates
 
-### 3. **Template Standardization**
-Your existing templates should become the defaults:
+Quality progression focuses on working software and user outcomes rather than documentation completeness:
 
-[1 tool called]
+### Stage Progression Criteria
 
-Perfect! Your existing templates map to the new structure:
+- Align: Story brief complete with measurable success criteria
+- Discover: Sufficient evidence to make informed design decisions
+- Prioritize: Clear value proposition and effort understanding
+- Design: Implementation approach agreed and technically feasible
+- Build: Working software increment meets acceptance criteria
+- Ship: Production deployment successful with monitoring active
+- Learn: Success metrics captured and learnings documented
+
+
+### Artifact Requirements
+
+- Minimal viable documentation at each stage
+- Optional artifacts created only when they add clear value
+- Cross-stage flexibility allowing work type creation as needed
+- Evidence-based progression rather than checklist completion
+
+## Template Organization
+
+Templates support just-in-time artifact creation:
 
 ```bash
-# Current → New Structure Mapping
-docs/templates/feature-brief.md → work/tasks/_templates/index.md
-docs/templates/adr.md → work/tasks/_templates/docs/adr/ADR-XXXX.md
-docs/templates/design-doc.md → work/tasks/_templates/specs/README.md
-docs/templates/review-checklist.md → work/tasks/_templates/reviews/review-checklist.md
+.zen/work/tasks/_templates/
+├─ index.md                   # Story brief template
+├─ research/                  # Investigation templates
+├─ spikes/                    # Exploration templates  
+├─ design/                    # Specification templates
+├─ execution/                 # Implementation templates
+└─ outcomes/                  # Learning templates
 ```
 
-### 4. **DoR/DoD Integration**
-Make DoR/DoD stage-aware:
+## Integration Points
 
-```yaml
-# manifest.yaml
-quality_gates:
-  stage_01_discover:
-    dor: ["story_defined", "acceptance_criteria", "success_metrics"]
-    dod: ["stakeholder_signoff", "manifest_complete"]
-  stage_03_design:
-    dor: ["contracts_drafted", "figma_linked"]  
-    dod: ["openapi_valid", "design_approved"]
-  # ... etc
+### External Tool Synchronization
+
+- Jira status mapping to Zenflow stages
+- GitHub branch and PR integration with execution artifacts
+- Figma design handoff automation with design specifications
+
+
+### CLI Workflow Support
+
+- `zen add research "user-interviews"` creates research/user-interviews.md
+- `zen add spike "performance-test"` creates spikes/performance-test.md  
+- `zen stage progress` advances Zenflow stage with quality gate validation
+- `zen status` shows current stage and recent artifact activity
+
+
+### Automation Hooks
+
+- Quality gate validation before stage progression
+- Template instantiation with task context
+- Cross-tool artifact linking and synchronization
+- Workflow state tracking and reporting
+
+## Migration Strategy
+
+### Immediate Implementation
+
+- Convert existing stories to index.md format
+- Create task directory structure for active work
+- Begin using research/ and spikes/ for current investigations
+
+
+### Template Development
+
+- Create minimal viable templates for each work type
+- Establish CLI commands for common artifact creation
+- Configure quality gate validations for stage progression
+
+
+### Tool Integration
+
+- Configure Jira synchronization with Zenflow stages
+- Set up GitHub integration for execution artifacts
+- Establish Figma handoff automation for design work
+
+## Success Metrics
+
+### Agile Delivery Indicators
+
+- Reduced time from story creation to working software
+- Increased frequency of user feedback incorporation
+- Higher percentage of delivered features meeting success criteria
+- Faster identification and resolution of technical risks through spikes
+
+### Workflow Effectiveness
+
+- Clear progression through Zenflow stages without bottlenecks
+- Appropriate artifact creation based on value and necessity
+- Cross-functional team collaboration through shared work types
+- Continuous improvement through outcomes capture and application
+
+---
+
+## Example Comprehensive Task Structure
+
+Example of a comprehsive structure of a task - for reference only:
+
+```sh
+.zen/work/tasks/PROJ-123/
+├─ .workflow/                 # Zenflow state and progression tracking
+├─ index.md                   # Story brief (required)
+├─ manifest.yaml              # Machine-readable metadata
+├─ research/                  # Discovery & Investigation
+│  ├─ user-research.md        # User interviews, surveys
+│  ├─ requirements.md         # Gathered requirements
+│  ├─ competitive-analysis.md # Market research
+│  └─ assumptions.md          # Hypotheses to validate
+├─ spikes/                    # Technical Exploration and Prototyping 
+│  ├─ architecture-spike.md   # Technical feasibility
+│  ├─ performance-poc.md      # Performance prototypes  
+│  ├─ integration-test.md     # 3rd party API tests
+│  └─ security-review.md      # Security considerations 
+├─ design/                    # Specifications and planning artifacts
+│  ├─ technical-spec.md       # Implementation approach
+│  ├─ api-contracts.yaml      # API specifications
+│  ├─ wireframes/             # UI/UX designs
+│  ├─ adr/                    # Architecture decisions
+│  └─ implementation-plan.md  # Development roadmap
+├─ execution/                 # Implementation Artifacts and Results
+│  ├─ code-reviews/           # Review evidence
+│  ├─ test-results/           # QA artifacts
+│  ├─ deployment-logs/        # Release evidence
+│  └─ monitoring/             # Production health
+└─ outcomes/                  # Results, Learning, and Retrospectives
+   ├─ metrics.md             #   Success measurements
+   ├─ retrospective.md       #   What we learned
+   ├─ user-feedback.md       #   Post-release insights
+   └─ next-iteration.md      #   Future improvements
 ```
 
-## **Migration Strategy**
-
-### 1. **Immediate (Current Story)**
-- Convert `store-9.md` to use the simple `index.md` format
-- Create `work/tasks/STORE-9/` folder with current artifacts
-- Use this as your pilot for the new structure
-
-### 2. **Template Creation**
-- Generate scaffold templates under `work/tasks/_templates/`
-- Create the automation scripts (`scripts/sync-jira.sh`, etc.)
-- Set up CI validation for the task structure
-
-### 3. **Agent Prompt Updates** 
-- Update your 12-stage agent prompts to reference the task folder structure
-- Each agent should know which folders it reads from and writes to
-- Create handoff protocols between stages
-
-## **Specific Improvements to Proposed Structure**
-
-### 1. **Add Agent Tracking**
-```bash
-work/tasks/STORE-9/
-├─ .workflow/                    # Agent state and handoffs
-│  ├─ stage-history.yaml        # Which agents ran when
-│  ├─ handoffs/                 # Agent-to-agent communication
-│  └─ validation-results.yaml   # Quality gate results
-```
-
-### 2. **Better Integration Hooks**
-```yaml
-# .taskrc.yaml additions
-integrations:
-  jira:
-    auto_sync: true
-    status_mapping:
-      "In Progress": "03-Design"
-      "Code Review": "07-Code-Review"
-  github:
-    pr_template: "reviews/pr-template.md"
-  figma:
-    auto_export: ["design/figma-exports/"]
-```
-
-## **Bottom Line**
-
-This proposed structure is **vastly superior** to the complex story template approach. It:
-
-✅ **Solves the original problem** - No more bloated stories  
-✅ **Enables your agentic workflow** - Each stage has clear inputs/outputs  
-✅ **Supports automation** - Machine-readable metadata + validation  
-✅ **Scales with complexity** - Rich artifact management without story bloat  
-✅ **Maintains traceability** - Links between Jira, GitHub, Figma, etc.
-
-I strongly recommend adopting this structure. It's exactly what you need to make your 12-stage agentic workflow truly effective while keeping individual stories focused and actionable.
+Note: The above are examples only and will be different for each Task.
