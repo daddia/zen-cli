@@ -156,13 +156,10 @@ jobs:
           BINARY_NAME=zen.exe
         fi
 
-        LDFLAGS="-ldflags \
-          -X github.com/daddia/zen/pkg/cmd/factory.version=${VERSION} \
-          -X github.com/daddia/zen/pkg/cmd/factory.commit=${COMMIT} \
-          -X github.com/daddia/zen/pkg/cmd/factory.buildTime=${BUILD_TIME}"
+        LDFLAGS="-X github.com/daddia/zen/pkg/cmd/factory.version=${VERSION} -X github.com/daddia/zen/pkg/cmd/factory.commit=${COMMIT} -X github.com/daddia/zen/pkg/cmd/factory.buildTime=${BUILD_TIME}"
 
         mkdir -p bin
-        go build ${LDFLAGS} -o bin/${BINARY_NAME} ./cmd/zen
+        go build -ldflags "${LDFLAGS}" -o bin/${BINARY_NAME} ./cmd/zen
 
         # Test the binary
         if [ "${{ matrix.goos }}" = "$(go env GOOS)" ] && [ "${{ matrix.goarch }}" = "$(go env GOARCH)" ]; then
