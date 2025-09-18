@@ -17,8 +17,8 @@ func TestNew(t *testing.T) {
 	manager := New("/test/root", "zen.yaml", logger)
 
 	assert.Equal(t, "/test/root", manager.Root())
-	assert.Equal(t, "/test/root/.zen/config.yaml", manager.ConfigFile())
-	assert.Equal(t, "/test/root/.zen", manager.ZenDirectory())
+	assert.Equal(t, "/test/root/.zen/config.yaml", filepath.ToSlash(manager.ConfigFile()))
+	assert.Equal(t, "/test/root/.zen", filepath.ToSlash(manager.ZenDirectory()))
 }
 
 func TestDetectProject_Empty(t *testing.T) {

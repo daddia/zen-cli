@@ -24,7 +24,7 @@ func TestNewCmdVersion(t *testing.T) {
 	// Test command properties
 	assert.Equal(t, "version", cmd.Use)
 	assert.Equal(t, "Display version information", cmd.Short)
-	assert.Contains(t, cmd.Long, "Display the version, build information, and platform details for Zen CLI")
+	assert.Contains(t, cmd.Long, "Display the version information for Zen CLI")
 }
 
 func TestVersionCommand_TextOutput(t *testing.T) {
@@ -40,12 +40,32 @@ func TestVersionCommand_TextOutput(t *testing.T) {
 	require.NoError(t, err)
 
 	output := stdout.String()
+	// Simple version output by default
 	assert.Contains(t, output, "zen version")
-	assert.Contains(t, output, "Build:")
-	assert.Contains(t, output, "Commit:")
-	assert.Contains(t, output, "Built:")
-	assert.Contains(t, output, "Go:")
-	assert.Contains(t, output, "Platform:")
+	assert.NotContains(t, output, "Build:")
+	assert.NotContains(t, output, "Commit:")
+	assert.NotContains(t, output, "Built:")
+	assert.NotContains(t, output, "Go:")
+	assert.NotContains(t, output, "Platform:")
+}
+
+func TestVersionCommand_BuildOptions(t *testing.T) {
+	var stdout bytes.Buffer
+	streams := iostreams.Test()
+	streams.Out = &stdout
+	factory := cmdutil.NewTestFactory(streams)
+
+	cmd := NewCmdVersion(factory)
+	cmd.SetArgs([]string{"--build-options"})
+
+	err := cmd.Execute()
+	require.NoError(t, err)
+
+	output := stdout.String()
+	// Detailed version output with --build-options
+	assert.Contains(t, output, "zen version")
+	assert.Contains(t, output, "platform:")
+	assert.Contains(t, output, "go version:")
 }
 
 func TestVersionCommand_JSONOutput(t *testing.T) {
@@ -152,13 +172,13 @@ func TestVersionInfo_Structure(t *testing.T) {
 
 	output := stdout.String()
 
-	// Check that version output contains expected fields
+	// Check that version output contains expected fields (simple by default)
 	assert.Contains(t, output, "zen version")
-	assert.Contains(t, output, "Build:")
-	assert.Contains(t, output, "Commit:")
-	assert.Contains(t, output, "Built:")
-	assert.Contains(t, output, "Go:")
-	assert.Contains(t, output, "Platform:")
+	assert.NotContains(t, output, "Build:")
+	assert.NotContains(t, output, "Commit:")
+	assert.NotContains(t, output, "Built:")
+	assert.NotContains(t, output, "Go:")
+	assert.NotContains(t, output, "Platform:")
 }
 
 func TestVersionCommand_ColorOutput(t *testing.T) {
@@ -218,7 +238,7 @@ func TestVersionCommand_Help(t *testing.T) {
 	if output == "" {
 		output = stderr.String() // Fallback to stderr
 	}
-	assert.Contains(t, output, "Display the version, build information, and platform details for Zen CLI")
+	assert.Contains(t, output, "Display the version information for Zen CLI")
 	assert.Contains(t, output, "Usage:")
 	assert.Contains(t, output, "version")
 }
