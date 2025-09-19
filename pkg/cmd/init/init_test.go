@@ -21,7 +21,7 @@ func TestNewCmdInit(t *testing.T) {
 
 	// Test command properties
 	assert.Equal(t, "init", cmd.Use)
-	assert.Equal(t, "Initialize a new Zen workspace", cmd.Short)
+	assert.Equal(t, "Initialize your new Zen workspace or reinitialize an existing one", cmd.Short)
 	assert.Contains(t, cmd.Long, "Initialize a new Zen workspace in the current directory")
 
 	// Test flags exist
