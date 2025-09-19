@@ -33,13 +33,13 @@ zen status [flags]
 ```
   # Display status overview
   zen status
-  
+
   # Output status as JSON for scripting
   zen status --output json
-  
+
   # Output status as YAML
   zen status --output yaml
-  
+
   # Check status with verbose output
   zen status --verbose
 ```

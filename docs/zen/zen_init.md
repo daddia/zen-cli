@@ -14,7 +14,7 @@ keywords:
 
 ## zen init
 
-Initialize a new Zen workspace
+Initialize your new Zen workspace or reinitialize an existing one
 
 ### Synopsis
 
@@ -43,16 +43,16 @@ zen init [flags]
 ```
   # Initialize in current directory (safe to run multiple times)
   zen init
-  
+
   # Reinitialize existing workspace (safe operation like git init)
   zen init
-  
+
   # Force reinitialize with backup of existing configuration
   zen init --force
-  
+
   # Initialize with custom config file location
   zen init --config ./config/zen.yaml
-  
+
   # Initialize with verbose output to see project detection
   zen init --verbose
 ```

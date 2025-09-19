@@ -26,7 +26,7 @@ AI-Powered Productivity Suite
 Manage configuration for Zen CLI
 
 ### [zen init](zen_init.md)
-Initialize a new Zen workspace
+Initialize your new Zen workspace or reinitialize an existing one
 
 ### [zen status](zen_status.md)
 Display workspace and system status
@@ -38,23 +38,11 @@ Display version information
 
 _These commands are planned for future implementation:_
 
-### [zen agents](zen_agents.md)
-AI agent management
-
 ### [zen assets](zen_assets.md)
 Manage assets and templates
 
 ### [zen help](zen_help.md)
 Help about any command
-
-### [zen integrations](zen_integrations.md)
-Manage external integrations
-
-### [zen product](zen_product.md)
-Product management commands
-
-### [zen workflow](zen_workflow.md)
-Manage engineering workflows
 
 ## Shell Completion
 
