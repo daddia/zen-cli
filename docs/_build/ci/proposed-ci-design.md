@@ -1,16 +1,12 @@
 # Proposed: Comprehensive CI/CD Pipeline for Zen CLI
 
-**AI-Powered Productivity Suite - Command Line Interface**
-
-By Jonathan Daddia
-
 A comprehensive CI/CD pipeline specifically designed for CLI applications, emphasizing cross-platform distribution, package management integration, and user experience validation while maintaining the highest standards of software quality and security.
 
 ## Pipeline Philosophy for CLI Applications
 
 Unlike web applications that require deployment to runtime environments, CLI tools require **distribution** to end-user systems through multiple channels. This pipeline balances rigorous quality assurance with efficient multi-platform release management, ensuring users can easily install, update, and rely on Zen CLI across diverse computing environments.
 
-The pipeline emphasizes **supply chain security**, **installation experience**, and **backward compatibility** - critical aspects for CLI tools that integrate deeply into developer workflows and system environments.
+The pipeline emphasizes **security**, **installation experience**, and **backward compatibility** - critical aspects for CLI tools that integrate deeply into developer workflows and system environments.
 
 ---
 
@@ -61,16 +57,7 @@ Comprehensive local validation to prevent pushing broken or insecure code, with 
 Automated code review with focus on CLI-specific patterns, maintainability, and Go best practices.
 
 **Proposed Process & Tools:**
-
-- **DeepSource**: 
-  - Go-specific code quality analysis
-  - CLI command pattern validation
-  - Configuration handling best practices
-  - Error handling and user experience patterns
-- **CodeQL** (Enhanced): 
-  - Security vulnerability detection in CLI argument parsing
-  - Input validation analysis for file system operations
-  - Command injection prevention validation
+- TBA
 
 **CLI-Specific Analysis:**
 - Command structure consistency
@@ -89,7 +76,7 @@ Comprehensive security analysis tailored for CLI distribution security, focusing
   - **Gitleaks**: Repository-wide secret detection
   - **gosec**: Go-specific security analysis
 - **Dependency Security**:
-  - **Snyk**: Go module vulnerability scanning
+  - **Trivy**: Go module vulnerability scanning
   - **go list -m -u all**: Dependency update analysis
 - **Supply Chain Security**:
   - **SLSA Build Provenance**: Generate build attestations

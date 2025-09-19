@@ -1,0 +1,162 @@
+name: Build
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  GO_VERSION: '1.25'
+
+jobs:
+  # ============================================================================
+  # CROSS-PLATFORM BUILD MATRIX
+  # ============================================================================
+  build:
+    name: Build (${{ matrix.goos }}/${{ matrix.goarch }})
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 10
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'pull_request' }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            runs-on: ubuntu-latest
+            can-test: true
+          - goos: linux
+            goarch: arm64
+            runs-on: ubuntu-latest
+            can-test: false
+          - goos: darwin
+            goarch: amd64
+            runs-on: macos-13
+            can-test: true
+          - goos: darwin
+            goarch: arm64
+            runs-on: macos-latest
+            can-test: true
+          - goos: windows
+            goarch: amd64
+            runs-on: windows-latest
+            can-test: true
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ matrix.runs-on }}-go-${{ hashFiles('**/go.sum') }}
+
+    - name: Download dependencies
+      run: make deps
+
+    - name: Build binary
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+      shell: bash
+      run: |
+        echo "Building for ${{ matrix.goos }}/${{ matrix.goarch }}"
+        make build
+
+        # Validate binary
+        BINARY_NAME=$(make binary-name)
+        if [ ! -f "./bin/${BINARY_NAME}" ]; then
+          echo "✗ Binary not found: ./bin/${BINARY_NAME}"
+          exit 1
+        fi
+
+        echo "✓ Binary built: ./bin/${BINARY_NAME}"
+
+    - name: Test binary (native platforms)
+      if: matrix.can-test
+      shell: bash
+      run: |
+        BINARY_NAME=$(make binary-name)
+        echo "Testing binary functionality..."
+        ./bin/${BINARY_NAME} version
+        ./bin/${BINARY_NAME} --help
+        echo "✓ Binary validation successful"
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: zen-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: bin/
+        retention-days: 30
+
+  # ============================================================================
+  # BUILD VALIDATION
+  # ============================================================================
+  build-validation:
+    name: Build Validation
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+    - name: Download all build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: zen-*
+        merge-multiple: true
+        path: artifacts/
+
+    - name: Validate artifacts
+      run: |
+        echo "Validating build artifacts..."
+
+        # Expected artifacts
+        expected_artifacts=(
+          "zen"           # Linux amd64
+          "zen"           # Linux arm64 (same name, different artifact)
+          "zen"           # Darwin amd64
+          "zen"           # Darwin arm64
+          "zen.exe"       # Windows amd64
+        )
+
+        artifact_count=$(find artifacts/ -type f | wc -l)
+        echo "Found $artifact_count artifact files"
+
+        if [ $artifact_count -lt 5 ]; then
+          echo "✗ Expected at least 5 artifacts, found $artifact_count"
+          find artifacts/ -type f
+          exit 1
+        fi
+
+        echo "✓ All build artifacts validated"
+
+    - name: Generate build summary
+      run: |
+        echo "# Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Linux amd64 | ✅ Built |" >> $GITHUB_STEP_SUMMARY
+        echo "| Linux arm64 | ✅ Built |" >> $GITHUB_STEP_SUMMARY
+        echo "| macOS amd64 | ✅ Built |" >> $GITHUB_STEP_SUMMARY
+        echo "| macOS arm64 | ✅ Built |" >> $GITHUB_STEP_SUMMARY
+        echo "| Windows amd64 | ✅ Built |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "All cross-platform builds completed successfully!" >> $GITHUB_STEP_SUMMARY

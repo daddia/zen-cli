@@ -1,0 +1,231 @@
+name: Comprehensive Testing
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  GO_VERSION: '1.25'
+
+jobs:
+  # ============================================================================
+  # INTEGRATION TESTS
+  # ============================================================================
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'pull_request' }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: make deps
+
+    - name: Run integration tests
+      run: make test-integration
+
+    - name: Upload integration coverage
+      uses: codecov/codecov-action@v5
+      with:
+        files: ./coverage/integration-coverage.out
+        flags: integration
+        name: integration-tests
+
+  # ============================================================================
+  # END-TO-END TESTS
+  # ============================================================================
+  test-e2e:
+    name: E2E Tests
+    needs: test-integration
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ matrix.os }}-go-${{ hashFiles('**/go.sum') }}
+
+    - name: Download dependencies
+      run: make deps
+
+    - name: Build for testing
+      run: make build
+
+    - name: Run E2E tests
+      run: make test-e2e
+
+  # ============================================================================
+  # RACE CONDITION TESTS
+  # ============================================================================
+  test-race:
+    name: Race Condition Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: make deps
+
+    - name: Run race tests
+      run: make test-race
+
+  # ============================================================================
+  # PERFORMANCE BENCHMARKS
+  # ============================================================================
+  test-benchmarks:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: make deps
+
+    - name: Run benchmarks
+      run: make test-benchmarks
+
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: coverage/benchmarks.txt
+        retention-days: 30
+
+  # ============================================================================
+  # TEST COVERAGE ANALYSIS
+  # ============================================================================
+  test-coverage:
+    name: Coverage Analysis
+    needs: [test-integration, test-race]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: make deps
+
+    - name: Generate comprehensive coverage
+      run: make test-coverage-report
+
+    - name: Validate test pyramid
+      run: |
+        # Count test files for pyramid validation
+        UNIT_TESTS=$(find . -name "*_test.go" -not -path "./test/*" | wc -l)
+        INTEGRATION_TESTS=$(find ./test/integration -name "*_test.go" 2>/dev/null | wc -l || echo 0)
+        E2E_TESTS=$(find ./test/e2e -name "*_test.go" 2>/dev/null | wc -l || echo 0)
+
+        TOTAL_TESTS=$((UNIT_TESTS + INTEGRATION_TESTS + E2E_TESTS))
+
+        if [ $TOTAL_TESTS -eq 0 ]; then
+          echo "✗ No tests found"
+          exit 1
+        fi
+
+        UNIT_PERCENT=$((UNIT_TESTS * 100 / TOTAL_TESTS))
+
+        echo "Test Distribution:"
+        echo "  Unit: $UNIT_TESTS ($UNIT_PERCENT%)"
+        echo "  Integration: $INTEGRATION_TESTS"
+        echo "  E2E: $E2E_TESTS"
+
+        if [ $UNIT_PERCENT -lt 60 ]; then
+          echo "✗ Unit tests should be at least 60% of test suite"
+          exit 1
+        fi
+
+        echo "✓ Test pyramid distribution validated"

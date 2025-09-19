@@ -1,0 +1,265 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+  attestations: write
+  id-token: write
+
+env:
+  GO_VERSION: '1.25'
+
+jobs:
+  # ============================================================================
+  # PRE-RELEASE VALIDATION
+  # ============================================================================
+  validate-release:
+    name: Release Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: make deps
+
+    - name: Run complete test suite
+      run: |
+        echo "Running pre-release validation..."
+        make test-unit
+        make test-race
+        echo "✅ All tests passed"
+
+    - name: Run security scan
+      run: make security
+
+    - name: Validate documentation
+      run: make docs-check
+
+    - name: Build all platforms
+      run: make build-all
+
+  # ============================================================================
+  # RELEASE CREATION
+  # ============================================================================
+  create-release:
+    name: Create Release
+    needs: validate-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: make deps
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract release information
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        echo "Release version: $VERSION"
+
+    - name: Generate changelog
+      run: |
+        echo "Generating changelog for $VERSION..."
+        # Extract changelog section for this version if available
+        if [ -f CHANGELOG.md ]; then
+          awk "/^## \[$VERSION\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md > release-notes.md || echo "No changelog entry found for $VERSION" > release-notes.md
+        else
+          echo "Release $VERSION" > release-notes.md
+          echo "" >> release-notes.md
+          echo "This release includes various improvements and bug fixes." >> release-notes.md
+        fi
+
+    - name: Run GoReleaser
+      uses: goreleaser/goreleaser-action@v6
+      with:
+        distribution: goreleaser
+        version: latest
+        args: release --clean --release-notes=release-notes.md
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================================================
+  # POST-RELEASE VALIDATION
+  # ============================================================================
+  validate-release-artifacts:
+    name: Validate Release Artifacts
+    needs: create-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Get release information
+      id: release
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Download and validate release assets
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VERSION: ${{ steps.release.outputs.version }}
+      run: |
+        echo "Validating release artifacts for $VERSION..."
+
+        # Get release information
+        RELEASE_ID=$(gh api repos/$GITHUB_REPOSITORY/releases/tags/$VERSION --jq '.id')
+        echo "Release ID: $RELEASE_ID"
+
+        # List release assets
+        gh api repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets --jq '.[].name' > assets.txt
+        echo "Release assets:"
+        cat assets.txt
+
+        # Validate expected assets exist
+        expected_assets=(
+          "zen_.*_linux_amd64.tar.gz"
+          "zen_.*_linux_arm64.tar.gz"
+          "zen_.*_darwin_amd64.tar.gz"
+          "zen_.*_darwin_arm64.tar.gz"
+          "zen_.*_windows_amd64.zip"
+          "checksums.txt"
+        )
+
+        for pattern in "${expected_assets[@]}"; do
+          if grep -qE "$pattern" assets.txt; then
+            echo "✅ Found asset matching: $pattern"
+          else
+            echo "❌ Missing asset matching: $pattern"
+            exit 1
+          fi
+        done
+
+        echo "✅ All expected release assets validated"
+
+  # ============================================================================
+  # CONTAINER IMAGE VALIDATION
+  # ============================================================================
+  validate-container-images:
+    name: Validate Container Images
+    needs: create-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+    - name: Get release version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Test container images
+      run: |
+        echo "Testing container images for $VERSION..."
+
+        # Test latest tag
+        docker run --rm ghcr.io/${{ github.repository }}:latest version
+
+        # Test version-specific tag
+        docker run --rm ghcr.io/${{ github.repository }}:$VERSION version
+
+        echo "✅ Container images validated"
+
+  # ============================================================================
+  # RELEASE NOTIFICATION
+  # ============================================================================
+  release-notification:
+    name: Release Notification
+    needs: [validate-release-artifacts, validate-container-images]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+    - name: Get release information
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Generate release summary
+      run: |
+        echo "# 🚀 Release $VERSION Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Release Validation" >> $GITHUB_STEP_SUMMARY
+        echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Pre-release Tests | ${{ needs.validate-release.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Release Creation | ${{ needs.create-release.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Artifact Validation | ${{ needs.validate-release-artifacts.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Container Images | ${{ needs.validate-container-images.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Distribution Channels" >> $GITHUB_STEP_SUMMARY
+        echo "- 📦 **GitHub Releases**: Binary downloads with checksums" >> $GITHUB_STEP_SUMMARY
+        echo "- 🐳 **Container Registry**: \`ghcr.io/${{ github.repository }}:$VERSION\`" >> $GITHUB_STEP_SUMMARY
+        echo "- 📋 **Release Notes**: Generated from changelog" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
+        echo "- [ ] Update package managers (Homebrew, etc.)" >> $GITHUB_STEP_SUMMARY
+        echo "- [ ] Announce release in communication channels" >> $GITHUB_STEP_SUMMARY
+        echo "- [ ] Monitor for any post-release issues" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "🎉 **Release $VERSION is now available!**" >> $GITHUB_STEP_SUMMARY
+
+    - name: Check for failures
+      if: needs.validate-release-artifacts.result == 'failure' || needs.validate-container-images.result == 'failure'
+      run: |
+        echo "❌ Release validation failed. Please check the logs and fix issues before proceeding."
+        exit 1
