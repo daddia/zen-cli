@@ -151,9 +151,21 @@ jobs:
       env:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
+      shell: bash
       run: |
-        echo "- Building for ${{ matrix.goos }}/${{ matrix.goarch }}"
-        make build
+        VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
+        COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+        BUILD_TIME=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+
+        BINARY_NAME=zen
+        if [ "${{ matrix.goos }}" = "windows" ]; then
+          BINARY_NAME=zen.exe
+        fi
+
+        LDFLAGS="-X github.com/daddia/zen/pkg/cmd/factory.version=${VERSION} -X github.com/daddia/zen/pkg/cmd/factory.commit=${COMMIT} -X github.com/daddia/zen/pkg/cmd/factory.buildTime=${BUILD_TIME}"
+
+        mkdir -p bin
+        go build -ldflags "${LDFLAGS}" -o bin/${BINARY_NAME} ./cmd/zen
 
         # Validate the binary
         if [ "${{ matrix.goos }}" = "$(go env GOOS)" ] && [ "${{ matrix.goarch }}" = "$(go env GOARCH)" ]; then
