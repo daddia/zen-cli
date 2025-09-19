@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/daddia/zen/internal/logging"
+	"github.com/daddia/zen/pkg/git"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -142,12 +143,12 @@ func (m *mockGitRepository) DeleteBranch(ctx context.Context, name string, force
 	return args.Error(0)
 }
 
-func (m *mockGitRepository) ListBranches(ctx context.Context, remote bool) ([]Branch, error) {
+func (m *mockGitRepository) ListBranches(ctx context.Context, remote bool) ([]git.Branch, error) {
 	args := m.Called(ctx, remote)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]Branch), args.Error(1)
+	return args.Get(0).([]git.Branch), args.Error(1)
 }
 
 func (m *mockGitRepository) SwitchBranch(ctx context.Context, name string) error {
@@ -165,20 +166,20 @@ func (m *mockGitRepository) Commit(ctx context.Context, message string, files ..
 	return args.Error(0)
 }
 
-func (m *mockGitRepository) GetCommitHistory(ctx context.Context, limit int) ([]Commit, error) {
+func (m *mockGitRepository) GetCommitHistory(ctx context.Context, limit int) ([]git.Commit, error) {
 	args := m.Called(ctx, limit)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]Commit), args.Error(1)
+	return args.Get(0).([]git.Commit), args.Error(1)
 }
 
-func (m *mockGitRepository) ShowCommit(ctx context.Context, hash string) (CommitDetails, error) {
+func (m *mockGitRepository) ShowCommit(ctx context.Context, hash string) (git.CommitDetails, error) {
 	args := m.Called(ctx, hash)
 	if args.Get(0) == nil {
-		return CommitDetails{}, args.Error(1)
+		return git.CommitDetails{}, args.Error(1)
 	}
-	return args.Get(0).(CommitDetails), args.Error(1)
+	return args.Get(0).(git.CommitDetails), args.Error(1)
 }
 
 func (m *mockGitRepository) AddFiles(ctx context.Context, files ...string) error {
@@ -206,12 +207,12 @@ func (m *mockGitRepository) StashPop(ctx context.Context, index int) error {
 	return args.Error(0)
 }
 
-func (m *mockGitRepository) ListStashes(ctx context.Context) ([]Stash, error) {
+func (m *mockGitRepository) ListStashes(ctx context.Context) ([]git.Stash, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]Stash), args.Error(1)
+	return args.Get(0).([]git.Stash), args.Error(1)
 }
 
 func (m *mockGitRepository) AddRemote(ctx context.Context, name, url string) error {
@@ -219,12 +220,12 @@ func (m *mockGitRepository) AddRemote(ctx context.Context, name, url string) err
 	return args.Error(0)
 }
 
-func (m *mockGitRepository) ListRemotes(ctx context.Context) ([]Remote, error) {
+func (m *mockGitRepository) ListRemotes(ctx context.Context) ([]git.Remote, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]Remote), args.Error(1)
+	return args.Get(0).([]git.Remote), args.Error(1)
 }
 
 func (m *mockGitRepository) Fetch(ctx context.Context, remote string) error {
@@ -247,25 +248,25 @@ func (m *mockGitRepository) SetConfig(ctx context.Context, key, value string, gl
 	return args.Error(0)
 }
 
-func (m *mockGitRepository) Diff(ctx context.Context, options DiffOptions) (string, error) {
+func (m *mockGitRepository) Diff(ctx context.Context, options git.DiffOptions) (string, error) {
 	args := m.Called(ctx, options)
 	return args.String(0), args.Error(1)
 }
 
-func (m *mockGitRepository) Log(ctx context.Context, options LogOptions) ([]Commit, error) {
+func (m *mockGitRepository) Log(ctx context.Context, options git.LogOptions) ([]git.Commit, error) {
 	args := m.Called(ctx, options)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]Commit), args.Error(1)
+	return args.Get(0).([]git.Commit), args.Error(1)
 }
 
-func (m *mockGitRepository) Blame(ctx context.Context, file string) ([]BlameLine, error) {
+func (m *mockGitRepository) Blame(ctx context.Context, file string) ([]git.BlameLine, error) {
 	args := m.Called(ctx, file)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]BlameLine), args.Error(1)
+	return args.Get(0).([]git.BlameLine), args.Error(1)
 }
 
 func (m *mockGitRepository) Tag(ctx context.Context, name, message string) error {
@@ -273,20 +274,20 @@ func (m *mockGitRepository) Tag(ctx context.Context, name, message string) error
 	return args.Error(0)
 }
 
-func (m *mockGitRepository) ListTags(ctx context.Context) ([]Tag, error) {
+func (m *mockGitRepository) ListTags(ctx context.Context) ([]git.Tag, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]Tag), args.Error(1)
+	return args.Get(0).([]git.Tag), args.Error(1)
 }
 
-func (m *mockGitRepository) Status(ctx context.Context) (StatusInfo, error) {
+func (m *mockGitRepository) Status(ctx context.Context) (git.StatusInfo, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
-		return StatusInfo{}, args.Error(1)
+		return git.StatusInfo{}, args.Error(1)
 	}
-	return args.Get(0).(StatusInfo), args.Error(1)
+	return args.Get(0).(git.StatusInfo), args.Error(1)
 }
 
 type mockManifestParser struct {
@@ -498,13 +499,12 @@ func TestClient_SyncRepository_Success(t *testing.T) {
 
 	// Set up mocks
 	auth.On("Authenticate", ctx, "github").Return(nil)
-	git.On("Clone", mock.Anything, mock.AnythingOfType("string"), "main", true).Return(nil)
-	git.On("GetFile", mock.Anything, "manifest.yaml").Return([]byte("test manifest"), nil)
+	git.On("GetFile", mock.AnythingOfType("*context.timerCtx"), "manifest.yaml").Return([]byte("test manifest"), nil)
 	parser.On("Parse", mock.Anything, []byte("test manifest")).Return(testManifest, nil)
 	cache.On("GetInfo", ctx).Return(&CacheInfo{TotalSize: 1024 * 1024}, nil)
 
 	// Execute
-	req := SyncRequest{Force: true, Shallow: true, Branch: "main"}
+	req := SyncRequest{Force: true, Branch: "main"}
 	result, err := client.SyncRepository(ctx, req)
 
 	// Verify
@@ -520,28 +520,31 @@ func TestClient_SyncRepository_Success(t *testing.T) {
 }
 
 func TestClient_SyncRepository_AuthenticationFailed(t *testing.T) {
-	client, auth, _, _, _ := createTestClient()
+	client, auth, cache, git, _ := createTestClient()
 	ctx := context.Background()
 
-	// Set up mocks
+	// Set up mocks - auth fails but sync continues with anonymous access
 	authErr := &AssetClientError{Code: ErrorCodeAuthenticationFailed, Message: "auth failed"}
 	auth.On("Authenticate", ctx, "github").Return(authErr)
 
+	// Since auth fails, it will try to get manifest file anonymously
+	manifestErr := &AssetClientError{Code: ErrorCodeAssetNotFound, Message: "manifest not found"}
+	git.On("GetFile", mock.AnythingOfType("*context.timerCtx"), "manifest.yaml").Return(nil, manifestErr)
+	cache.On("GetInfo", ctx).Return(&CacheInfo{TotalSize: 0}, nil)
+
 	// Execute
-	req := SyncRequest{Force: true, Shallow: true, Branch: "main"}
+	req := SyncRequest{Force: true, Branch: "main"}
 	result, err := client.SyncRepository(ctx, req)
 
-	// Verify
+	// Verify - should succeed but with partial status due to manifest error
 	assert.NotNil(t, result)
-	assert.Equal(t, "error", result.Status)
-	assert.Contains(t, result.Error, "authentication failed")
-	assert.Error(t, err)
-
-	var assetErr *AssetClientError
-	assert.ErrorAs(t, err, &assetErr)
-	assert.Equal(t, ErrorCodeAuthenticationFailed, assetErr.Code)
+	assert.Equal(t, "partial", result.Status)
+	assert.Contains(t, result.Error, "failed to load manifest")
+	assert.NoError(t, err) // Sync doesn't fail, just returns partial status
 
 	auth.AssertExpectations(t)
+	git.AssertExpectations(t)
+	cache.AssertExpectations(t)
 }
 
 func TestClient_GetCacheInfo(t *testing.T) {

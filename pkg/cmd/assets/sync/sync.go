@@ -21,7 +21,6 @@ type SyncOptions struct {
 	AssetClient  func() (assets.AssetClientInterface, error)
 	OutputFormat string
 	Force        bool
-	Shallow      bool
 	Branch       string
 	Timeout      int
 }
@@ -32,42 +31,48 @@ func NewCmdAssetsSync(f *cmdutil.Factory) *cobra.Command {
 		IO:          f.IOStreams,
 		AssetClient: f.AssetClient,
 		Branch:      "main",
-		Timeout:     300, // 5 minutes default
+		Timeout:     60, // 1 minute default for metadata-only sync
 	}
 
 	cmd := &cobra.Command{
 		Use:   "sync",
 		Short: "Synchronize assets with remote repository",
-		Long: `Synchronize the local asset cache with the remote repository.
+		Long: `Synchronize the local asset metadata with the remote repository.
 
-This command fetches the latest assets from the configured Git repository
-and updates the local cache. It performs authentication, downloads new or
-updated assets, and removes assets that no longer exist in the repository.
+This command fetches the latest asset manifest (catalog) from the configured
+Git repository and updates the local metadata cache. It does NOT download
+actual asset content - assets are downloaded on-demand when requested.
 
-Synchronization modes:
-- Normal sync: Incremental update (git pull)
-- Force sync: Full re-download (git clone --force)
-- Shallow sync: Download only the latest commit (faster)
+What gets synchronized:
+- Asset manifest (manifest.yaml) - lightweight metadata only
+- Asset descriptions, categories, tags, and checksums
+- Asset availability and version information
+
+Actual asset content is downloaded only when you use 'zen assets get <name>'.
+This keeps sync operations fast and minimizes network/disk usage.
 
 The sync operation requires authentication with the Git provider.
 Use 'zen assets auth' to configure authentication first.`,
-		Example: `  # Normal synchronization
+		Example: `  # Synchronize asset metadata (manifest only)
   zen assets sync
 
-  # Force a complete re-synchronization
+  # Force refresh of cached metadata
   zen assets sync --force
-
-  # Shallow sync (faster, latest commit only)
-  zen assets sync --shallow
 
   # Sync from a specific branch
   zen assets sync --branch develop
 
   # Sync with custom timeout
-  zen assets sync --timeout 600
+  zen assets sync --timeout 60
 
   # Output sync results as JSON
-  zen assets sync --output json`,
+  zen assets sync --output json
+
+  # After sync, list available assets
+  zen assets list
+
+  # Download specific asset content on-demand
+  zen assets get technical-spec`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Get output format from persistent flag
 			opts.OutputFormat, _ = cmd.Flags().GetString("output")
@@ -75,10 +80,9 @@ Use 'zen assets auth' to configure authentication first.`,
 		},
 	}
 
-	cmd.Flags().BoolVar(&opts.Force, "force", false, "Force complete re-synchronization")
-	cmd.Flags().BoolVar(&opts.Shallow, "shallow", false, "Perform shallow sync (latest commit only)")
+	cmd.Flags().BoolVar(&opts.Force, "force", false, "Force refresh of cached metadata")
 	cmd.Flags().StringVar(&opts.Branch, "branch", "main", "Branch to synchronize")
-	cmd.Flags().IntVar(&opts.Timeout, "timeout", 300, "Timeout in seconds for sync operation")
+	cmd.Flags().IntVar(&opts.Timeout, "timeout", 60, "Timeout in seconds for sync operation")
 
 	return cmd
 }
@@ -104,7 +108,7 @@ func syncRun(opts *SyncOptions) error {
 	if opts.OutputFormat == "text" || opts.OutputFormat == "" {
 		if opts.IO.IsStdoutTTY() {
 			cs := internal.NewColorScheme(opts.IO)
-			fmt.Fprintf(opts.IO.Out, "%s Synchronizing assets repository...\n", cs.Bold("🔄"))
+			fmt.Fprintf(opts.IO.Out, "%s Synchronizing assets repository...\n", cs.Bold("Syncing"))
 
 			// Show progress indicators
 			go showProgressIndicators(ctx, opts.IO)
@@ -115,9 +119,8 @@ func syncRun(opts *SyncOptions) error {
 
 	// Perform synchronization
 	syncRequest := assets.SyncRequest{
-		Force:   opts.Force,
-		Shallow: opts.Shallow,
-		Branch:  opts.Branch,
+		Force:  opts.Force,
+		Branch: opts.Branch,
 	}
 
 	result, err := client.SyncRepository(ctx, syncRequest)
@@ -154,9 +157,9 @@ func showProgressIndicators(ctx context.Context, io *iostreams.IOStreams) {
 
 	cs := internal.NewColorScheme(io)
 	steps := []string{
-		"🔐 Authenticating with Git provider",
-		"📡 Fetching repository updates",
-		"💾 Updating local cache",
+		"Authenticating with Git provider",
+		"Fetching repository updates",
+		"Updating local cache",
 	}
 
 	ticker := time.NewTicker(500 * time.Millisecond)
@@ -203,9 +206,9 @@ func displaySyncText(opts *SyncOptions, result *assets.SyncResult) error {
 	case "success":
 		fmt.Fprintf(opts.IO.Out, "%s Sync completed successfully\n", cs.Green("✓"))
 	case "partial":
-		fmt.Fprintf(opts.IO.Out, "%s Sync completed with warnings\n", cs.Yellow("⚠"))
+		fmt.Fprintf(opts.IO.Out, "%s Sync completed with warnings\n", cs.Yellow("!"))
 		if result.Error != "" {
-			fmt.Fprintf(opts.IO.Out, "%s Warning: %s\n", cs.Yellow("⚠"), result.Error)
+			fmt.Fprintf(opts.IO.Out, "%s Warning: %s\n", cs.Yellow("!"), result.Error)
 		}
 	case "error":
 		fmt.Fprintf(opts.IO.Out, "%s Sync failed\n", cs.Red("✗"))
@@ -220,7 +223,7 @@ func displaySyncText(opts *SyncOptions, result *assets.SyncResult) error {
 	// Show statistics
 	if result.AssetsAdded > 0 || result.AssetsUpdated > 0 || result.AssetsRemoved > 0 {
 		fmt.Fprintln(opts.IO.Out)
-		fmt.Fprintf(opts.IO.Out, "%s Changes:\n", cs.Bold("📊"))
+		fmt.Fprintf(opts.IO.Out, "%s Changes:\n", cs.Bold("Changes"))
 
 		if result.AssetsAdded > 0 {
 			fmt.Fprintf(opts.IO.Out, "  %s Added: %s assets\n",
@@ -240,7 +243,7 @@ func displaySyncText(opts *SyncOptions, result *assets.SyncResult) error {
 
 	// Show cache and timing information
 	fmt.Fprintln(opts.IO.Out)
-	fmt.Fprintf(opts.IO.Out, "%s Summary:\n", cs.Bold("📋"))
+	fmt.Fprintf(opts.IO.Out, "%s Summary:\n", cs.Bold("Summary"))
 
 	if result.CacheSizeMB > 0 {
 		fmt.Fprintf(opts.IO.Out, "  Cache size: %.1f MB\n", result.CacheSizeMB)
@@ -258,7 +261,7 @@ func displaySyncText(opts *SyncOptions, result *assets.SyncResult) error {
 	// Helpful next steps
 	if opts.IO.IsStdoutTTY() && result.Status == "success" {
 		fmt.Fprintln(opts.IO.Out)
-		fmt.Fprintf(opts.IO.Out, "%s Next steps:\n", cs.Gray("💡"))
+		fmt.Fprintf(opts.IO.Out, "%s Next steps:\n", cs.Gray("Tip:"))
 		fmt.Fprintf(opts.IO.Out, "  %s zen assets list           # List available assets\n", cs.Gray("→"))
 		fmt.Fprintf(opts.IO.Out, "  %s zen assets info <name>    # Get asset information\n", cs.Gray("→"))
 		fmt.Fprintf(opts.IO.Out, "  %s zen assets status         # Check overall status\n", cs.Gray("→"))

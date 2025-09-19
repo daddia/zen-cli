@@ -175,10 +175,10 @@ func displayStatusText(opts *StatusOptions, status *StatusInfo) error {
 	cs := internal.NewColorScheme(opts.IO)
 
 	// Header
-	fmt.Fprintf(opts.IO.Out, "%s Asset Status\n\n", cs.Bold("📦"))
+	fmt.Fprintf(opts.IO.Out, "%s Asset Status\n\n", cs.Bold("Assets"))
 
 	// Authentication section
-	fmt.Fprintf(opts.IO.Out, "%s Authentication\n", cs.Bold("🔐"))
+	fmt.Fprintf(opts.IO.Out, "%s Authentication\n", cs.Bold("Auth"))
 	if status.Authentication.Authenticated {
 		fmt.Fprintf(opts.IO.Out, "  Status: %s Authenticated\n", cs.Green("✓"))
 		if status.Authentication.Provider != "" {
@@ -197,7 +197,7 @@ func displayStatusText(opts *StatusOptions, status *StatusInfo) error {
 	fmt.Fprintln(opts.IO.Out)
 
 	// Cache section
-	fmt.Fprintf(opts.IO.Out, "%s Cache\n", cs.Bold("💾"))
+	fmt.Fprintf(opts.IO.Out, "%s Cache\n", cs.Bold("Cache"))
 	switch status.Cache.Status {
 	case "healthy":
 		fmt.Fprintf(opts.IO.Out, "  Status: %s Healthy\n", cs.Green("✓"))
@@ -220,7 +220,7 @@ func displayStatusText(opts *StatusOptions, status *StatusInfo) error {
 	fmt.Fprintln(opts.IO.Out)
 
 	// Repository section
-	fmt.Fprintf(opts.IO.Out, "%s Repository\n", cs.Bold("📡"))
+	fmt.Fprintf(opts.IO.Out, "%s Repository\n", cs.Bold("Repository"))
 	if status.Repository.Available {
 		fmt.Fprintf(opts.IO.Out, "  Status: %s Connected\n", cs.Green("✓"))
 		if status.Repository.URL != "" {
@@ -243,7 +243,7 @@ func displayStatusText(opts *StatusOptions, status *StatusInfo) error {
 	// Footer with helpful commands
 	if opts.IO.IsStdoutTTY() {
 		fmt.Fprintln(opts.IO.Out)
-		fmt.Fprintf(opts.IO.Out, "%s Quick actions:\n", cs.Gray("💡"))
+		fmt.Fprintf(opts.IO.Out, "%s Quick actions:\n", cs.Gray("Tip:"))
 		if !status.Authentication.Authenticated {
 			fmt.Fprintf(opts.IO.Out, "  %s zen assets auth github    # Authenticate with GitHub\n", cs.Gray("→"))
 		}

@@ -163,7 +163,7 @@ func displayListText(opts *ListOptions, assetList *assets.AssetList, filter asse
 	cs := internal.NewColorScheme(opts.IO)
 
 	if len(assetList.Assets) == 0 {
-		fmt.Fprintf(opts.IO.Out, "%s No assets found", cs.Gray("ℹ"))
+		fmt.Fprintf(opts.IO.Out, "%s No assets found", cs.Gray("Info:"))
 		if hasFilters(filter) {
 			fmt.Fprintf(opts.IO.Out, " matching the specified criteria")
 		}
@@ -172,9 +172,9 @@ func displayListText(opts *ListOptions, assetList *assets.AssetList, filter asse
 		if opts.IO.IsStdoutTTY() {
 			fmt.Fprintln(opts.IO.Out)
 			if !hasFilters(filter) {
-				fmt.Fprintf(opts.IO.Out, "%s Try running 'zen assets sync' to synchronize with the repository.\n", cs.Gray("💡"))
+				fmt.Fprintf(opts.IO.Out, "%s Try running 'zen assets sync' to synchronize with the repository.\n", cs.Gray("Tip:"))
 			} else {
-				fmt.Fprintf(opts.IO.Out, "%s Try adjusting your filters or run 'zen assets list' to see all assets.\n", cs.Gray("💡"))
+				fmt.Fprintf(opts.IO.Out, "%s Try adjusting your filters or run 'zen assets list' to see all assets.\n", cs.Gray("Tip:"))
 			}
 		}
 		return nil
@@ -234,7 +234,7 @@ func displayListText(opts *ListOptions, assetList *assets.AssetList, filter asse
 			nextOffset := filter.Offset + filter.Limit
 			if nextOffset < assetList.Total {
 				fmt.Fprintf(opts.IO.Out, "\n%s Use --offset %d to see more results",
-					cs.Gray("💡"), nextOffset)
+					cs.Gray("Tip:"), nextOffset)
 			}
 		}
 	} else {
@@ -245,7 +245,7 @@ func displayListText(opts *ListOptions, assetList *assets.AssetList, filter asse
 
 	// Show active filters
 	if hasFilters(filter) && opts.IO.IsStdoutTTY() {
-		fmt.Fprintf(opts.IO.Out, "\n%s Active filters:", cs.Gray("🔍"))
+		fmt.Fprintf(opts.IO.Out, "\n%s Active filters:", cs.Gray("Filters:"))
 		if filter.Type != "" {
 			fmt.Fprintf(opts.IO.Out, " type=%s", filter.Type)
 		}

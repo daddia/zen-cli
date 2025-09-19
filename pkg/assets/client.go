@@ -4,12 +4,15 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/daddia/zen/internal/logging"
 	"github.com/daddia/zen/pkg/errors"
+	"github.com/daddia/zen/pkg/git"
 )
 
 // Client implements AssetClientInterface
@@ -18,7 +21,7 @@ type Client struct {
 	logger logging.Logger
 	auth   AuthProvider
 	cache  CacheManager
-	git    GitRepository
+	git    git.Repository
 	parser ManifestParser
 
 	// Internal state
@@ -36,13 +39,13 @@ type Client struct {
 }
 
 // NewClient creates a new asset client
-func NewClient(config AssetConfig, logger logging.Logger, auth AuthProvider, cache CacheManager, git GitRepository, parser ManifestParser) *Client {
+func NewClient(config AssetConfig, logger logging.Logger, auth AuthProvider, cache CacheManager, gitRepo git.Repository, parser ManifestParser) *Client {
 	return &Client{
 		config: config,
 		logger: logger,
 		auth:   auth,
 		cache:  cache,
-		git:    git,
+		git:    gitRepo,
 		parser: parser,
 	}
 }
@@ -155,46 +158,31 @@ func (c *Client) SyncRepository(ctx context.Context, req SyncRequest) (*SyncResu
 		Status: "success",
 	}
 
-	// Authenticate first
+	// Try to authenticate (optional for public repositories)
 	if err := c.auth.Authenticate(ctx, c.config.AuthProvider); err != nil {
-		c.mu.Lock()
-		c.metrics.errorCount++
-		c.mu.Unlock()
+		// Check if this is just a missing token (could be public repo)
+		if assetErr, ok := err.(*AssetClientError); ok && assetErr.Code == ErrorCodeAuthenticationFailed {
+			c.logger.Warn("no authentication token found, attempting anonymous access", "provider", c.config.AuthProvider)
+			// Continue without authentication - will work for public repositories
+		} else {
+			// Other authentication errors should fail
+			c.mu.Lock()
+			c.metrics.errorCount++
+			c.mu.Unlock()
 
-		result.Status = "error"
-		result.Error = fmt.Sprintf("authentication failed: %v", err)
-		return result, &AssetClientError{
-			Code:    ErrorCodeAuthenticationFailed,
-			Message: "failed to authenticate with Git provider",
-			Details: err.Error(),
+			result.Status = "error"
+			result.Error = fmt.Sprintf("authentication failed: %v", err)
+			return result, &AssetClientError{
+				Code:    ErrorCodeAuthenticationFailed,
+				Message: "failed to authenticate with Git provider",
+				Details: err.Error(),
+			}
 		}
 	}
 
 	// Set up timeout context
 	syncCtx, cancel := context.WithTimeout(ctx, time.Duration(c.config.SyncTimeoutSeconds)*time.Second)
 	defer cancel()
-
-	// Perform Git operations
-	var gitErr error
-	if req.Force || c.isFirstSync() {
-		gitErr = c.git.Clone(syncCtx, c.config.RepositoryURL, req.Branch, req.Shallow)
-	} else {
-		gitErr = c.git.Pull(syncCtx)
-	}
-
-	if gitErr != nil {
-		c.mu.Lock()
-		c.metrics.errorCount++
-		c.mu.Unlock()
-
-		result.Status = "error"
-		result.Error = fmt.Sprintf("git operation failed: %v", gitErr)
-		return result, &AssetClientError{
-			Code:    ErrorCodeRepositoryError,
-			Message: "failed to sync repository",
-			Details: gitErr.Error(),
-		}
-	}
 
 	// Load and parse manifest
 	manifestContent, err := c.git.GetFile(syncCtx, "manifest.yaml")
@@ -208,6 +196,12 @@ func (c *Client) SyncRepository(ctx context.Context, req SyncRequest) (*SyncResu
 			result.Status = "partial"
 			result.Error = fmt.Sprintf("failed to parse manifest: %v", err)
 		} else {
+			// Save manifest to .zen/assets/manifest.yaml
+			if err := c.saveManifestToDisk(manifestContent); err != nil {
+				c.logger.Warn("failed to save manifest to disk", "error", err)
+				// Don't fail the sync, just warn
+			}
+
 			// Update manifest data and calculate changes
 			c.mu.Lock()
 			oldCount := len(c.manifestData)
@@ -433,6 +427,51 @@ func (c *Client) isFirstSync() bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.lastSync.IsZero()
+}
+
+// saveManifestToDisk saves the manifest content to .zen/assets/manifest.yaml
+func (c *Client) saveManifestToDisk(manifestContent []byte) error {
+	// Ensure the .zen/assets directory exists
+	assetsDir := c.config.CachePath
+	if strings.HasPrefix(assetsDir, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return errors.Wrap(err, "failed to get user home directory")
+		}
+		assetsDir = filepath.Join(home, assetsDir[2:])
+	}
+
+	if err := os.MkdirAll(assetsDir, 0755); err != nil {
+		return errors.Wrap(err, "failed to create assets directory")
+	}
+
+	// Write manifest to file
+	manifestPath := filepath.Join(assetsDir, "manifest.yaml")
+	if err := os.WriteFile(manifestPath, manifestContent, 0644); err != nil {
+		return errors.Wrap(err, "failed to write manifest file")
+	}
+
+	c.logger.Debug("manifest saved to disk", "path", manifestPath)
+	return nil
+}
+
+// sanitizeURL removes sensitive information from URLs for logging
+func (c *Client) sanitizeURL(rawURL string) string {
+	if rawURL == "" {
+		return "[empty-url]"
+	}
+
+	// Simple sanitization - just show the host and path without credentials
+	if idx := strings.Index(rawURL, "@"); idx != -1 {
+		// URL contains credentials, hide them
+		if protoIdx := strings.Index(rawURL, "://"); protoIdx != -1 {
+			protocol := rawURL[:protoIdx+3]
+			remainder := rawURL[idx+1:]
+			return protocol + "[credentials]@" + remainder
+		}
+	}
+
+	return rawURL
 }
 
 // GetMetrics returns client performance metrics (for monitoring/debugging)

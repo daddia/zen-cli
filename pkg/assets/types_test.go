@@ -20,7 +20,7 @@ func TestDefaultAssetConfig(t *testing.T) {
 	config := DefaultAssetConfig()
 
 	assert.Equal(t, "main", config.Branch)
-	assert.Equal(t, "~/.zen/cache/assets", config.CachePath)
+	assert.Equal(t, "~/.zen/assets", config.CachePath)
 	assert.Equal(t, int64(100), config.CacheSizeMB)
 	assert.Equal(t, 24*time.Hour, config.DefaultTTL)
 	assert.Equal(t, "github", config.AuthProvider)

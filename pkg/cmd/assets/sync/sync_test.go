@@ -25,7 +25,7 @@ func TestNewCmdAssetsSync(t *testing.T) {
 	// Test command metadata
 	assert.Equal(t, "sync", cmd.Use)
 	assert.Equal(t, "Synchronize assets with remote repository", cmd.Short)
-	assert.Contains(t, cmd.Long, "Synchronize the local asset cache")
+	assert.Contains(t, cmd.Long, "Synchronize the local asset metadata")
 	assert.Contains(t, cmd.Example, "zen assets sync")
 }
 
@@ -41,11 +41,6 @@ func TestSyncCommandFlags(t *testing.T) {
 	assert.Equal(t, "bool", forceFlag.Value.Type())
 	assert.Equal(t, "false", forceFlag.DefValue)
 
-	shallowFlag := cmd.Flags().Lookup("shallow")
-	require.NotNil(t, shallowFlag)
-	assert.Equal(t, "bool", shallowFlag.Value.Type())
-	assert.Equal(t, "false", shallowFlag.DefValue)
-
 	branchFlag := cmd.Flags().Lookup("branch")
 	require.NotNil(t, branchFlag)
 	assert.Equal(t, "string", branchFlag.Value.Type())
@@ -54,7 +49,7 @@ func TestSyncCommandFlags(t *testing.T) {
 	timeoutFlag := cmd.Flags().Lookup("timeout")
 	require.NotNil(t, timeoutFlag)
 	assert.Equal(t, "int", timeoutFlag.Value.Type())
-	assert.Equal(t, "300", timeoutFlag.DefValue)
+	assert.Equal(t, "60", timeoutFlag.DefValue)
 }
 
 func TestSyncSuccessfulTextOutput(t *testing.T) {
@@ -268,7 +263,6 @@ func TestSyncWithFlags(t *testing.T) {
 	cmd := NewCmdAssetsSync(f)
 	cmd.SetArgs([]string{
 		"--force",
-		"--shallow",
 		"--branch", "develop",
 		"--timeout", "600",
 	})
@@ -279,7 +273,6 @@ func TestSyncWithFlags(t *testing.T) {
 
 	// The mock client should have captured the sync request
 	assert.True(t, mockClient.lastRequest.Force)
-	assert.True(t, mockClient.lastRequest.Shallow)
 	assert.Equal(t, "develop", mockClient.lastRequest.Branch)
 }
 

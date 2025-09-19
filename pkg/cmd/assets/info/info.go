@@ -155,10 +155,10 @@ func displayInfoText(opts *InfoOptions, content *assets.AssetContent) error {
 	meta := content.Metadata
 
 	// Header
-	fmt.Fprintf(opts.IO.Out, "%s %s\n\n", cs.Bold("📄"), cs.Bold(meta.Name))
+	fmt.Fprintf(opts.IO.Out, "%s %s\n\n", cs.Bold("Asset:"), cs.Bold(meta.Name))
 
 	// Basic information
-	fmt.Fprintf(opts.IO.Out, "%s Basic Information\n", cs.Bold("ℹ️"))
+	fmt.Fprintf(opts.IO.Out, "%s Basic Information\n", cs.Bold("Info"))
 	fmt.Fprintf(opts.IO.Out, "  Name: %s\n", meta.Name)
 
 	// Color code asset type
@@ -188,7 +188,7 @@ func displayInfoText(opts *InfoOptions, content *assets.AssetContent) error {
 
 	// Tags
 	if len(meta.Tags) > 0 {
-		fmt.Fprintf(opts.IO.Out, "%s Tags\n", cs.Bold("🏷️"))
+		fmt.Fprintf(opts.IO.Out, "%s Tags\n", cs.Bold("Tags"))
 		fmt.Fprintf(opts.IO.Out, "  %s\n", strings.Join(meta.Tags, ", "))
 		fmt.Fprintln(opts.IO.Out)
 	}
@@ -272,10 +272,10 @@ func displayInfoText(opts *InfoOptions, content *assets.AssetContent) error {
 			preview = preview[:previewLength] + "..."
 		}
 
-		fmt.Fprintf(opts.IO.Out, "%s Content Preview\n", cs.Bold("👁️"))
+		fmt.Fprintf(opts.IO.Out, "%s Content Preview\n", cs.Bold("Preview"))
 		fmt.Fprintf(opts.IO.Out, "%s\n", cs.Gray(preview))
 		fmt.Fprintln(opts.IO.Out)
-		fmt.Fprintf(opts.IO.Out, "%s Use --include-content to see the full content\n", cs.Gray("💡"))
+		fmt.Fprintf(opts.IO.Out, "%s Use --include-content to see the full content\n", cs.Gray("Tip:"))
 	}
 
 	return nil

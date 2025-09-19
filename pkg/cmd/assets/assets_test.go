@@ -77,7 +77,7 @@ func TestCmdAssetsMetadata(t *testing.T) {
 	assert.Equal(t, "Manage assets and templates", cmd.Short)
 	assert.Contains(t, cmd.Long, "Manage assets and templates for Zen CLI")
 	assert.Contains(t, cmd.Example, "zen assets auth github")
-	assert.Equal(t, "core", cmd.GroupID)
+	assert.Equal(t, "assets", cmd.GroupID)
 }
 
 func TestCmdAssetsValidation(t *testing.T) {
