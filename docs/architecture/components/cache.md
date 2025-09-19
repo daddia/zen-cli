@@ -116,9 +116,9 @@ Maintenance operations provide automatic cleanup of expired entries, background 
 
 Factory integration makes the cache component available through the cmdutil.Factory.Cache method, providing consistent configuration and setup across all components while ensuring easy access for all commands through a standardized interface.
 
-Service integration demonstrates the cache component's role in asset management for content caching, integration with the configuration system for cache settings management, and coordination with the logging system for operational visibility and monitoring.
+Service integration demonstrates the cache component's role in asset management for manifest caching and session-based asset storage, integration with the configuration system for cache settings management, and coordination with the logging system for operational visibility and monitoring.
 
-Adapter integration showcases how the AssetCacheManager adapts the generic cache for asset-specific requirements, implements error code translation to maintain interface compatibility, and provides seamless integration with existing asset management infrastructure.
+Adapter integration showcases how the AssetCacheManager adapts the generic cache for session-based asset storage, implements error code translation to maintain interface compatibility, and provides seamless integration with existing asset management infrastructure including TTL management for session lifetime.
 
 ## Related Components
 

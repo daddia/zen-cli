@@ -41,12 +41,12 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
   - **Acceptance**: Repository structure with manifest.yaml for asset discovery
 
 - [x] **[ZEN-007] Git-based Asset Client** *(L)*
-  - **Deliverable**: Asset client with GitHub authentication and local caching
-  - **Acceptance**: Can sync assets to `~/.zen/cache/assets/` with offline support
+  - **Deliverable**: Asset client with GitHub authentication and manifest synchronization
+  - **Acceptance**: Can sync manifest to `.zen/assets/` and fetch assets dynamically
 
 - [x] **[ZEN-008] Asset Commands** *(M)*
   - **Deliverable**: `zen assets auth`, `zen assets sync`, `zen assets list`
-  - **Acceptance**: Can authenticate, sync, and list available assets
+  - **Acceptance**: Can authenticate, sync manifest, and list available assets from manifest
 
 ### **Template Engine & Task Creation** → Target Release v0.3.0
 

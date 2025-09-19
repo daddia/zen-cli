@@ -10,23 +10,23 @@ informed: Engineering Leadership, Security Team
 
 ## Context and Problem Statement
 
-The Zen CLI requires a Git-based asset client (ZEN-007) to authenticate with Git providers, clone private repositories, and manage local asset caching.
+The Zen CLI requires a Git-based asset client (ZEN-007) to authenticate with Git providers, fetch asset manifests, and dynamically access private repository assets.
 
-The asset client must support GitHub and GitLab authentication, provide fast offline access to cached assets (<100ms), and efficiently synchronize repositories (<30s initial clone). The implementation needs to balance performance, security, maintainability, and feature completeness while integrating seamlessly with the existing Zen CLI architecture.
+The asset client must support GitHub and GitLab authentication, provide fast manifest synchronization, and efficiently access assets on-demand from remote repositories. The implementation needs to balance performance, security, maintainability, and feature completeness while integrating seamlessly with the existing Zen CLI architecture.
 
 Key requirements include:
 
-- Private repository cloning with authentication
-- Local asset caching with TTL management
-- Offline functionality with cached assets
+- Private repository authentication and access
+- Manifest synchronization to `.zen/assets/` directory
+- Dynamic asset fetching without local storage
 - Integration with Template Engine interface
 - Support for GitHub PAT and GitLab tokens
 - Minimal external dependencies per Library-First principles
-- Performance targets: <100ms cached access, <30s sync
+- Performance targets: <100ms manifest access, <5s asset fetch
 
 ## Decision Drivers
 
-- **Performance Requirements**: Asset loading <100ms cached, repository sync <30s initial clone
+- **Performance Requirements**: Manifest access <100ms, dynamic asset fetch <5s
 - **Authentication Support**: GitHub Personal Access Tokens, GitLab Project Access Tokens
 - **External Dependencies**: Minimize dependencies per Library-First development approach (ADR-0020)
 - **Feature Completeness**: Support for clone, pull, fetch operations with authentication
@@ -66,7 +66,7 @@ Chosen option: "Git CLI wrapper with subprocess execution", because it provides 
 
 Implementation will be validated through:
 
-- Performance benchmarks meeting <100ms cached access and <30s sync targets
+- Performance benchmarks meeting <100ms manifest access and <5s dynamic asset fetch targets
 - Authentication testing with GitHub and GitLab using PAT/Project tokens
 - Cross-platform testing on macOS, Linux, and Windows
 - Integration testing with Template Engine interface
@@ -181,7 +181,7 @@ Access assets directly from the local file system without any Git integration, r
 
 **Performance Considerations:**
 
-- Subprocess overhead mitigated by local caching strategy
+- Subprocess overhead mitigated by manifest caching and selective asset fetching
 - Git CLI optimization flags: `--depth=1` for shallow clones
 - Credential caching to minimize authentication overhead
 
@@ -191,4 +191,4 @@ Access assets directly from the local file system without any Git integration, r
 - Environment variable support for CI/CD workflows
 - No credential logging or exposure in error messages
 
-Note: This decision focuses on Git operations only. Asset parsing and caching implementation are separate concerns addressed in the asset client architecture.
+Note: This decision focuses on Git operations only. Manifest storage and dynamic asset fetching implementation are separate concerns addressed in the asset client architecture.

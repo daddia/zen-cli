@@ -6,9 +6,9 @@ Accepted
 ## Context
 
 Zen CLI requires caching capabilities across multiple components:
-- Asset management needs to cache templates, prompts, and manifests
+- Asset management needs to cache manifests (assets are fetched dynamically)
 - Configuration system could benefit from caching expensive operations
-- Git operations could cache repository metadata and file contents
+- Git operations could cache repository metadata
 - Future features will likely need similar caching capabilities
 
 Initially, a cache implementation was created specifically for the assets package, but this approach led to:
