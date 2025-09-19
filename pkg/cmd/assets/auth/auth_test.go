@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -268,15 +267,6 @@ func (a *testAuthManager) ListProviders() []string {
 }
 
 func (a *testAuthManager) DeleteCredentials(provider string) error {
-	return nil
-}
-
-// readCloserWrapper wraps a strings.Reader to implement io.ReadCloser
-type readCloserWrapper struct {
-	*strings.Reader
-}
-
-func (r readCloserWrapper) Close() error {
 	return nil
 }
 

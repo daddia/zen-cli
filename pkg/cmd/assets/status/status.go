@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/daddia/zen/pkg/assets"
@@ -185,17 +184,6 @@ func getAuthenticationInfo(ctx context.Context, authManagerFunc func() (interfac
 	}
 
 	return authInfo
-}
-
-func hasGitHubToken() bool {
-	// Check for GitHub token in environment variables
-	tokenEnvVars := []string{"GITHUB_TOKEN", "GH_TOKEN", "ZEN_GITHUB_TOKEN"}
-	for _, envVar := range tokenEnvVars {
-		if token := os.Getenv(envVar); token != "" {
-			return true
-		}
-	}
-	return false
 }
 
 func displayStatusJSON(opts *StatusOptions, status *StatusInfo) error {

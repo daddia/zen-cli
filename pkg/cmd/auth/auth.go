@@ -12,6 +12,8 @@ import (
 	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // AuthOptions contains options for the auth command
@@ -201,7 +203,7 @@ func authenticateProvider(ctx context.Context, opts *AuthOptions, authManager au
 
 	// Success message
 	fmt.Fprintf(opts.IO.Out, "✓ Successfully authenticated with %s\n",
-		strings.Title(opts.Provider))
+		cases.Title(language.English).String(opts.Provider))
 
 	// Show additional info
 	if opts.IO.IsStdoutTTY() {
@@ -256,7 +258,7 @@ func promptForToken(opts *AuthOptions) (string, error) {
 	}
 
 	// Show instructions
-	fmt.Fprintf(opts.IO.Out, "⚠ Authentication required for %s\n\n", strings.Title(opts.Provider))
+	fmt.Fprintf(opts.IO.Out, "⚠ Authentication required for %s\n\n", cases.Title(language.English).String(opts.Provider))
 	fmt.Fprintf(opts.IO.Out, "Instructions: %s:\n", info.Description)
 	for _, instruction := range info.Instructions {
 		fmt.Fprintf(opts.IO.Out, "%s\n", instruction)
@@ -264,7 +266,7 @@ func promptForToken(opts *AuthOptions) (string, error) {
 	fmt.Fprintln(opts.IO.Out)
 
 	// Prompt for token
-	fmt.Fprintf(opts.IO.Out, "Enter your %s token: ", strings.Title(opts.Provider))
+	fmt.Fprintf(opts.IO.Out, "Enter your %s token: ", cases.Title(language.English).String(opts.Provider))
 
 	var token string
 	_, err = fmt.Fscanln(opts.IO.In, &token)

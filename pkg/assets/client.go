@@ -246,12 +246,13 @@ func (c *Client) SyncRepository(ctx context.Context, req SyncRequest) (*SyncResu
 	var err error
 
 	// Use HTTP client if available (preferred for individual file fetching)
-	if c.http != nil {
+	switch {
+	case c.http != nil:
 		manifestContent, err = c.http.DownloadManifest(syncCtx, c.config.RepositoryURL, c.config.Branch)
-	} else if c.git != nil {
+	case c.git != nil:
 		// Fallback to Git CLI (requires repository clone)
 		manifestContent, err = c.git.GetFile(syncCtx, "manifest.yaml")
-	} else {
+	default:
 		err = fmt.Errorf("no repository access method configured")
 	}
 
@@ -413,18 +414,19 @@ func (c *Client) ensureManifestLoaded(ctx context.Context) error {
 		var err error
 
 		// Use HTTP client if available (preferred for individual file fetching)
-		if c.http != nil {
+		switch {
+		case c.http != nil:
 			manifestContent, err = c.http.DownloadManifest(ctx, c.config.RepositoryURL, c.config.Branch)
 			if err != nil {
 				return errors.Wrap(err, "failed to download manifest via HTTP API")
 			}
-		} else if c.git != nil {
+		case c.git != nil:
 			// Fallback to Git CLI (requires repository clone)
 			manifestContent, err = c.git.GetFile(ctx, "manifest.yaml")
 			if err != nil {
 				return errors.Wrap(err, "failed to load manifest file from repository")
 			}
-		} else {
+		default:
 			return errors.New("no repository access method configured")
 		}
 
