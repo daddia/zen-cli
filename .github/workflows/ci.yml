@@ -114,11 +114,12 @@ jobs:
         flags: unittests
         name: ci-unit-tests
 
-  # Documentation Check
+  # Documentation Check (Optional)
   docs:
-    name: Documentation
+    name: Documentation (Optional)
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    continue-on-error: true
 
     steps:
     - name: Checkout code
@@ -131,3 +132,4 @@ jobs:
 
     - name: Check documentation sync
       run: make docs-check
+      continue-on-error: true

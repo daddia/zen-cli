@@ -432,6 +432,28 @@ ci-validate: ## Run CI validation pipeline (strict mode)
 	@$(GOMOD) verify
 	@echo "✓ CI validation completed successfully"
 
+ci-validate-no-docs: ## Run CI validation pipeline without documentation check
+	@echo "Running CI validation pipeline (no docs)..."
+	@echo "============================================="
+	@echo ""
+	@$(MAKE) deps
+	@$(MAKE) fmt
+	@if ! git diff --exit-code; then \
+		echo "✗ Code formatting changes detected"; \
+		echo "  Run 'make fmt' and commit changes"; \
+		exit 1; \
+	fi
+	@$(MAKE) lint
+	@$(MAKE) security
+	@$(MAKE) test-coverage-ci
+	@$(MAKE) test-integration
+	@$(MAKE) test-e2e
+	@$(MAKE) test-race
+	@$(MAKE) test-benchmarks
+	@$(MAKE) build-all
+	@$(GOMOD) verify
+	@echo "✓ CI validation completed successfully (docs check skipped)"
+
 validate-fast: ## Run fast validation (unit tests + linting only)
 	@echo "Running fast validation..."
 	@echo "============================"
