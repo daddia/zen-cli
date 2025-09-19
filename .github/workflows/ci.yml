@@ -49,7 +49,7 @@ jobs:
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
       with:
-        file: ./coverage/coverage.out
+        files: ./coverage/coverage.out
         flags: unittests
         name: codecov-umbrella
 
@@ -155,8 +155,10 @@ jobs:
         echo "- Building for ${{ matrix.goos }}/${{ matrix.goarch }}"
         make build
 
-        # Validate the binary
+        # Validate the binary on native platform
         if [ "${{ matrix.goos }}" = "$(go env GOOS)" ] && [ "${{ matrix.goarch }}" = "$(go env GOARCH)" ]; then
+          BINARY_NAME=$(make binary-name)
+          echo "- Validating binary: ./bin/${BINARY_NAME}"
           ./bin/${BINARY_NAME} version
           ./bin/${BINARY_NAME} --help
         fi

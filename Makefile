@@ -63,8 +63,12 @@ help: ## Display this help screen
 build: deps ## Build the zen binary for current platform
 	@echo "Building zen binary..."
 	@mkdir -p $(BINARY_DIR)
-	$(GOBUILD) $(LDFLAGS) -tags "$(BUILD_TAGS)" -o $(BINARY_DIR)/$(BINARY_NAME) ./cmd/zen
-	@echo "✓ Binary built: $(BINARY_DIR)/$(BINARY_NAME)"
+	@GOOS=$${GOOS:-$$(go env GOOS)}; \
+	GOARCH=$${GOARCH:-$$(go env GOARCH)}; \
+	OUTPUT=$(BINARY_DIR)/$(BINARY_NAME); \
+	if [ "$$GOOS" = "windows" ]; then OUTPUT=$$OUTPUT.exe; fi; \
+	$(GOBUILD) $(LDFLAGS) -tags "$(BUILD_TAGS)" -o $$OUTPUT ./cmd/zen; \
+	echo "✓ Binary built: $$OUTPUT"
 
 build-all: deps ## Build binaries for all supported platforms
 	@echo "Building zen binaries for all platforms..."
@@ -381,6 +385,12 @@ version: ## Display version information
 	@echo "Commit:  $(COMMIT)"
 	@echo "Built:   $(BUILD_TIME)"
 	@echo "Go:      $(GO_VERSION)"
+
+binary-name: ## Display the binary name for current platform
+	@GOOS=$${GOOS:-$$(go env GOOS)}; \
+	OUTPUT=$(BINARY_NAME); \
+	if [ "$$GOOS" = "windows" ]; then OUTPUT=$$OUTPUT.exe; fi; \
+	echo "$$OUTPUT"
 
 info: version ## Display build information
 	@echo ""
