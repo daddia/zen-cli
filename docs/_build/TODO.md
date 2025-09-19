@@ -22,31 +22,7 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 ---
 
-## Complete
-
-- [x] **[ZEN-001] Go Project Setup** - CLI framework with Cobra
-- [x] **[ZEN-002] Core CLI Framework** - Root command, version, help
-- [x] **[ZEN-003] Workspace Detection & Init** - `zen init` command
-- [x] **[ZEN-004] Configuration Management** - Config loading system
-- [x] **[ZEN-005] Testing & CI/CD** - GitHub Actions, releases, cross-platform builds
-
----
-
 ## In Progress
-
-### **Asset Management Foundation** → Target Release v0.2.0
-
-- [x] **[ZEN-006] Private Asset Repository** *(S)*
-  - **Deliverable**: Private `zen-assets` repo with templates (task, ADR, README) and prompts
-  - **Acceptance**: Repository structure with manifest.yaml for asset discovery
-
-- [x] **[ZEN-007] Git-based Asset Client** *(L)*
-  - **Deliverable**: Asset client with GitHub authentication and manifest synchronization
-  - **Acceptance**: Can sync manifest to `.zen/assets/` and fetch assets dynamically
-
-- [x] **[ZEN-008] Asset Commands** *(M)*
-  - **Deliverable**: `zen assets auth`, `zen assets sync`, `zen assets list`
-  - **Acceptance**: Can authenticate, sync manifest, and list available assets from manifest
 
 ### **Template Engine & Task Creation** → Target Release v0.3.0
 
@@ -172,3 +148,14 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 6. **Real-World**: No toy examples - must work for actual development
 
 ---
+
+## Complete
+
+- [x] **[ZEN-001] Go Project Setup** - CLI framework with Cobra
+- [x] **[ZEN-002] Core CLI Framework** - Root command, version, help
+- [x] **[ZEN-003] Workspace Detection & Init** - `zen init` command
+- [x] **[ZEN-004] Configuration Management** - Config loading system
+- [x] **[ZEN-005] Testing & CI/CD** - GitHub Actions, releases, cross-platform builds
+- [x] **[ZEN-006] Private Asset Repository** - Private `zen-assets` repo with manifest.yaml
+- [x] **[ZEN-007] Git-based Asset Client** - Asset client with GitHub auth
+- [x] **[ZEN-008] Asset Commands** - `zen assets auth`, `zen assets sync`, `zen assets list`

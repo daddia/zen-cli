@@ -168,10 +168,44 @@ func (c *Client) GetAsset(ctx context.Context, name string, opts GetAssetOptions
 	c.mu.RUnlock()
 
 	if metadata != nil {
+		// Load the actual content from repository if we have the path
+		if metadata.Path != "" {
+			c.logger.Debug("loading asset content from repository", "name", name, "path", metadata.Path)
+
+			var content []byte
+			var err error
+
+			// Use git repository to fetch the actual content
+			if c.git != nil {
+				content, err = c.git.GetFile(ctx, metadata.Path)
+				if err != nil {
+					c.logger.Warn("failed to load asset content from git", "name", name, "path", metadata.Path, "error", err)
+					// Fall through to return metadata only
+				}
+			}
+
+			if err == nil && len(content) > 0 {
+				result := &AssetContent{
+					Metadata: *metadata,
+					Content:  string(content),
+					Checksum: metadata.Checksum,
+					Cached:   false,
+					CacheAge: 0,
+				}
+
+				// Cache the result for session reuse
+				if err := c.cache.Put(ctx, name, result); err != nil {
+					c.logger.Warn("failed to cache asset for session", "name", name, "error", err)
+				}
+
+				return result, nil
+			}
+		}
+
 		// For info command, we can return just the metadata without loading content
 		result := &AssetContent{
 			Metadata: *metadata,
-			Content:  "", // Will be loaded on demand if needed
+			Content:  "", // Content not loaded
 			Checksum: metadata.Checksum,
 			Cached:   false,
 			CacheAge: 0,
@@ -567,18 +601,18 @@ func (c *Client) verifyIntegrity(content *AssetContent) error {
 
 // getManifestPath returns the path to the local manifest file in workspace
 func (c *Client) getManifestPath() string {
-	// Always use workspace-local .zen/assets directory
-	assetsDir := c.config.CachePath
+	// Always use workspace-local .zen/assets directory for manifest
+	// The manifest is separate from the cache - it's the source of truth
+	assetsDir := filepath.Join(".zen", "assets")
 
-	// If cache path is not set or is a home directory path, use workspace default
-	if assetsDir == "" || strings.HasPrefix(assetsDir, "~/") {
-		assetsDir = filepath.Join(".zen", "assets")
-	}
-
-	// Ensure it's relative to current workspace, not absolute or home-based
-	if filepath.IsAbs(assetsDir) {
-		// Convert absolute path to workspace-relative
-		assetsDir = filepath.Join(".zen", "assets")
+	// If we have a cache path that looks like it contains .zen/assets,
+	// extract the base workspace path
+	if c.config.CachePath != "" && strings.Contains(c.config.CachePath, ".zen") {
+		// Extract base path before .zen
+		parts := strings.Split(c.config.CachePath, ".zen")
+		if len(parts) > 0 && parts[0] != "" {
+			assetsDir = filepath.Join(parts[0], ".zen", "assets")
+		}
 	}
 
 	return filepath.Join(assetsDir, "manifest.yaml")

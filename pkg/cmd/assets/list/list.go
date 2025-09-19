@@ -93,6 +93,14 @@ to update the manifest with the latest assets from the repository.`,
 }
 
 func listRun(opts *ListOptions) error {
+	// Validate input parameters
+	if opts.Limit < 0 {
+		return fmt.Errorf("invalid argument: limit cannot be negative")
+	}
+	if opts.Offset < 0 {
+		return fmt.Errorf("invalid argument: offset cannot be negative")
+	}
+
 	ctx := context.Background()
 
 	// Get asset client

@@ -1,6 +1,17 @@
 # Post-development and pre-push validation
 
-**MUST** All CI must pass
+## Comprehensive Validation
+
+Run all validation checks with a single command:
+
+```bash
+make pre-push
+```
+
+This target runs all required validation steps in sequence and will fail fast if any step fails.
+
+## Individual Validation Requirements
+
 **MUST** All dependencies must download (`make deps`)
 **MUST** All code must be formatted (`make fmt`)
 **MUST** All linting must pass (`make lint`)
@@ -15,3 +26,9 @@
 **MUST** All builds must pass (`make build`)
 **MUST** All cross-platform builds must pass (`make build-all`)
 **MUST** Go module verification must pass (`go mod verify`)
+
+## Alternative Validation Targets
+
+- `make ci-validate` - Strict CI validation with formatting checks
+- `make validate-fast` - Quick validation (unit tests + linting only)
+- `make check` - Standard quality checks (lint + security + tests)

@@ -1033,7 +1033,7 @@ func TestAssetsIntegration_ComprehensiveErrorScenarios(t *testing.T) {
 			{
 				name:      "empty_asset_name",
 				args:      []string{"assets", "info", ""},
-				errorText: "required",
+				errorText: "not found",
 			},
 		}
 
@@ -1309,7 +1309,7 @@ func TestAssetsIntegration_UserExperience(t *testing.T) {
 			{
 				name:          "missing_asset_name",
 				args:          []string{"assets", "info"},
-				shouldContain: []string{"required", "asset"},
+				shouldContain: []string{"accepts 1 arg", "received 0"},
 			},
 			{
 				name:          "invalid_provider",

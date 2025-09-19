@@ -253,7 +253,7 @@ func TestE2E_GlobalFlags(t *testing.T) {
 			if tt.name == "help_flag" {
 				// Help should exit with 0 and show help text
 				require.NoError(t, err, "help command failed: %s", stderr)
-				assert.Contains(t, stdout, "AI-Powered Productivity Suite")
+				assert.Contains(t, stdout, "Zen. The unified control plane for product & engineering.")
 			} else {
 				require.NoError(t, err, "command with %s failed: %s", tt.name, stderr)
 				assert.NotEmpty(t, stdout, "should produce output")
