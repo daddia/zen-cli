@@ -403,7 +403,10 @@ func TestGetAuthConfig(t *testing.T) {
 				cfg.Assets.AuthProvider = "github"
 				return cfg
 			},
-			setupEnv:   func() {},
+			setupEnv: func() {
+				// Clear any existing environment variable that might override
+				os.Unsetenv("ZEN_AUTH_STORAGE_TYPE")
+			},
 			cleanupEnv: func() {},
 			validate: func(t *testing.T, cfg auth.Config) {
 				assert.Equal(t, "keychain", cfg.StorageType)

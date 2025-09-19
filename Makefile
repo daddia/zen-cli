@@ -185,7 +185,8 @@ test-parallel: ## Run tests with maximum parallelization
 test-benchmarks: ## Run benchmark tests for performance validation
 	@echo "Running benchmark tests..."
 	@mkdir -p $(COVERAGE_DIR)
-	$(GOTEST) -bench=. -benchmem -benchtime=1s ./internal/... ./pkg/... > $(COVERAGE_DIR)/benchmarks.txt
+	$(GOTEST) -bench=. -benchmem -benchtime=1s ./internal/... ./pkg/... > $(COVERAGE_DIR)/benchmarks.txt 2>&1 || \
+		(echo "✗ Benchmark tests failed. Output:" && cat $(COVERAGE_DIR)/benchmarks.txt && exit 1)
 	@echo "✓ Benchmark results: $(COVERAGE_DIR)/benchmarks.txt"
 
 test-race: ## Run tests with race detection only

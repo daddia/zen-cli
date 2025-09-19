@@ -92,6 +92,8 @@ jobs:
 
     - name: Run E2E tests
       run: make test-e2e
+      env:
+        ZEN_AUTH_STORAGE_TYPE: file
 
   # Race Condition Tests
   test-race:
@@ -123,6 +125,8 @@ jobs:
 
     - name: Run race tests
       run: make test-race
+      env:
+        ZEN_AUTH_STORAGE_TYPE: file
 
   # Performance Benchmarks
   test-benchmarks:
@@ -154,6 +158,8 @@ jobs:
 
     - name: Run benchmarks
       run: make test-benchmarks
+      env:
+        ZEN_AUTH_STORAGE_TYPE: file
 
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
@@ -193,6 +199,8 @@ jobs:
 
     - name: Generate comprehensive coverage
       run: make test-coverage-report
+      env:
+        ZEN_AUTH_STORAGE_TYPE: file
 
     - name: Validate test pyramid
       run: |
