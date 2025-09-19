@@ -29,7 +29,7 @@ func TestExecute(t *testing.T) {
 		{
 			name:           "help command",
 			args:           []string{"--help"},
-			expectedOutput: "Zen CLI - AI-Powered Productivity Suite",
+			expectedOutput: "Zen. The unified control plane for product & engineering.",
 			wantErr:        false,
 		},
 		{
