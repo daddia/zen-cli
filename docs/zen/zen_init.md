@@ -5,7 +5,7 @@ description: "CLI reference for zen init"
 section: "CLI Reference"
 man_section: 1
 since: v0.0.0
-date: 2025-09-19
+date: 2025-09-20
 keywords:
   - zen
   - cli
@@ -29,10 +29,16 @@ without errors, similar to 'git init' behavior.
 
 The .zen/ directory contains:
   - Configuration files
+  - Assets directory with manifest cache
   - Cache directory
   - Log directory
   - Templates directory (for future use)
   - Backups directory
+
+If GitHub authentication is configured, zen init will automatically:
+  - Set up the assets infrastructure
+  - Download the latest assets manifest (if needed)
+  - Make assets available for immediate use
 
 ```
 zen init [flags]
