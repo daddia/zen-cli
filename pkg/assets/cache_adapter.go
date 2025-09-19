@@ -43,7 +43,15 @@ func (s *AssetContentSerializer) ContentType() string {
 }
 
 // NewAssetCacheManager creates a new asset cache manager using the generic cache
+// The cache is session-based with a default TTL matching CLI session duration
 func NewAssetCacheManager(basePath string, sizeLimitMB int64, defaultTTL time.Duration, logger logging.Logger) *AssetCacheManager {
+	// Use session-based TTL if not specified
+	if defaultTTL == 0 {
+		// Default to 1 hour for CLI session cache
+		// This ensures cached assets are available for the duration of typical workflows
+		defaultTTL = 1 * time.Hour
+	}
+
 	config := cache.Config{
 		BasePath:    basePath,
 		SizeLimitMB: sizeLimitMB,

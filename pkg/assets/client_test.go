@@ -3,6 +3,8 @@ package assets
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -12,6 +14,126 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
+
+// Test setup and teardown functions
+
+// setupTestEnvironment creates a temporary directory and sets up test fixtures
+func setupTestEnvironment(t *testing.T) (string, func()) {
+	// Create temporary directory for test
+	tempDir, err := os.MkdirTemp("", "zen-assets-test-*")
+	require.NoError(t, err)
+
+	// Create .zen/assets directory structure
+	assetsDir := filepath.Join(tempDir, ".zen", "assets")
+	err = os.MkdirAll(assetsDir, 0755)
+	require.NoError(t, err)
+
+	// Create cache directory structure
+	cacheDir := filepath.Join(tempDir, ".zen", "cache", "assets")
+	err = os.MkdirAll(cacheDir, 0755)
+	require.NoError(t, err)
+
+	// Cleanup function
+	cleanup := func() {
+		os.RemoveAll(tempDir)
+	}
+
+	return tempDir, cleanup
+}
+
+// setupManifestFile copies the test manifest to the expected location
+func setupManifestFile(t *testing.T, tempDir string) func() {
+	// Load test manifest content
+	manifestContent := loadTestManifest(t)
+
+	// Write manifest to the expected location (.zen/assets/manifest.yaml)
+	manifestPath := filepath.Join(tempDir, ".zen", "assets", "manifest.yaml")
+	err := os.WriteFile(manifestPath, manifestContent, 0644)
+	require.NoError(t, err)
+
+	// Teardown function that removes the manifest
+	teardown := func() {
+		os.Remove(manifestPath)
+	}
+
+	return teardown
+}
+
+// setupTestEnvironmentWithManifest creates test environment and copies manifest file
+func setupTestEnvironmentWithManifest(t *testing.T) (string, func()) {
+	tempDir, cleanup := setupTestEnvironment(t)
+
+	// Setup manifest file
+	manifestTeardown := setupManifestFile(t, tempDir)
+
+	// Combined cleanup function
+	combinedCleanup := func() {
+		manifestTeardown()
+		cleanup()
+	}
+
+	return tempDir, combinedCleanup
+}
+
+// loadTestManifest loads the test manifest fixture
+func loadTestManifest(t *testing.T) []byte {
+	// Get current working directory
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+
+	// Find the project root by looking for go.mod
+	projectRoot := wd
+	for {
+		if _, err := os.Stat(filepath.Join(projectRoot, "go.mod")); err == nil {
+			break
+		}
+		parent := filepath.Dir(projectRoot)
+		if parent == projectRoot {
+			// Reached filesystem root without finding go.mod
+			t.Fatalf("Could not find project root (go.mod not found)")
+		}
+		projectRoot = parent
+	}
+
+	// Build path to test fixture
+	manifestPath := filepath.Join(projectRoot, "test", "fixtures", "assets", "manifest.yaml")
+
+	content, err := os.ReadFile(manifestPath)
+	require.NoError(t, err, "Failed to load test manifest fixture from %s", manifestPath)
+
+	return content
+}
+
+// createTestClientWithRealManifest creates a test client with the real manifest fixture
+func createTestClientWithRealManifest(t *testing.T) (*Client, []AssetMetadata, func()) {
+	tempDir, cleanup := setupTestEnvironment(t)
+
+	// Load real manifest
+	manifestContent := loadTestManifest(t)
+
+	// Create client with temp directory
+	config := DefaultAssetConfig()
+	config.CachePath = filepath.Join(tempDir, ".zen", "cache", "assets")
+
+	logger := logging.NewBasic()
+	auth := &mockAuthProvider{}
+	cache := &mockCacheManager{}
+	git := &mockGitRepository{}
+	parser := NewYAMLManifestParser(logger)
+
+	client := NewClient(config, logger, auth, cache, git, parser)
+
+	// Parse the manifest to get expected data
+	parsedManifest, err := parser.Parse(context.Background(), manifestContent)
+	require.NoError(t, err)
+
+	// Pre-load manifest data in client
+	client.mu.Lock()
+	client.manifestData = parsedManifest
+	client.mu.Unlock()
+
+	return client, parsedManifest, cleanup
+}
 
 // Mock implementations for testing
 
@@ -334,7 +456,7 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestClient_ListAssets_EmptyFilter(t *testing.T) {
-	client, _, _, git, parser := createTestClient()
+	client, _, _, _, _ := createTestClient()
 	ctx := context.Background()
 
 	// Set up test data
@@ -348,9 +470,10 @@ func TestClient_ListAssets_EmptyFilter(t *testing.T) {
 		},
 	}
 
-	// Set up mocks
-	git.On("GetFile", ctx, "manifest.yaml").Return([]byte("test manifest"), nil)
-	parser.On("Parse", ctx, []byte("test manifest")).Return(testManifest, nil)
+	// Pre-load manifest data in client to bypass ensureManifestLoaded
+	client.mu.Lock()
+	client.manifestData = testManifest
+	client.mu.Unlock()
 
 	// Execute
 	result, err := client.ListAssets(ctx, AssetFilter{})
@@ -361,13 +484,10 @@ func TestClient_ListAssets_EmptyFilter(t *testing.T) {
 	assert.Equal(t, "test-template", result.Assets[0].Name)
 	assert.Equal(t, 1, result.Total)
 	assert.False(t, result.HasMore)
-
-	git.AssertExpectations(t)
-	parser.AssertExpectations(t)
 }
 
 func TestClient_ListAssets_WithTypeFilter(t *testing.T) {
-	client, _, _, git, parser := createTestClient()
+	client, _, _, _, _ := createTestClient()
 	ctx := context.Background()
 
 	// Set up test data
@@ -382,9 +502,10 @@ func TestClient_ListAssets_WithTypeFilter(t *testing.T) {
 		},
 	}
 
-	// Set up mocks
-	git.On("GetFile", ctx, "manifest.yaml").Return([]byte("test manifest"), nil)
-	parser.On("Parse", ctx, []byte("test manifest")).Return(testManifest, nil)
+	// Pre-load manifest data in client to bypass ensureManifestLoaded
+	client.mu.Lock()
+	client.manifestData = testManifest
+	client.mu.Unlock()
 
 	// Execute with filter
 	filter := AssetFilter{Type: AssetTypeTemplate}
@@ -723,6 +844,151 @@ func TestClient_GetAsset_EmptyName(t *testing.T) {
 	assert.ErrorAs(t, err, &assetErr)
 	assert.Equal(t, ErrorCodeAssetNotFound, assetErr.Code)
 	assert.Contains(t, assetErr.Message, "cannot be empty")
+}
+
+// Test with real manifest fixture
+func TestClient_ListAssets_WithRealManifest(t *testing.T) {
+	client, manifest, cleanup := createTestClientWithRealManifest(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	// Execute
+	result, err := client.ListAssets(ctx, AssetFilter{})
+
+	// Verify
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.True(t, len(result.Assets) > 0, "Should have assets from real manifest")
+	assert.Equal(t, len(manifest), result.Total)
+
+	// Check that we have expected asset types
+	hasTemplate := false
+	hasPrompt := false
+	for _, asset := range result.Assets {
+		if asset.Type == AssetTypeTemplate {
+			hasTemplate = true
+		}
+		if asset.Type == AssetTypePrompt {
+			hasPrompt = true
+		}
+	}
+	assert.True(t, hasTemplate, "Should have template assets")
+	assert.True(t, hasPrompt, "Should have prompt assets")
+}
+
+func TestClient_ListAssets_WithRealManifest_FilterByType(t *testing.T) {
+	client, _, cleanup := createTestClientWithRealManifest(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	// Execute with template filter
+	result, err := client.ListAssets(ctx, AssetFilter{Type: AssetTypeTemplate})
+
+	// Verify
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.True(t, len(result.Assets) > 0, "Should have template assets")
+
+	// All results should be templates
+	for _, asset := range result.Assets {
+		assert.Equal(t, AssetTypeTemplate, asset.Type)
+	}
+}
+
+func TestClient_ListAssets_WithRealManifest_FilterByCategory(t *testing.T) {
+	client, _, cleanup := createTestClientWithRealManifest(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	// Execute with planning category filter
+	result, err := client.ListAssets(ctx, AssetFilter{Category: "planning"})
+
+	// Verify
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+
+	// All results should be planning category
+	for _, asset := range result.Assets {
+		assert.Equal(t, "planning", asset.Category)
+	}
+}
+
+func TestClient_SyncRepository_WithRealManifest(t *testing.T) {
+	tempDir, cleanup := setupTestEnvironment(t)
+	defer cleanup()
+
+	// Create client with temp directory
+	config := DefaultAssetConfig()
+	config.CachePath = filepath.Join(tempDir, ".zen", "cache", "assets")
+
+	logger := logging.NewBasic()
+	auth := &mockAuthProvider{}
+	cache := &mockCacheManager{}
+	git := &mockGitRepository{}
+	parser := NewYAMLManifestParser(logger)
+
+	client := NewClient(config, logger, auth, cache, git, parser)
+	ctx := context.Background()
+
+	// Load real manifest content
+	manifestContent := loadTestManifest(t)
+
+	// Set up mocks
+	auth.On("Authenticate", ctx, "github").Return(nil)
+	git.On("GetFile", mock.AnythingOfType("*context.timerCtx"), "manifest.yaml").Return(manifestContent, nil)
+	cache.On("GetInfo", ctx).Return(&CacheInfo{TotalSize: 0}, nil)
+
+	// Execute
+	req := SyncRequest{Force: true, Branch: "main"}
+	result, err := client.SyncRepository(ctx, req)
+
+	// Verify
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "success", result.Status)
+	assert.True(t, result.AssetsAdded > 0, "Should have added assets from real manifest")
+
+	// Verify manifest was saved to disk
+	manifestPath := filepath.Join(tempDir, ".zen", "assets", "manifest.yaml")
+	savedContent, err := os.ReadFile(manifestPath)
+	require.NoError(t, err)
+	assert.Equal(t, manifestContent, savedContent)
+
+	auth.AssertExpectations(t)
+	git.AssertExpectations(t)
+	cache.AssertExpectations(t)
+}
+
+func TestClient_ListAssets_LoadsFromDisk(t *testing.T) {
+	tempDir, cleanup := setupTestEnvironmentWithManifest(t)
+	defer cleanup()
+
+	// Create client with temp directory - this will make getManifestPath point to our temp dir
+	config := DefaultAssetConfig()
+	config.CachePath = filepath.Join(tempDir, ".zen", "cache", "assets")
+
+	logger := logging.NewBasic()
+	auth := &mockAuthProvider{}
+	cache := &mockCacheManager{}
+	git := &mockGitRepository{}
+	parser := NewYAMLManifestParser(logger)
+
+	client := NewClient(config, logger, auth, cache, git, parser)
+	ctx := context.Background()
+
+	// Execute - this should load manifest from disk, not call Git
+	result, err := client.ListAssets(ctx, AssetFilter{})
+
+	// Verify
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.True(t, len(result.Assets) > 0, "Should have loaded assets from disk manifest")
+
+	// Verify that Git was NOT called (no expectations set)
+	git.AssertExpectations(t)
 }
 
 // Benchmark tests

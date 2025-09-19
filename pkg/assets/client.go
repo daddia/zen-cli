@@ -93,6 +93,7 @@ func (c *Client) ListAssets(ctx context.Context, filter AssetFilter) (*AssetList
 }
 
 // GetAsset retrieves a specific asset by name
+// Uses cache-first lookup with session TTL, falling back to Git repository
 func (c *Client) GetAsset(ctx context.Context, name string, opts GetAssetOptions) (*AssetContent, error) {
 	c.logger.Debug("getting asset", "name", name, "options", opts)
 
@@ -103,33 +104,34 @@ func (c *Client) GetAsset(ctx context.Context, name string, opts GetAssetOptions
 		}
 	}
 
-	// Try cache first if enabled
-	if opts.UseCache {
-		if content, err := c.cache.Get(ctx, name); err == nil {
-			c.mu.Lock()
-			c.metrics.cacheHits++
-			c.mu.Unlock()
+	// Always try cache first (session-based caching)
+	// Cache is used for the duration of the CLI session
+	if content, err := c.cache.Get(ctx, name); err == nil {
+		c.mu.Lock()
+		c.metrics.cacheHits++
+		c.mu.Unlock()
 
-			if opts.VerifyIntegrity {
-				if err := c.verifyIntegrity(content); err != nil {
-					c.logger.Warn("cache integrity check failed", "asset", name, "error", err)
-					// Continue to load from repository
-				} else {
-					c.logger.Debug("asset served from cache", "name", name)
-					return content, nil
-				}
+		// Verify integrity if requested
+		if opts.VerifyIntegrity {
+			if err := c.verifyIntegrity(content); err != nil {
+				c.logger.Warn("cache integrity check failed, fetching from repository", "asset", name, "error", err)
+				// Continue to load from repository
 			} else {
-				c.logger.Debug("asset served from cache", "name", name)
+				c.logger.Debug("asset served from session cache", "name", name, "cache_age", content.CacheAge)
 				return content, nil
 			}
+		} else {
+			c.logger.Debug("asset served from session cache", "name", name, "cache_age", content.CacheAge)
+			return content, nil
 		}
-
-		c.mu.Lock()
-		c.metrics.cacheMisses++
-		c.mu.Unlock()
 	}
 
-	// Load from repository
+	c.mu.Lock()
+	c.metrics.cacheMisses++
+	c.mu.Unlock()
+
+	// Load from repository (dynamic fetch)
+	c.logger.Debug("fetching asset from repository", "name", name)
 	content, err := c.loadAssetFromRepository(ctx, name, opts)
 	if err != nil {
 		c.mu.Lock()
@@ -138,20 +140,21 @@ func (c *Client) GetAsset(ctx context.Context, name string, opts GetAssetOptions
 		return nil, err
 	}
 
-	// Cache the result
-	if opts.UseCache {
-		if err := c.cache.Put(ctx, name, content); err != nil {
-			c.logger.Warn("failed to cache asset", "name", name, "error", err)
-		}
+	// Always cache the result for session reuse
+	// The cache will be cleared when the CLI session ends
+	if err := c.cache.Put(ctx, name, content); err != nil {
+		c.logger.Warn("failed to cache asset for session", "name", name, "error", err)
+		// Don't fail the operation, just warn
 	}
 
-	c.logger.Debug("asset loaded from repository", "name", name)
+	c.logger.Debug("asset fetched from repository and cached", "name", name)
 	return content, nil
 }
 
-// SyncRepository synchronizes with the remote repository
+// SyncRepository synchronizes the manifest with the remote repository
+// This only syncs the manifest.yaml file, not the actual asset content
 func (c *Client) SyncRepository(ctx context.Context, req SyncRequest) (*SyncResult, error) {
-	c.logger.Info("starting repository sync", "request", req)
+	c.logger.Info("starting manifest sync", "request", req)
 
 	startTime := time.Now()
 	result := &SyncResult{
@@ -184,44 +187,80 @@ func (c *Client) SyncRepository(ctx context.Context, req SyncRequest) (*SyncResu
 	syncCtx, cancel := context.WithTimeout(ctx, time.Duration(c.config.SyncTimeoutSeconds)*time.Second)
 	defer cancel()
 
-	// Load and parse manifest
+	// Always fetch manifest (lightweight operation)
+	c.logger.Info("fetching manifest from repository")
 	manifestContent, err := c.git.GetFile(syncCtx, "manifest.yaml")
 	if err != nil {
+		c.mu.Lock()
+		c.metrics.errorCount++
+		c.mu.Unlock()
+
 		result.Status = "partial"
 		result.Error = fmt.Sprintf("failed to load manifest: %v", err)
-	} else {
-		// Parse manifest
-		newManifest, err := c.parser.Parse(syncCtx, manifestContent)
-		if err != nil {
-			result.Status = "partial"
-			result.Error = fmt.Sprintf("failed to parse manifest: %v", err)
+		result.DurationMS = time.Since(startTime).Milliseconds()
+
+		// Get cache info even if manifest fetch failed
+		if cacheInfo, err := c.cache.GetInfo(ctx); err == nil {
+			result.CacheSizeMB = float64(cacheInfo.TotalSize) / (1024 * 1024)
+		}
+
+		c.logger.Info("manifest sync completed with errors", "result", result)
+		return result, nil // Don't fail the sync, just return partial status
+	}
+
+	// Parse manifest to validate
+	newManifest, err := c.parser.Parse(syncCtx, manifestContent)
+	if err != nil {
+		result.Status = "error"
+		result.Error = fmt.Sprintf("invalid manifest: %v", err)
+		result.DurationMS = time.Since(startTime).Milliseconds()
+		return result, errors.Wrap(err, "failed to parse manifest")
+	}
+
+	// Save manifest to .zen/assets/manifest.yaml
+	if err := c.saveManifestToDisk(manifestContent); err != nil {
+		c.logger.Warn("failed to save manifest to disk", "error", err)
+		// Don't fail the sync, just warn
+		result.Status = "partial"
+	}
+
+	// Calculate changes before updating
+	c.mu.Lock()
+	oldAssets := make(map[string]AssetMetadata)
+	for _, asset := range c.manifestData {
+		oldAssets[asset.Name] = asset
+	}
+
+	var added, updated, removed int
+	newAssets := make(map[string]AssetMetadata)
+	for _, asset := range newManifest {
+		newAssets[asset.Name] = asset
+		if oldAsset, exists := oldAssets[asset.Name]; exists {
+			// Check if asset was updated (compare checksums or timestamps)
+			if oldAsset.Checksum != asset.Checksum || oldAsset.UpdatedAt != asset.UpdatedAt {
+				updated++
+			}
 		} else {
-			// Save manifest to .zen/assets/manifest.yaml
-			if err := c.saveManifestToDisk(manifestContent); err != nil {
-				c.logger.Warn("failed to save manifest to disk", "error", err)
-				// Don't fail the sync, just warn
-			}
-
-			// Update manifest data and calculate changes
-			c.mu.Lock()
-			oldCount := len(c.manifestData)
-			c.manifestData = newManifest
-			c.lastSync = time.Now()
-			c.metrics.syncCount++
-			c.mu.Unlock()
-
-			// Calculate changes (simplified)
-			newCount := len(newManifest)
-			switch {
-			case newCount > oldCount:
-				result.AssetsAdded = newCount - oldCount
-			case newCount < oldCount:
-				result.AssetsRemoved = oldCount - newCount
-			default:
-				result.AssetsUpdated = newCount // Assume all updated if same count
-			}
+			added++
 		}
 	}
+
+	// Check for removed assets
+	for name := range oldAssets {
+		if _, exists := newAssets[name]; !exists {
+			removed++
+		}
+	}
+
+	// Update manifest data
+	c.manifestData = newManifest
+	c.lastSync = time.Now()
+	c.metrics.syncCount++
+	c.mu.Unlock()
+
+	result.AssetsAdded = added
+	result.AssetsUpdated = updated
+	result.AssetsRemoved = removed
 
 	// Get cache info
 	if cacheInfo, err := c.cache.GetInfo(ctx); err == nil {
@@ -288,10 +327,26 @@ func (c *Client) ensureManifestLoaded(ctx context.Context) error {
 	c.mu.RUnlock()
 
 	if !hasManifest {
-		// Try to load manifest from cache/repository
+		// First try to load manifest from local disk (.zen/assets/manifest.yaml)
+		manifestPath := c.getManifestPath()
+		if manifestContent, err := os.ReadFile(manifestPath); err == nil {
+			c.logger.Debug("loading manifest from disk", "path", manifestPath)
+			manifest, err := c.parser.Parse(ctx, manifestContent)
+			if err != nil {
+				c.logger.Warn("failed to parse local manifest, will fetch from repository", "error", err)
+			} else {
+				c.mu.Lock()
+				c.manifestData = manifest
+				c.mu.Unlock()
+				return nil
+			}
+		}
+
+		// If local manifest doesn't exist or is invalid, fetch from repository
+		c.logger.Debug("fetching manifest from repository")
 		manifestContent, err := c.git.GetFile(ctx, "manifest.yaml")
 		if err != nil {
-			return errors.Wrap(err, "failed to load manifest file")
+			return errors.Wrap(err, "failed to load manifest file from repository")
 		}
 
 		manifest, err := c.parser.Parse(ctx, manifestContent)
@@ -423,24 +478,51 @@ func (c *Client) verifyIntegrity(content *AssetContent) error {
 	return nil
 }
 
-// saveManifestToDisk saves the manifest content to .zen/assets/manifest.yaml
-func (c *Client) saveManifestToDisk(manifestContent []byte) error {
-	// Ensure the .zen/assets directory exists
-	assetsDir := c.config.CachePath
-	if strings.HasPrefix(assetsDir, "~/") {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return errors.Wrap(err, "failed to get user home directory")
+// getManifestPath returns the path to the local manifest file
+func (c *Client) getManifestPath() string {
+	var assetsDir string
+
+	if c.config.CachePath != "" {
+		// If a custom cache path is configured, derive assets directory from it
+		// CachePath is typically ~/.zen/cache/assets, we want ~/.zen/assets
+		if strings.Contains(c.config.CachePath, "cache") {
+			// Replace "cache/assets" with "assets" or "cache" with "assets"
+			basePath := strings.Replace(c.config.CachePath, "/cache/assets", "/assets", 1)
+			if basePath == c.config.CachePath {
+				// If no replacement happened, try replacing just "cache"
+				basePath = strings.Replace(c.config.CachePath, "/cache", "/assets", 1)
+			}
+			assetsDir = basePath
+		} else {
+			// Fallback: assume cache path is the base and add assets
+			assetsDir = filepath.Join(filepath.Dir(c.config.CachePath), "assets")
 		}
-		assetsDir = filepath.Join(home, assetsDir[2:])
+	} else {
+		// Default path
+		assetsDir = filepath.Join(".zen", "assets")
 	}
 
+	// Expand home directory if needed
+	if strings.HasPrefix(assetsDir, "~/") {
+		if home, err := os.UserHomeDir(); err == nil {
+			assetsDir = filepath.Join(home, assetsDir[2:])
+		}
+	}
+
+	return filepath.Join(assetsDir, "manifest.yaml")
+}
+
+// saveManifestToDisk saves the manifest content to .zen/assets/manifest.yaml
+func (c *Client) saveManifestToDisk(manifestContent []byte) error {
+	manifestPath := c.getManifestPath()
+	assetsDir := filepath.Dir(manifestPath)
+
+	// Ensure the .zen/assets directory exists
 	if err := os.MkdirAll(assetsDir, 0755); err != nil {
 		return errors.Wrap(err, "failed to create assets directory")
 	}
 
 	// Write manifest to file
-	manifestPath := filepath.Join(assetsDir, "manifest.yaml")
 	if err := os.WriteFile(manifestPath, manifestContent, 0644); err != nil {
 		return errors.Wrap(err, "failed to write manifest file")
 	}
