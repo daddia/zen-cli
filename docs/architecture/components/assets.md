@@ -194,6 +194,29 @@ The asset management component implements comprehensive error handling with grac
 
 **Command Integration**: Dedicated asset management commands provide user-friendly interfaces for authentication, synchronization, and asset discovery operations.
 
+Usage examples:
+
+  - command: "zen assets list --type=template"
+    description: "List all available templates"
+    
+  - command: "zen assets list --category=planning"
+    description: "List all planning-related assets"
+    
+  - command: "zen assets list --stage=01-align"
+    description: "List assets for the Align stage"
+    
+  - command: "zen assets list --stream=i2d"
+    description: "List assets for the I2D stream"
+    
+  - command: "zen assets search 'api design'"
+    description: "Search for assets related to API design"
+    
+  - command: "zen template generate strategy.md.template"
+    description: "Generate a new file from the strategy template"
+    
+  - command: "zen prompt run api-design.md"
+    description: "Run the API design prompt"
+
 ## Security Considerations
 
 **Credential Security**:
