@@ -1,5 +1,5 @@
 # Zen CLI Release Configuration
-version: 1
+version: 2
 
 project_name: zen
 
@@ -9,7 +9,8 @@ before:
     - go generate ./...
 
 builds:
-  - env:
+  - id: zen
+    env:
       - CGO_ENABLED=0
     main: ./cmd/zen
     binary: zen
@@ -33,7 +34,10 @@ universal_binaries:
   - replace: true
 
 archives:
-  - format: tar.gz
+  - id: zen-archive
+    builds:
+      - zen
+    format: tar.gz
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
@@ -114,6 +118,8 @@ brews:
 nfpms:
   - file_name_template: '{{ .ConventionalFileName }}'
     id: packages
+    builds:
+      - zen
     homepage: https://github.com/daddia/zen
     description: AI-Powered Productivity Suite
     maintainer: Jonathan Daddia <your-email@example.com>
