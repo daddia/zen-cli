@@ -31,14 +31,6 @@ func (m *mockAuthProvider) GetCredentials(provider string) (string, error) {
 	return m.credentials[provider], nil
 }
 
-func (m *mockAuthProvider) setCredentials(provider, token string) {
-	m.credentials[provider] = token
-}
-
-func (m *mockAuthProvider) setError(provider string, err error) {
-	m.errors[provider] = err
-}
-
 func TestNewCLIRepository(t *testing.T) {
 	logger := logging.NewBasic()
 	auth := newMockAuthProvider()

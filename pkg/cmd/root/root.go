@@ -118,23 +118,6 @@ func Root() (*cobra.Command, error) {
 	return NewCmdRoot(f)
 }
 
-// newPlaceholderCommand creates a placeholder command for future implementation
-func newPlaceholderCommand(name, description string, f *cmdutil.Factory) *cobra.Command {
-	return &cobra.Command{
-		Use:   name,
-		Short: description,
-		Long:  fmt.Sprintf("%s\n\nThis command is planned for future implementation.", description),
-		Run: func(cmd *cobra.Command, args []string) {
-			f.Logger.Info("command not yet implemented",
-				"command", name,
-				"description", description)
-			fmt.Fprintf(cmd.OutOrStdout(), "Note: Command '%s' is planned for future implementation.\n", name)
-			fmt.Fprintf(cmd.OutOrStdout(), "Description: %s\n", description)
-			fmt.Fprintln(cmd.OutOrStdout(), "\nThis will be available in upcoming releases!")
-		},
-	}
-}
-
 // newCompletionCommand creates the shell completion command
 func newCompletionCommand(f *cmdutil.Factory) *cobra.Command {
 	return &cobra.Command{

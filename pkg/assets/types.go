@@ -181,7 +181,6 @@ type CacheManager interface {
 	Cleanup(ctx context.Context) error
 }
 
-
 // ManifestParser represents manifest parsing interface
 type ManifestParser interface {
 	// Parse parses the manifest file and returns asset metadata

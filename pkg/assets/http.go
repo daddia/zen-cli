@@ -2,8 +2,6 @@ package assets
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -194,82 +192,4 @@ type GitHubResponse struct {
 	Type        string `json:"type"`
 	Content     string `json:"content"`
 	Encoding    string `json:"encoding"`
-}
-
-// downloadFromGitHub downloads content using GitHub's API with proper content handling
-func (h *HTTPManifestClient) downloadFromGitHub(ctx context.Context, apiURL string) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create HTTP request")
-	}
-
-	// Add authentication headers
-	if err := h.addAuthHeaders(req); err != nil {
-		return nil, errors.Wrap(err, "failed to add authentication headers")
-	}
-
-	req.Header.Set("Accept", "application/vnd.github.v3+json")
-	req.Header.Set("User-Agent", "zen-cli/1.0")
-
-	resp, err := h.httpClient.Do(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "HTTP request failed")
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("GitHub API request failed with status %d", resp.StatusCode)
-	}
-
-	var githubResp GitHubResponse
-	if err := json.NewDecoder(resp.Body).Decode(&githubResp); err != nil {
-		return nil, errors.Wrap(err, "failed to decode GitHub API response")
-	}
-
-	// For small files, content is base64 encoded in the response
-	if githubResp.Encoding == "base64" && githubResp.Content != "" {
-		// Decode base64 content
-		content, err := h.decodeBase64Content(githubResp.Content)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to decode base64 content")
-		}
-		return content, nil
-	}
-
-	// For larger files, use the download URL
-	if githubResp.DownloadURL != "" {
-		return h.downloadFromURL(ctx, githubResp.DownloadURL)
-	}
-
-	return nil, fmt.Errorf("unable to download content from GitHub")
-}
-
-// decodeBase64Content decodes base64 content from GitHub API
-func (h *HTTPManifestClient) decodeBase64Content(content string) ([]byte, error) {
-	// Remove whitespace and newlines from base64 content
-	content = strings.ReplaceAll(content, "\n", "")
-	content = strings.ReplaceAll(content, " ", "")
-
-	// GitHub uses standard base64 encoding
-	return base64.StdEncoding.DecodeString(content)
-}
-
-// downloadFromURL downloads content from a direct URL
-func (h *HTTPManifestClient) downloadFromURL(ctx context.Context, downloadURL string) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", downloadURL, nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create download request")
-	}
-
-	resp, err := h.httpClient.Do(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "download request failed")
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("download failed with status %d", resp.StatusCode)
-	}
-
-	return io.ReadAll(resp.Body)
 }

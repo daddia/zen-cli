@@ -423,12 +423,6 @@ func (c *Client) verifyIntegrity(content *AssetContent) error {
 	return nil
 }
 
-func (c *Client) isFirstSync() bool {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.lastSync.IsZero()
-}
-
 // saveManifestToDisk saves the manifest content to .zen/assets/manifest.yaml
 func (c *Client) saveManifestToDisk(manifestContent []byte) error {
 	// Ensure the .zen/assets directory exists
@@ -456,23 +450,6 @@ func (c *Client) saveManifestToDisk(manifestContent []byte) error {
 }
 
 // sanitizeURL removes sensitive information from URLs for logging
-func (c *Client) sanitizeURL(rawURL string) string {
-	if rawURL == "" {
-		return "[empty-url]"
-	}
-
-	// Simple sanitization - just show the host and path without credentials
-	if idx := strings.Index(rawURL, "@"); idx != -1 {
-		// URL contains credentials, hide them
-		if protoIdx := strings.Index(rawURL, "://"); protoIdx != -1 {
-			protocol := rawURL[:protoIdx+3]
-			remainder := rawURL[idx+1:]
-			return protocol + "[credentials]@" + remainder
-		}
-	}
-
-	return rawURL
-}
 
 // GetMetrics returns client performance metrics (for monitoring/debugging)
 func (c *Client) GetMetrics() map[string]interface{} {
