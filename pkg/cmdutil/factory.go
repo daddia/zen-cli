@@ -7,6 +7,7 @@ import (
 	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/internal/logging"
 	"github.com/daddia/zen/pkg/assets"
+	"github.com/daddia/zen/pkg/cache"
 	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/daddia/zen/pkg/types"
 )
@@ -23,6 +24,7 @@ type Factory struct {
 	WorkspaceManager func() (WorkspaceManager, error)
 	AgentManager     func() (AgentManager, error)
 	AssetClient      func() (assets.AssetClientInterface, error)
+	Cache            func(basePath string) cache.Manager[string]
 
 	// Global flag values
 	ConfigFile string
@@ -89,6 +91,15 @@ func NewTestFactory(streams *iostreams.IOStreams) *Factory {
 		},
 		AssetClient: func() (assets.AssetClientInterface, error) {
 			return &testAssetClient{}, nil
+		},
+		Cache: func(basePath string) cache.Manager[string] {
+			config := cache.Config{
+				BasePath:    basePath,
+				SizeLimitMB: 10,
+				DefaultTTL:  time.Hour,
+			}
+			serializer := cache.NewStringSerializer()
+			return cache.NewManager(config, logging.NewBasic(), serializer)
 		},
 		BuildInfo: map[string]string{
 			"version":    "dev",

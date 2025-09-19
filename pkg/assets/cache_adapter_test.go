@@ -7,31 +7,30 @@ import (
 	"time"
 
 	"github.com/daddia/zen/internal/logging"
+	"github.com/daddia/zen/pkg/cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewFileCacheManager(t *testing.T) {
+func TestNewAssetCacheManager(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
 
-	cache := NewFileCacheManager(tempDir, 100, time.Hour, logger)
+	cache := NewAssetCacheManager(tempDir, 100, time.Hour, logger)
 
 	assert.NotNil(t, cache)
-	assert.Equal(t, tempDir, cache.basePath)
-	assert.Equal(t, int64(100), cache.sizeLimitMB)
-	assert.Equal(t, time.Hour, cache.defaultTTL)
-	assert.NotNil(t, cache.logger)
-	assert.NotNil(t, cache.index)
+	assert.NotNil(t, cache.cache)
 }
 
-func TestFileCacheManager_Put_And_Get(t *testing.T) {
+func TestAssetCacheManager_PutAndGet(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	cache := NewFileCacheManager(tempDir, 100, time.Hour, logger)
+	cache := NewAssetCacheManager(tempDir, 100, time.Hour, logger)
+	defer cache.Close()
+
 	ctx := context.Background()
 
-	// Create test content
+	// Create test asset content
 	content := &AssetContent{
 		Metadata: AssetMetadata{
 			Name:        "test-asset",
@@ -56,13 +55,15 @@ func TestFileCacheManager_Put_And_Get(t *testing.T) {
 	assert.True(t, retrieved.CacheAge >= 0)
 }
 
-func TestFileCacheManager_Get_NotFound(t *testing.T) {
+func TestAssetCacheManager_GetNotFound(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	cache := NewFileCacheManager(tempDir, 100, time.Hour, logger)
+	cache := NewAssetCacheManager(tempDir, 100, time.Hour, logger)
+	defer cache.Close()
+
 	ctx := context.Background()
 
-	// Try to get non-existent key
+	// Try to get non-existent asset
 	content, err := cache.Get(ctx, "nonexistent")
 
 	assert.Nil(t, content)
@@ -70,36 +71,35 @@ func TestFileCacheManager_Get_NotFound(t *testing.T) {
 
 	var assetErr *AssetClientError
 	assert.ErrorAs(t, err, &assetErr)
-	assert.Equal(t, ErrorCodeCacheError, assetErr.Code)
-	assert.Contains(t, assetErr.Message, "not found in cache")
+	assert.Equal(t, ErrorCodeAssetNotFound, assetErr.Code)
 }
 
-func TestFileCacheManager_Put_EmptyKey(t *testing.T) {
+func TestAssetCacheManager_PutNilContent(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	cache := NewFileCacheManager(tempDir, 100, time.Hour, logger)
+	cache := NewAssetCacheManager(tempDir, 100, time.Hour, logger)
+	defer cache.Close()
+
 	ctx := context.Background()
 
-	content := &AssetContent{
-		Content: "test",
-	}
-
-	err := cache.Put(ctx, "", content)
+	err := cache.Put(ctx, "test-key", nil)
 
 	assert.Error(t, err)
 	var assetErr *AssetClientError
 	assert.ErrorAs(t, err, &assetErr)
 	assert.Equal(t, ErrorCodeCacheError, assetErr.Code)
-	assert.Contains(t, assetErr.Message, "cannot be empty")
+	assert.Contains(t, assetErr.Message, "cannot be nil")
 }
 
-func TestFileCacheManager_Delete(t *testing.T) {
+func TestAssetCacheManager_Delete(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	cache := NewFileCacheManager(tempDir, 100, time.Hour, logger)
+	cache := NewAssetCacheManager(tempDir, 100, time.Hour, logger)
+	defer cache.Close()
+
 	ctx := context.Background()
 
-	// Put an item first
+	// Create and put test content
 	content := &AssetContent{
 		Content:  "test content",
 		Checksum: "test123",
@@ -121,24 +121,15 @@ func TestFileCacheManager_Delete(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestFileCacheManager_Delete_NotFound(t *testing.T) {
+func TestAssetCacheManager_Clear(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	cache := NewFileCacheManager(tempDir, 100, time.Hour, logger)
+	cache := NewAssetCacheManager(tempDir, 100, time.Hour, logger)
+	defer cache.Close()
+
 	ctx := context.Background()
 
-	// Delete non-existent key should not error
-	err := cache.Delete(ctx, "nonexistent")
-	assert.NoError(t, err)
-}
-
-func TestFileCacheManager_Clear(t *testing.T) {
-	tempDir := t.TempDir()
-	logger := logging.NewBasic()
-	cache := NewFileCacheManager(tempDir, 100, time.Hour, logger)
-	ctx := context.Background()
-
-	// Put multiple items
+	// Put multiple assets
 	for i := 0; i < 3; i++ {
 		content := &AssetContent{
 			Content:  fmt.Sprintf("content %d", i),
@@ -159,10 +150,12 @@ func TestFileCacheManager_Clear(t *testing.T) {
 	}
 }
 
-func TestFileCacheManager_GetInfo(t *testing.T) {
+func TestAssetCacheManager_GetInfo(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	cache := NewFileCacheManager(tempDir, 100, time.Hour, logger)
+	cache := NewAssetCacheManager(tempDir, 100, time.Hour, logger)
+	defer cache.Close()
+
 	ctx := context.Background()
 
 	// Initially empty
@@ -171,7 +164,7 @@ func TestFileCacheManager_GetInfo(t *testing.T) {
 	assert.Equal(t, int64(0), info.TotalSize)
 	assert.Equal(t, 0, info.AssetCount)
 
-	// Add an item
+	// Add an asset
 	content := &AssetContent{
 		Content:  "test content",
 		Checksum: "test123",
@@ -187,52 +180,49 @@ func TestFileCacheManager_GetInfo(t *testing.T) {
 	assert.Equal(t, 1, info.AssetCount)
 }
 
-func TestFileCacheManager_Cleanup(t *testing.T) {
-	tempDir := t.TempDir()
-	logger := logging.NewBasic()
-	cache := NewFileCacheManager(tempDir, 100, time.Hour, logger)
-	ctx := context.Background()
+func TestAssetContentSerializer(t *testing.T) {
+	serializer := NewAssetContentSerializer()
 
-	// Add an item
-	content := &AssetContent{
-		Content:  "test content",
-		Checksum: "test123",
+	content := AssetContent{
+		Metadata: AssetMetadata{
+			Name: "test",
+			Type: AssetTypeTemplate,
+		},
+		Content:  "# Test Content",
+		Checksum: "sha256:test",
 	}
 
-	err := cache.Put(ctx, "test-key", content)
+	// Test Serialize
+	data, err := serializer.Serialize(content)
 	require.NoError(t, err)
+	assert.Equal(t, []byte("# Test Content"), data)
 
-	// Run cleanup (should not remove non-expired items)
-	err = cache.Cleanup(ctx)
+	// Test Deserialize
+	result, err := serializer.Deserialize(data)
 	require.NoError(t, err)
+	assert.Equal(t, "# Test Content", result.Content)
 
-	// Verify item still exists
-	_, err = cache.Get(ctx, "test-key")
-	assert.NoError(t, err)
+	// Test ContentType
+	assert.Equal(t, "text/plain", serializer.ContentType())
 }
 
-func TestFileCacheManager_SanitizeFileName(t *testing.T) {
-	tempDir := t.TempDir()
-	logger := logging.NewBasic()
-	cache := NewFileCacheManager(tempDir, 100, time.Hour, logger)
-
+func TestConvertCacheErrorCode(t *testing.T) {
 	tests := []struct {
-		input    string
-		expected string
+		input    cache.ErrorCode
+		expected AssetErrorCode
 	}{
-		{"normal-name", "normal-name"},
-		{"path/with/slashes", "path_with_slashes"},
-		{"name:with:colons", "name_with_colons"},
-		{"name*with*wildcards", "name_with_wildcards"},
-		{"name?with?questions", "name_with_questions"},
-		{"name\"with\"quotes", "name_with_quotes"},
-		{"name<with>brackets", "name_with_brackets"},
-		{"name|with|pipes", "name_with_pipes"},
+		{cache.ErrorCodeNotFound, ErrorCodeAssetNotFound},
+		{cache.ErrorCodeInvalidKey, ErrorCodeCacheError},
+		{cache.ErrorCodeStorageFull, ErrorCodeCacheError},
+		{cache.ErrorCodeCorrupted, ErrorCodeIntegrityError},
+		{cache.ErrorCodePermission, ErrorCodeCacheError},
+		{cache.ErrorCodeSerialization, ErrorCodeCacheError},
+		{"unknown", ErrorCodeCacheError},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.input, func(t *testing.T) {
-			result := cache.sanitizeFileName(tt.input)
+		t.Run(string(tt.input), func(t *testing.T) {
+			result := convertCacheErrorCode(tt.input)
 			assert.Equal(t, tt.expected, result)
 		})
 	}

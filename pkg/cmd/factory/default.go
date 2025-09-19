@@ -4,11 +4,13 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/internal/logging"
 	"github.com/daddia/zen/internal/workspace"
 	"github.com/daddia/zen/pkg/assets"
+	"github.com/daddia/zen/pkg/cache"
 	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/daddia/zen/pkg/git"
 	"github.com/daddia/zen/pkg/iostreams"
@@ -30,6 +32,7 @@ func New() *cmdutil.Factory {
 	f.WorkspaceManager = workspaceFunc(f) // Depends on Config, Logger
 	f.AgentManager = agentFunc(f)         // Depends on Config, Logger
 	f.AssetClient = assetClientFunc(f)    // Depends on Config, Logger
+	f.Cache = cacheFunc(f)                // Depends on Logger
 
 	return f
 }
@@ -237,7 +240,7 @@ func assetClientFunc(f *cmdutil.Factory) func() (assets.AssetClientInterface, er
 			cachePath = filepath.Join(home, cachePath[2:])
 		}
 
-		cache := assets.NewFileCacheManager(
+		cache := assets.NewAssetCacheManager(
 			cachePath,
 			assetConfig.CacheSizeMB,
 			assetConfig.DefaultTTL,
@@ -303,4 +306,16 @@ func getAssetConfig(cfg *config.Config) assets.AssetConfig {
 	}
 
 	return config
+}
+
+func cacheFunc(f *cmdutil.Factory) func(basePath string) cache.Manager[string] {
+	return func(basePath string) cache.Manager[string] {
+		config := cache.Config{
+			BasePath:    basePath,
+			SizeLimitMB: 50, // Default 50MB for general purpose cache
+			DefaultTTL:  24 * time.Hour,
+		}
+		serializer := cache.NewStringSerializer()
+		return cache.NewManager(config, f.Logger, serializer)
+	}
 }
