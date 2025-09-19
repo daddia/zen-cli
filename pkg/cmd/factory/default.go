@@ -319,7 +319,14 @@ func getAssetConfig(cfg *config.Config) assets.AssetConfig {
 	}
 
 	if cfg.Assets.CachePath != "" {
-		config.CachePath = cfg.Assets.CachePath
+		// Expand tilde in cache path
+		cachePath := cfg.Assets.CachePath
+		if strings.HasPrefix(cachePath, "~/") {
+			if home, err := os.UserHomeDir(); err == nil {
+				cachePath = filepath.Join(home, cachePath[2:])
+			}
+		}
+		config.CachePath = cachePath
 	}
 
 	if cfg.Assets.CacheSizeMB > 0 {
