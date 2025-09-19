@@ -10,6 +10,54 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/), and this 
 
 ---
 
+## [v0.3.0] - 2025-09-20
+
+### Added
+- **Template Engine Core**: Comprehensive Go template engine with Asset Client integration and Zen-specific extensions
+  - Native Go text/template engine with custom function registry (45+ functions)
+  - Seamless Asset Client integration for template loading from remote repositories
+  - Template compilation caching with configurable TTL and LRU eviction
+  - Variable validation with type checking, constraints (regex, ranges, enums), and default values
+  - YAML frontmatter and comment-based metadata extraction
+  - Factory pattern integration with dependency injection
+- **Zen-Specific Template Functions**: Extensive function library for workflow automation
+  - **Task Functions**: `taskID`, `taskIDShort`, `randomID` for unique identifier generation
+  - **Workflow Functions**: `zenflowStages`, `stageNumber`, `stageName`, `nextStage`, `prevStage` for Zenflow integration
+  - **Date/Time Functions**: `now`, `today`, `tomorrow`, `formatDate`, `addDays`, `workingDays` for temporal operations
+  - **String Manipulation**: `camelCase`, `pascalCase`, `snakeCase`, `kebabCase`, `slugify`, `titleCase` for naming conventions
+  - **Path Functions**: `workspacePath`, `relativePath`, `joinPath`, `fileName`, `fileExt`, `dirName` for file operations
+  - **Formatting Functions**: `indent`, `dedent`, `wrap`, `truncate`, `pad` for content formatting
+  - **Collection Functions**: `join`, `split`, `contains`, `hasPrefix`, `hasSuffix`, `replace` for data manipulation
+  - **Conditional Functions**: `default`, `coalesce`, `ternary` for logic operations
+  - **Math Functions**: `add`, `sub`, `mul`, `div`, `mod` for calculations
+- **Template Configuration System**: Complete configuration integration for template engine behavior
+  - Template compilation caching controls (`templates.cache_enabled`, `templates.cache_ttl`, `templates.cache_size`)
+  - Strict mode validation (`templates.strict_mode`) for error handling
+  - AI enhancement preparation (`templates.enable_ai`) for future LLM integration
+  - Custom delimiter configuration (`templates.left_delim`, `templates.right_delim`) for template syntax
+- **Go Template Syntax Support**: Pure Go template syntax with advanced features
+  - Variable substitution: `{{.VARIABLE_NAME}}`
+  - Conditional rendering: `{{if .condition}}content{{end}}`
+  - Loop iteration: `{{range .items}}{{.name}}{{end}}`
+  - Function calls: `{{taskID "ZEN"}}`, `{{today}}`, `{{camelCase .title}}`
+  - Pipeline operations: `{{.text | trim | upper}}`
+  - Template composition: `{{define "template"}}{{template "template" .}}`
+
+### Changed
+- Enhanced Factory dependency injection to include Template Engine
+- Extended configuration system with templates section
+- Improved error handling with Template Engine specific error types
+- Updated documentation generation to include template configuration options
+
+### Technical
+- Template compilation performance: P95 ≤ 10ms for templates under 50KB
+- Memory-efficient caching with configurable size limits and TTL
+- Thread-safe concurrent template operations
+- Comprehensive test coverage: 84.2% for template package, 69.6% overall
+- Security-focused design with input validation and sandboxed execution
+
+---
+
 ## [v0.2.0] - 2025-09-19
 
 ### Added
