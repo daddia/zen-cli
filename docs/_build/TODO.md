@@ -26,66 +26,65 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 ### **Template Engine & Task Creation** → Target Release v0.3.0
 
-- [ ] **[ZEN-009] Template Engine Core** *(L)*
+- [ ] **[ZEN-009] Template Engine Core**
   - **Deliverable**: Go template engine with custom functions integrated with Asset Client
   - **Acceptance**: Can render templates with variables, conditionals, and Zen-specific extensions
-  - **Priority**: P0 (Foundation for all content generation)
 
-- [ ] **[ZEN-010] Task Creation Command** *(M)*
+- [ ] **[ZEN-010] Task Creation Command**
   - **Deliverable**: `zen task create --type [story|bug|epic]` with template-driven structure
   - **Acceptance**: Creates proper `.zen/work/tasks/{TASK-ID}/` structure with index.md and manifest.yaml
   - **Priority**: P0 (Critical for Golden Path)
 
-- [ ] **[ZEN-011] AI Client Foundation** *(L)*
+- [ ] **[ZEN-011] AI Client Foundation**
   - **Deliverable**: Multi-provider LLM client (OpenAI, Anthropic, Azure) with strategy pattern
   - **Acceptance**: Unified interface for content enhancement, cost tracking, and provider switching
   - **Priority**: P0 (Core AI capability)
 
-- [ ] **[ZEN-012] Content Generation Commands** *(M)*
+- [ ] **[ZEN-012] Content Generation Commands**
   - **Deliverable**: `zen write <template>` and `zen draft <template>` for content creation
   - **Acceptance**: Generate content from templates with AI enhancement and variable prompting
   - **Priority**: P1 (User workflow efficiency)
 
-- [ ] **[ZEN-013] Template Viewing Command** *(S)*
+- [ ] **[ZEN-013] Template Viewing Command**
   - **Deliverable**: `zen template view <template>` renders template as plain markdown
   - **Acceptance**: Shows template structure and variables for user reference
   - **Priority**: P2 (User experience enhancement)
 
 ### **Work Management & Workflow** → Target Release v0.4.0
 
-- [ ] **[ZEN-014] Task Structure Implementation** *(L)*
+- [ ] **[ZEN-014] Task Structure Implementation**
   - **Deliverable**: Complete task directory structure with manifest.yaml
   - **Acceptance**: Tasks have workflow stages, metadata, and artifact directories
 
-- [ ] **[ZEN-015] Task Management Commands** *(M)*
+- [ ] **[ZEN-015] Task Management Commands**
   - **Deliverable**: `zen task list`, `zen task status`, `zen task show`
   - **Acceptance**: Can view and manage existing tasks
 
-- [ ] **[ZEN-016] Workflow Stage Commands** *(M)*
+- [ ] **[ZEN-016] Workflow Stage Commands**
   - **Deliverable**: `zen align`, `zen discover`, `zen prioritize`, etc.
   - **Acceptance**: Can progress tasks through workflow stages
 
-- [ ] **[ZEN-017] Stage Validation** *(S)*
+- [ ] **[ZEN-017] Stage Validation**
   - **Deliverable**: Basic quality gates for stage progression
   - **Acceptance**: Validates required artifacts before stage completion
   - **Priority**: P1
 
 ### **Golden Path Completion** → Target Release v0.5.0
 
-- [ ] **[ZEN-018] Design Stage Templates** *(M)*
+- [ ] **[ZEN-018] Design Stage Templates**
   - **Deliverable**: Templates for API specs, technical designs, architecture
   - **Acceptance**: Can generate design artifacts with AI assistance
 
-- [ ] **[ZEN-019] Build Stage Integration** *(L)*
+- [ ] **[ZEN-019] Build Stage Integration**
   - **Deliverable**: PR templates, commit messages, code scaffolding
   - **Acceptance**: Integrates with development workflow
 
-- [ ] **[ZEN-020] Documentation Generation** *(M)*
+- [ ] **[ZEN-020] Documentation Generation**
   - **Deliverable**: Auto-generate README, CHANGELOG from task artifacts
   - **Acceptance**: Documentation stays in sync with task progress
   - **Priority**: P1
 
-- [ ] **[ZEN-021] End-to-End Validation** *(S)*
+- [ ] **[ZEN-021] End-to-End Validation**
   - **Deliverable**: Complete Golden Path validation
   - **Acceptance**: Ship a Zen feature built entirely with Zen
 
@@ -97,34 +96,34 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 ### **Workflow Enhancement** → Target Release v0.6.0
 
-- [ ] **[ZEN-021] Context Awareness** *(M)*
+- [ ] **[ZEN-021] Context Awareness**
   - **Deliverable**: Commands understand current task and stage context
   - **Acceptance**: Reduced need for explicit task/stage specification
   - **Priority**: P1
 
-- [ ] **[ZEN-022] Template Library Expansion** *(L)*
+- [ ] **[ZEN-022] Template Library Expansion**
   - **Deliverable**: Comprehensive templates based on real usage
   - **Acceptance**: Templates cover 80% of common scenarios
   - **Priority**: P1
 
-- [ ] **[ZEN-023] AI Prompt Optimization** *(M)*
+- [ ] **[ZEN-023] AI Prompt Optimization**
   - **Deliverable**: Refined prompts for better AI assistance
   - **Acceptance**: Less manual editing of AI-generated content
   - **Priority**: P1
 
 ### **External Integration** → Target Release v0.7.0
 
-- [ ] **[ZEN-024] GitHub Integration** *(L)*
+- [ ] **[ZEN-024] GitHub Integration**
   - **Deliverable**: Link tasks with issues, PRs, commits
   - **Acceptance**: Bidirectional sync with GitHub
   - **Priority**: P1
 
-- [ ] **[ZEN-025] Jira Integration** *(M)*
+- [ ] **[ZEN-025] Jira Integration**
   - **Deliverable**: Optional Jira synchronization
   - **Acceptance**: Tasks can sync with external project tracking
   - **Priority**: P2
 
-- [ ] **[ZEN-026] Documentation Publishing** *(M)*
+- [ ] **[ZEN-026] Documentation Publishing**
   - **Deliverable**: Publish to Confluence, GitHub Wiki, etc.
   - **Acceptance**: Automated documentation distribution
   - **Priority**: P2
