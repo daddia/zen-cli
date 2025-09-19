@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master, develop ]
+    branches: [ main ]
 
 permissions:
   contents: read
@@ -112,27 +112,18 @@ jobs:
     strategy:
       matrix:
         include:
-          # Linux AMD64 - native testing
           - goos: linux
             goarch: amd64
             runs-on: ubuntu-latest
-          # macOS Intel - native testing
           - goos: darwin
             goarch: amd64
             runs-on: macos-13
-          # Windows AMD64 - native testing
           - goos: windows
             goarch: amd64
             runs-on: windows-latest
-          # Cross-compile only (no testing on these)
-          # - goos: linux
-          #   goarch: arm64
-          #   runs-on: ubuntu-latest
-          # - goos: darwin
-          #   goarch: arm64
-          #   runs-on: ubuntu-latest
 
     runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 15
 
     steps:
     - name: Checkout code
@@ -151,14 +142,12 @@ jobs:
         path: |
           ~/.cache/go-build
           ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
+        key: ${{ matrix.runs-on }}-go-${{ hashFiles('**/go.sum') }}
 
     - name: Download dependencies
       run: make deps
 
-    - name: Build binary
+    - name: Build and test binary
       env:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
@@ -190,45 +179,3 @@ jobs:
         name: zen-${{ matrix.goos }}-${{ matrix.goarch }}
         path: bin/
         retention-days: 30
-
-  integration:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-    needs: [build]
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
-
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: ${{ env.GO_VERSION }}
-
-    - name: Cache Go modules
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-
-    - name: Download dependencies
-      run: make deps
-
-    - name: Download build artifacts
-      uses: actions/download-artifact@v5
-      with:
-        name: zen-linux-amd64
-        path: bin/
-
-    - name: Make binary executable
-      run: chmod +x bin/zen
-
-    - name: Run integration tests
-      run: make test-integration || echo "Integration tests not yet implemented"
-
-    - name: Run E2E tests
-      run: make test-e2e || echo "E2E tests not yet implemented"
