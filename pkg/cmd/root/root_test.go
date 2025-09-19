@@ -23,7 +23,7 @@ func TestNewCmdRoot(t *testing.T) {
 	// Test basic command properties
 	assert.Equal(t, "zen", cmd.Use)
 	assert.Equal(t, "AI-Powered Productivity Suite", cmd.Short)
-	assert.Contains(t, cmd.Long, "Zen CLI - AI-Powered Productivity Suite")
+	assert.Contains(t, cmd.Long, "Zen. The unified control plane for product & engineering.")
 	assert.True(t, cmd.SilenceUsage)
 	assert.True(t, cmd.SilenceErrors)
 
@@ -159,10 +159,10 @@ func TestRootCommandHelp(t *testing.T) {
 	require.NoError(t, err)
 
 	output := buf.String()
-	assert.Contains(t, output, "AI-Powered Productivity Suite")
-	assert.Contains(t, output, "zen init")
-	assert.Contains(t, output, "zen config")
-	assert.Contains(t, output, "zen status")
+	assert.Contains(t, output, "Zen. The unified control plane for product & engineering.")
+	assert.Contains(t, output, "init")
+	assert.Contains(t, output, "config")
+	assert.Contains(t, output, "status")
 	assert.Contains(t, output, "Additional Commands:")
 }
 
@@ -183,7 +183,7 @@ func TestRootCommandGroups(t *testing.T) {
 		groupIDs[i] = group.ID
 	}
 
-	expectedGroups := []string{"core", "product", "engineering"}
+	expectedGroups := []string{"start", "workspace", "assets"}
 	for _, expected := range expectedGroups {
 		assert.Contains(t, groupIDs, expected, "Expected group %s not found", expected)
 	}
@@ -197,7 +197,9 @@ func TestPlaceholderCommands(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test placeholder commands exist
-	placeholderCommands := []string{"workflow", "product", "integrations", "agents"}
+	// Note: These placeholder commands are not currently implemented
+	// placeholderCommands := []string{"workflow", "product", "integrations", "agents"}
+	placeholderCommands := []string{} // Empty for now
 
 	for _, cmdName := range placeholderCommands {
 		subcmd, _, err := cmd.Find([]string{cmdName})

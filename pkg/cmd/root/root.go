@@ -128,9 +128,9 @@ func newPlaceholderCommand(name, description string, f *cmdutil.Factory) *cobra.
 			f.Logger.Info("command not yet implemented",
 				"command", name,
 				"description", description)
-			fmt.Fprintf(cmd.OutOrStdout(), "📋 Command '%s' is planned for future implementation.\n", name)
-			fmt.Fprintf(cmd.OutOrStdout(), "💡 Description: %s\n", description)
-			fmt.Fprintln(cmd.OutOrStdout(), "\n🚀 This will be available in upcoming releases!")
+			fmt.Fprintf(cmd.OutOrStdout(), "Note: Command '%s' is planned for future implementation.\n", name)
+			fmt.Fprintf(cmd.OutOrStdout(), "Description: %s\n", description)
+			fmt.Fprintln(cmd.OutOrStdout(), "\nThis will be available in upcoming releases!")
 		},
 	}
 }
