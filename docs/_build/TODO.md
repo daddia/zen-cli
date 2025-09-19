@@ -22,13 +22,17 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 ---
 
-## In Progress
+## Complete
 
-### **Template Engine & Task Creation** → Target Release v0.3.0
+### **Template Engine** → Target Release v0.3.0
 
-- [ ] **[ZEN-009] Template Engine Core**
+- [x] **[ZEN-009] Template Engine Core**
   - **Deliverable**: Go template engine with custom functions integrated with Asset Client
   - **Acceptance**: Can render templates with variables, conditionals, and Zen-specific extensions
+
+## Next
+
+### **Task Creation** → Target Release v0.4.0
 
 - [ ] **[ZEN-010] Task Creation Command**
   - **Deliverable**: `zen task create [TASK-ID] --type [story|bug|epic]` with template-driven structure
@@ -50,7 +54,7 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
   - **Acceptance**: Shows template structure and variables for user reference
   - **Priority**: P2 (User experience enhancement)
 
-### **Work Management & Workflow** → Target Release v0.4.0
+### **Work Management & Workflow** → Target Release [TBD]
 
 - [ ] **[ZEN-014] Task Structure Implementation**
   - **Deliverable**: Complete task directory structure with manifest.yaml
@@ -69,7 +73,7 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
   - **Acceptance**: Validates required artifacts before stage completion
   - **Priority**: P1
 
-### **Golden Path Completion** → Target Release v0.5.0
+### **Golden Path Completion** → Target Release [TBD]
 
 - [ ] **[ZEN-018] Design Stage Templates**
   - **Deliverable**: Templates for API specs, technical designs, architecture
@@ -94,7 +98,7 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 **Objective**: Improve Golden Path based on usage, add essential integrations.
 
-### **Workflow Enhancement** → Target Release v0.6.0
+### **Workflow Enhancement** → Target Release [TBD]
 
 - [ ] **[ZEN-021] Context Awareness**
   - **Deliverable**: Commands understand current task and stage context
@@ -111,7 +115,7 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
   - **Acceptance**: Less manual editing of AI-generated content
   - **Priority**: P1
 
-### **External Integration** → Target Release v0.7.0
+### **External Integration** → Target Release [TBD]
 
 - [ ] **[ZEN-024] GitHub Integration**
   - **Deliverable**: Link tasks with issues, PRs, commits
