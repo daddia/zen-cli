@@ -22,13 +22,7 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 ---
 
-## Complete
-
-### **Template Engine** → Target Release v0.3.0
-
-- [x] **[ZEN-009] Template Engine Core**
-  - **Deliverable**: Go template engine with custom functions integrated with Asset Client
-  - **Acceptance**: Can render templates with variables, conditionals, and Zen-specific extensions
+## Release Candidate
 
 ## Next
 
@@ -171,3 +165,5 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 - [x] **[ZEN-006] Private Asset Repository** - Private `zen-assets` repo with manifest.yaml
 - [x] **[ZEN-007] Git-based Asset Client** - Asset client with GitHub auth
 - [x] **[ZEN-008] Asset Commands** - `zen assets auth`, `zen assets sync`, `zen assets list`
+
+- [x] **[ZEN-009] Template Engine Core** - Go template engine with custom functions integrated with Asset Client
