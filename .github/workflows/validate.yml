@@ -26,15 +26,15 @@ jobs:
           - platform: linux-amd64
             os: ubuntu-latest
             artifact: zen-linux-amd64
-            binary: zen
+            binary: zen-linux-amd64
           - platform: darwin-arm64
             os: macos-latest
             artifact: zen-darwin-arm64
-            binary: zen
+            binary: zen-darwin-arm64
           - platform: windows-amd64
             os: windows-latest
             artifact: zen-windows-amd64
-            binary: zen.exe
+            binary: zen-windows-amd64.exe
 
     steps:
     - name: Checkout code
@@ -98,15 +98,15 @@ jobs:
           - platform: ubuntu
             os: ubuntu-latest
             artifact: zen-linux-amd64
-            binary: zen
+            binary: zen-linux-amd64
           - platform: macos
             os: macos-latest
             artifact: zen-darwin-arm64
-            binary: zen
+            binary: zen-darwin-arm64
           - platform: windows
             os: windows-latest
             artifact: zen-windows-amd64
-            binary: zen.exe
+            binary: zen-windows-amd64.exe
 
     steps:
     - name: Download build artifact
@@ -155,7 +155,7 @@ jobs:
         run-id: ${{ github.event.workflow_run.id }}
 
     - name: Make binary executable
-      run: chmod +x bin/zen
+      run: chmod +x bin/zen-linux-amd64
 
     - name: Performance benchmarks
       run: |
@@ -164,7 +164,7 @@ jobs:
         # Test startup time (should be fast for CLI)
         echo "Testing startup time..."
         time_start=$(date +%s%N)
-        ./bin/zen version > /dev/null
+        ./bin/zen-linux-amd64 version > /dev/null
         time_end=$(date +%s%N)
         startup_time=$(( (time_end - time_start) / 1000000 ))
 
@@ -180,7 +180,7 @@ jobs:
         # Test help command performance
         echo "Testing help command performance..."
         time_start=$(date +%s%N)
-        ./bin/zen --help > /dev/null
+        ./bin/zen-linux-amd64 --help > /dev/null
         time_end=$(date +%s%N)
         help_time=$(( (time_end - time_start) / 1000000 ))
 
@@ -197,7 +197,7 @@ jobs:
         echo "Testing memory usage..."
 
         # Basic memory usage test
-        /usr/bin/time -v ./bin/zen version 2>&1 | grep "Maximum resident set size" || echo "Memory info not available"
+        /usr/bin/time -v ./bin/zen-linux-amd64 version 2>&1 | grep "Maximum resident set size" || echo "Memory info not available"
 
         echo "✓ Memory usage validation completed"
 
