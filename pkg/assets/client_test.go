@@ -522,6 +522,17 @@ func TestClient_GetAsset_FromCache(t *testing.T) {
 	client, _, cache, _, _ := createTestClient()
 	ctx := context.Background()
 
+	// Pre-load manifest data to avoid loading from git
+	client.mu.Lock()
+	client.manifestData = []AssetMetadata{
+		{
+			Name: "test-asset",
+			Type: AssetTypeTemplate,
+			Path: "templates/test.template",
+		},
+	}
+	client.mu.Unlock()
+
 	// Set up test data
 	expectedContent := &AssetContent{
 		Metadata: AssetMetadata{
