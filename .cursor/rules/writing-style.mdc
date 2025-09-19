@@ -1,22 +1,100 @@
 ---
 alwaysApply: false
 ---
-# Professional Communication Standards
+# Zen Writing Style Guidelines
 
-## Tone and Style
-- Write in a professional yet approachable tone
-- Use clear, direct language that builds confidence
-- Be helpful and constructive in all communications
-- Avoid emojis - let clear language convey meaning
+# Zen Communication Guide
 
-## Documentation and Messages
-- Use active voice when possible
-- Be concise but complete
-- Include context and examples where helpful
-- Focus on user success and problem-solving
+## Voice Principles
+- Calm, clear, and confident — never noisy
+- Minimal words, maximum signal
+- Guide the user into flow; remove friction
+- Professional, approachable, and human
+- No emojis — clarity carries the tone
 
-## Error Messages and Help Text
-- Provide actionable guidance
-- Suggest next steps or solutions
-- Use encouraging language that empowers users
-- Maintain professionalism while being supportive
+## Tone & Style
+- Prefer simple, everyday words
+- Use active voice and present tense
+- Be concise but complete; cut filler
+- Lead with the outcome, then the how
+- Encourage without hype (quiet confidence)
+
+**Examples**
+- “Zen commands to get you flowing”
+- “Start your zenspace”
+- "Access the Zen assets library”
+
+## Microcopy Patterns
+
+### Section / CTA Labels
+- Start here
+- Create a zenspace
+- Keep the flow
+- See what’s possible
+- Learn as you go
+
+**Zen-styled variants**
+- Zen commands to get you flowing
+- Zen help to keep you flowing
+- Access the Zen assets library
+
+### Buttons
+- Do: “Run command”, “View details”, “Try again”
+- Zen: “Run zen”, “View flow”
+- Don’t: “Click here”, “Submit now!!!”
+
+### Links & Hints
+- “Need a hand? See Zen help.”
+- “New to zenflow? Start here.”
+
+## Documentation & Messages
+- Provide just enough context, then an example
+- Show the next action (one step, not five)
+- Use consistent names for things (one term per concept)
+
+**Template**
+- What it is → Why it matters → How to do it → What next
+
+## Error Messages & Help Text
+- Acknowledge briefly, guide clearly, close calmly
+
+**Pattern**
+1. Name the issue (plain language)
+2. Say why it happened (if useful)
+3. Offer one clear next step (with a command or link)
+4. Optional: add a short tip
+
+**Examples**
+- “We couldn’t reach the registry. Try `zen sync` to reconnect, then run that command again.”
+- “This template isn’t installed. Run `zen templates add <name>` to get it flowing.”
+
+**Avoid**
+- Blame (“you did X wrong”)
+- Jargon without a fix
+- Wall-of-text explanations
+
+## Empty States & Success
+- Empty: invite the first simple action
+  - “No templates yet. Add your first to keep the flow.”
+- Success: confirm and point forward
+  - “Template added. Use `zen new` to start from it.”
+
+## Word Choices (prefer → avoid)
+- set up / add / remove → configure / utilize / execute
+- start / begin → commence / initiate
+- write / draft → generate
+- fix / resolve → remediate
+- help / guidance → assistance (formal)
+
+## Consistency Rules
+- Sentence case for headings and buttons
+- Use “Zen” as a quiet guide, not a slogan
+- One idea per sentence; one action per step
+- No exclamation marks; let clarity do the work
+
+## Quick Checklist (before you ship)
+- Is the outcome obvious in the first line?
+- Is there exactly one next step?
+- Are the words simple and consistent?
+- Does it sound calm and confident?
+- Would this help someone keep their flow?
