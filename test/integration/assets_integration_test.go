@@ -800,7 +800,7 @@ func TestAssetsIntegration_PerformanceAndConcurrency(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping performance tests in short mode")
 	}
-	
+
 	// Force file storage in CI environments where keychain is not available
 	defer setupFileStorage(t)()
 
