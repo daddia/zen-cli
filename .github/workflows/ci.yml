@@ -5,11 +5,12 @@ on:
     branches: ['**']
     paths-ignore:
       - 'docs/**'
+      - '.cursor/**'
   pull_request:
     branches: ['**']
     paths-ignore:
       - 'docs/**'
-
+      - '.cursor/**'
 permissions:
   contents: read
 
