@@ -79,6 +79,58 @@ var Options = []ConfigOption{
 		DefaultValue:  "false",
 		Type:          "bool",
 	},
+	// Assets configuration options
+	{
+		Key:          "assets.repository_url",
+		Description:  "Asset repository URL",
+		DefaultValue: "https://github.com/daddia/zen-assets.git",
+		Type:         "string",
+	},
+	{
+		Key:          "assets.branch",
+		Description:  "Asset repository branch",
+		DefaultValue: "main",
+		Type:         "string",
+	},
+	{
+		Key:           "assets.auth_provider",
+		Description:   "Authentication provider for assets",
+		AllowedValues: []string{"github", "gitlab"},
+		DefaultValue:  "github",
+		Type:          "string",
+	},
+	{
+		Key:          "assets.cache_path",
+		Description:  "Local cache path for assets",
+		DefaultValue: "~/.zen/assets",
+		Type:         "string",
+	},
+	{
+		Key:          "assets.cache_size_mb",
+		Description:  "Maximum cache size in MB",
+		DefaultValue: "100",
+		Type:         "int",
+	},
+	{
+		Key:          "assets.sync_timeout_seconds",
+		Description:  "Sync timeout in seconds",
+		DefaultValue: "30",
+		Type:         "int",
+	},
+	{
+		Key:           "assets.integrity_checks_enabled",
+		Description:   "Enable integrity checks for assets",
+		AllowedValues: []string{"true", "false"},
+		DefaultValue:  "true",
+		Type:          "bool",
+	},
+	{
+		Key:           "assets.prefetch_enabled",
+		Description:   "Enable prefetching of assets",
+		AllowedValues: []string{"true", "false"},
+		DefaultValue:  "true",
+		Type:          "bool",
+	},
 }
 
 // GetCurrentValue returns the current value of a configuration option
@@ -103,6 +155,8 @@ func (opt ConfigOption) getValueFromConfig(cfg *Config) string {
 			current = current.FieldByName("CLI")
 		case "workspace":
 			current = current.FieldByName("Workspace")
+		case "assets":
+			current = current.FieldByName("Assets")
 		case "development":
 			current = current.FieldByName("Development")
 		default:
@@ -127,6 +181,20 @@ func (opt ConfigOption) getValueFromConfig(cfg *Config) string {
 					current = current.FieldByName("OutputFormat")
 				case "config_file":
 					current = current.FieldByName("ConfigFile")
+				case "repository_url":
+					current = current.FieldByName("RepositoryURL")
+				case "auth_provider":
+					current = current.FieldByName("AuthProvider")
+				case "cache_path":
+					current = current.FieldByName("CachePath")
+				case "cache_size_mb":
+					current = current.FieldByName("CacheSizeMB")
+				case "sync_timeout_seconds":
+					current = current.FieldByName("SyncTimeoutSeconds")
+				case "integrity_checks_enabled":
+					current = current.FieldByName("IntegrityChecksEnabled")
+				case "prefetch_enabled":
+					current = current.FieldByName("PrefetchEnabled")
 				default:
 					current = current.FieldByName(fieldName)
 				}

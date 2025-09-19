@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,6 +24,9 @@ type Config struct {
 
 	// Workspace configuration
 	Workspace WorkspaceConfig `mapstructure:"workspace"`
+
+	// Assets configuration
+	Assets AssetsConfig `mapstructure:"assets"`
 
 	// Development configuration
 	Development DevelopmentConfig `mapstructure:"development"`
@@ -52,6 +56,36 @@ type WorkspaceConfig struct {
 
 	// Configuration file name
 	ConfigFile string `mapstructure:"config_file"`
+}
+
+// AssetsConfig contains asset repository configuration
+type AssetsConfig struct {
+	// Repository URL (defaults to official zen-assets repository)
+	RepositoryURL string `mapstructure:"repository_url"`
+
+	// Branch to use (defaults to "main")
+	Branch string `mapstructure:"branch"`
+
+	// Authentication provider (github, gitlab)
+	AuthProvider string `mapstructure:"auth_provider"`
+
+	// Cache settings
+	CachePath   string `mapstructure:"cache_path"`
+	CacheSizeMB int64  `mapstructure:"cache_size_mb"`
+
+	// Sync timeout in seconds
+	SyncTimeoutSeconds int `mapstructure:"sync_timeout_seconds"`
+
+	// Feature flags
+	IntegrityChecksEnabled bool `mapstructure:"integrity_checks_enabled"`
+	PrefetchEnabled        bool `mapstructure:"prefetch_enabled"`
+}
+
+// Redacted returns a copy of the AssetsConfig with sensitive fields redacted
+func (a AssetsConfig) Redacted() AssetsConfig {
+	redacted := a
+	redacted.RepositoryURL = RedactSensitiveValue("repository_url", a.RepositoryURL)
+	return redacted
 }
 
 // DevelopmentConfig contains development-specific settings
@@ -156,24 +190,26 @@ func LoadWithOptions(opts LoadOptions) (*Config, error) {
 	return &config, nil
 }
 
-// setDefaults sets default configuration values
+// setDefaults sets default configuration values from Options
 func setDefaults(v *viper.Viper) {
-	// Logging defaults
-	v.SetDefault("log_level", "info")
-	v.SetDefault("log_format", "text")
-
-	// CLI defaults
-	v.SetDefault("cli.no_color", false)
-	v.SetDefault("cli.verbose", false)
-	v.SetDefault("cli.output_format", "text")
-
-	// Workspace defaults
-	v.SetDefault("workspace.root", ".")
-	v.SetDefault("workspace.config_file", "zen.yaml")
-
-	// Development defaults
-	v.SetDefault("development.debug", false)
-	v.SetDefault("development.profile", false)
+	// Use Options as single source of truth for defaults
+	for _, opt := range Options {
+		// Convert string defaults to appropriate types
+		switch opt.Type {
+		case "bool":
+			if opt.DefaultValue == "true" {
+				v.SetDefault(opt.Key, true)
+			} else {
+				v.SetDefault(opt.Key, false)
+			}
+		case "int":
+			if val, err := strconv.Atoi(opt.DefaultValue); err == nil {
+				v.SetDefault(opt.Key, val)
+			}
+		default: // "string"
+			v.SetDefault(opt.Key, opt.DefaultValue)
+		}
+	}
 }
 
 // configureFileDiscovery sets up configuration file discovery paths
@@ -399,11 +435,19 @@ func (c *Config) GetLoadedSources() []string {
 	return c.loadedFrom
 }
 
+// Redacted returns a copy of the Config with sensitive fields redacted for display
+func (c *Config) Redacted() Config {
+	redacted := *c
+	redacted.Assets = c.Assets.Redacted()
+	return redacted
+}
+
 // IsSensitiveField checks if a field contains sensitive information that should be redacted
 func IsSensitiveField(fieldName string) bool {
 	sensitive := []string{
 		"api_key", "token", "secret", "password", "key",
 		"auth", "credential", "private", "cert", "pem",
+		"repository_url", "repo", // Asset repository URLs should be obfuscated
 	}
 
 	fieldLower := strings.ToLower(fieldName)
@@ -426,25 +470,19 @@ func RedactSensitiveValue(fieldName, value string) string {
 	return value
 }
 
-// LoadDefaults returns a configuration with default values
+// LoadDefaults returns a configuration with default values from Options
 func LoadDefaults() *Config {
-	cfg := &Config{
-		LogLevel:  "info",
-		LogFormat: "text",
-		CLI: CLIConfig{
-			NoColor:      false,
-			Verbose:      false,
-			OutputFormat: "text",
-		},
-		Workspace: WorkspaceConfig{
-			Root:       ".",
-			ConfigFile: "zen.yaml",
-		},
-		Development: DevelopmentConfig{
-			Debug:   false,
-			Profile: false,
-		},
+	// Create a temporary viper instance to get defaults
+	v := viper.New()
+	setDefaults(v)
+
+	// Unmarshal into config struct
+	var cfg Config
+	if err := v.Unmarshal(&cfg); err != nil {
+		// This should not happen if Options are properly defined
+		panic(fmt.Sprintf("failed to unmarshal default configuration: %v", err))
 	}
+
 	cfg.loadedFrom = []string{"defaults"}
-	return cfg
+	return &cfg
 }
