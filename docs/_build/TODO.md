@@ -31,7 +31,7 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
   - **Acceptance**: Can render templates with variables, conditionals, and Zen-specific extensions
 
 - [ ] **[ZEN-010] Task Creation Command**
-  - **Deliverable**: `zen task create --type [story|bug|epic]` with template-driven structure
+  - **Deliverable**: `zen task create [TASK-ID] --type [story|bug|epic]` with template-driven structure
   - **Acceptance**: Creates proper `.zen/work/tasks/{TASK-ID}/` structure with index.md and manifest.yaml
   - **Priority**: P0 (Critical for Golden Path)
 
