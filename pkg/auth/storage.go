@@ -63,7 +63,12 @@ func GetStorageInfo() map[string]StorageInfo {
 func NewStorage(storageType string, config Config, logger logging.Logger) (CredentialStorage, error) {
 	switch storageType {
 	case "keychain":
-		return NewKeychainStorage(config, logger)
+		// Try keychain first, fall back to file if not available
+		if isKeychainAvailable() {
+			return NewKeychainStorage(config, logger)
+		}
+		logger.Debug("keychain storage not available, falling back to file storage")
+		return NewFileStorage(config, logger)
 	case "file":
 		return NewFileStorage(config, logger)
 	case "memory":

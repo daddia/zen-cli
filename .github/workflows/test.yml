@@ -46,6 +46,8 @@ jobs:
 
     - name: Run integration tests
       run: make test-integration
+      env:
+        ZEN_AUTH_STORAGE_TYPE: file
 
     - name: Upload integration coverage
       uses: codecov/codecov-action@v5

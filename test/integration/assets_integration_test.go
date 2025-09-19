@@ -22,6 +22,19 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// setupFileStorage forces file storage for CI environments where keychain is not available
+func setupFileStorage(t *testing.T) func() {
+	originalStorageType := os.Getenv("ZEN_AUTH_STORAGE_TYPE")
+	os.Setenv("ZEN_AUTH_STORAGE_TYPE", "file")
+	return func() {
+		if originalStorageType == "" {
+			os.Unsetenv("ZEN_AUTH_STORAGE_TYPE")
+		} else {
+			os.Setenv("ZEN_AUTH_STORAGE_TYPE", originalStorageType)
+		}
+	}
+}
+
 // TestAssetsIntegration_Comprehensive tests comprehensive asset functionality
 // This test suite covers all asset commands with various scenarios
 func TestAssetsIntegration_Comprehensive(t *testing.T) {
@@ -588,6 +601,9 @@ func TestAssetsIntegration_OutputFormats(t *testing.T) {
 
 // TestAssetsIntegration_ErrorHandling tests error scenarios
 func TestAssetsIntegration_ErrorHandling(t *testing.T) {
+	// Force file storage in CI environments where keychain is not available
+	defer setupFileStorage(t)()
+
 	tempDir := t.TempDir()
 	oldWd, err := os.Getwd()
 	require.NoError(t, err)
@@ -701,6 +717,9 @@ func TestAssetsIntegration_ConfigurationPrecedence(t *testing.T) {
 
 // TestAssetsIntegration_SharedAuthArchitecture tests the shared auth manager integration
 func TestAssetsIntegration_SharedAuthArchitecture(t *testing.T) {
+	// Force file storage in CI environments where keychain is not available
+	defer setupFileStorage(t)()
+
 	tempDir := t.TempDir()
 	oldWd, err := os.Getwd()
 	require.NoError(t, err)
@@ -781,6 +800,9 @@ func TestAssetsIntegration_PerformanceAndConcurrency(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping performance tests in short mode")
 	}
+	
+	// Force file storage in CI environments where keychain is not available
+	defer setupFileStorage(t)()
 
 	tempDir := t.TempDir()
 	oldWd, err := os.Getwd()
