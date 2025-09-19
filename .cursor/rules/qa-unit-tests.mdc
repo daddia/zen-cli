@@ -1,0 +1,86 @@
+---
+description: "Go unit testing standards and quality gates"
+globs: "*_test.go"
+alwaysApply: false
+---
+
+# Unit Test Standards
+
+All Go unit tests (`*_test.go`) **MUST** adhere to these quality standards and patterns.
+
+## Coverage Requirements
+
+**SHALL** achieve overall test coverage of at least 80% as validated by `make test-coverage-ci`
+**SHALL** prioritize testing critical business logic and error paths over trivial code
+**SHALL** exclude generated code, test utilities, and main functions from coverage calculations
+
+## Test Structure & Organization
+
+**MUST** follow the Arrange-Act-Assert (AAA) pattern for test clarity:
+- **Arrange**: Set up test data, mocks, and preconditions
+- **Act**: Execute the function or method under test
+- **Assert**: Verify the expected outcomes and side effects
+
+**MUST** use descriptive test function names that clearly state the scenario and expected behavior
+**SHOULD** organize tests using subtests (`t.Run()`) for related test cases
+
+## Test Independence & Isolation
+
+**MUST** ensure tests are completely independent and can run in any order
+**SHALL NOT** share state between tests or rely on test execution sequence
+**MUST** clean up any resources, temporary files, or global state in test teardown
+**MUST** use `t.Cleanup()` or `defer` statements for proper resource cleanup
+
+## Mocking & Dependencies
+
+**MUST** mock or stub all external dependencies to isolate the unit under test
+**SHOULD** use interface-based mocking for better testability
+**MUST** avoid network calls, file system operations, or database connections in unit tests
+**SHOULD** use dependency injection to make code more testable
+
+## Test Coverage & Scenarios
+
+**SHOULD** test the happy path, edge cases, and error conditions:
+- Valid inputs with expected outputs
+- Invalid inputs with appropriate error handling
+- Boundary conditions (empty, nil, zero, max values)
+- Concurrent access scenarios where applicable
+
+**SHALL** verify exactly one behavior or aspect per test function
+**MUST** include explicit assertions that fail fast with clear error messages
+**SHOULD** test both positive and negative scenarios for each function
+
+## Performance & Execution
+
+**SHOULD** execute rapidly (< 100ms per test) to encourage frequent execution
+**MUST** use `testing.Short()` to skip long-running tests when appropriate
+**SHALL** avoid sleep statements; use synchronization primitives or mocks instead
+
+## Error Handling & Assertions
+
+**MUST** use explicit, assertive assertions that provide clear failure messages
+**SHOULD** prefer testify/assert or similar libraries for better assertion readability
+**MUST** validate error types and messages, not just error presence
+**SHOULD** test error propagation and wrapping behavior
+
+## Code Quality & Maintainability
+
+**SHOULD** write tests for clarity and maintainability, not just coverage
+**MAY** use helper functions to reduce duplication and improve readability
+**MAY** include comments only for complex test scenarios or non-obvious setup
+**SHOULD** follow the same coding standards as production code
+
+## Integration with CI/CD
+
+**SHALL** be automated in the CI pipeline via `make test-unit`
+**MUST** pass race detection tests via `make test-race`
+**SHALL** integrate with coverage reporting and quality gates
+**MUST** fail the build when coverage drops below the 80% threshold
+
+## Test Data & Fixtures
+
+**SHOULD** use table-driven tests for testing multiple input scenarios
+**MAY** use test fixtures for complex setup, but prefer inline test data when possible
+**MUST** use deterministic test data; avoid random values unless testing randomness
+**SHOULD** use factory functions or builders for creating test objects
+
