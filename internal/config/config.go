@@ -28,6 +28,9 @@ type Config struct {
 	// Assets configuration
 	Assets AssetsConfig `mapstructure:"assets"`
 
+	// Templates configuration
+	Templates TemplatesConfig `mapstructure:"templates"`
+
 	// Development configuration
 	Development DevelopmentConfig `mapstructure:"development"`
 
@@ -89,6 +92,28 @@ func (a AssetsConfig) Redacted() AssetsConfig {
 	redacted := a
 	redacted.RepositoryURL = RedactSensitiveValue("repository_url", a.RepositoryURL)
 	return redacted
+}
+
+// TemplatesConfig contains template engine configuration
+type TemplatesConfig struct {
+	// Enable template compilation caching
+	CacheEnabled *bool `mapstructure:"cache_enabled"`
+
+	// Cache TTL duration (e.g., "30m", "1h")
+	CacheTTL string `mapstructure:"cache_ttl"`
+
+	// Maximum number of templates to cache
+	CacheSize int `mapstructure:"cache_size"`
+
+	// Enable strict mode (error on missing variables)
+	StrictMode *bool `mapstructure:"strict_mode"`
+
+	// Enable AI enhancement features
+	EnableAI *bool `mapstructure:"enable_ai"`
+
+	// Custom template delimiters
+	LeftDelim  string `mapstructure:"left_delim"`
+	RightDelim string `mapstructure:"right_delim"`
 }
 
 // DevelopmentConfig contains development-specific settings

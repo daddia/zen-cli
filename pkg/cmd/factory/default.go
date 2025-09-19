@@ -14,6 +14,7 @@ import (
 	"github.com/daddia/zen/pkg/cache"
 	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/daddia/zen/pkg/iostreams"
+	"github.com/daddia/zen/pkg/template"
 	"github.com/spf13/cobra"
 )
 
@@ -26,14 +27,15 @@ func New() *cmdutil.Factory {
 	}
 
 	// Build dependency chain (order matters)
-	f.Config = configFunc()               // No dependencies
-	f.IOStreams = ioStreams(f)            // Depends on Config
-	f.Logger = loggerFunc(f)              // Depends on Config
-	f.WorkspaceManager = workspaceFunc(f) // Depends on Config, Logger
-	f.AgentManager = agentFunc(f)         // Depends on Config, Logger
-	f.AuthManager = authFunc(f)           // Depends on Config, Logger
-	f.AssetClient = assetClientFunc(f)    // Depends on Config, Logger, AuthManager
-	f.Cache = cacheFunc(f)                // Depends on Logger
+	f.Config = configFunc()                  // No dependencies
+	f.IOStreams = ioStreams(f)               // Depends on Config
+	f.Logger = loggerFunc(f)                 // Depends on Config
+	f.WorkspaceManager = workspaceFunc(f)    // Depends on Config, Logger
+	f.AgentManager = agentFunc(f)            // Depends on Config, Logger
+	f.AuthManager = authFunc(f)              // Depends on Config, Logger
+	f.AssetClient = assetClientFunc(f)       // Depends on Config, Logger, AuthManager
+	f.Cache = cacheFunc(f)                   // Depends on Logger
+	f.TemplateEngine = templateEngineFunc(f) // Depends on Config, Logger, AssetClient
 
 	return f
 }
@@ -299,6 +301,82 @@ func assetClientFunc(f *cmdutil.Factory) func() (assets.AssetClientInterface, er
 
 		return cachedClient, nil
 	}
+}
+
+func templateEngineFunc(f *cmdutil.Factory) func() (cmdutil.TemplateEngineInterface, error) {
+	var cachedEngine cmdutil.TemplateEngineInterface
+	var engineError error
+
+	return func() (cmdutil.TemplateEngineInterface, error) {
+		if cachedEngine != nil || engineError != nil {
+			return cachedEngine, engineError
+		}
+
+		cfg, err := f.Config()
+		if err != nil {
+			engineError = err
+			return nil, engineError
+		}
+
+		logger := f.Logger
+
+		// Get asset client for template loading
+		assetClient, err := f.AssetClient()
+		if err != nil {
+			engineError = err
+			return nil, engineError
+		}
+
+		// Get template engine configuration
+		templateConfig := getTemplateEngineConfig(cfg)
+
+		// Create template engine
+		cachedEngine = template.NewEngine(logger, assetClient, templateConfig)
+
+		return cachedEngine, nil
+	}
+}
+
+func getTemplateEngineConfig(cfg *config.Config) template.EngineConfig {
+	// Default configuration
+	config := template.EngineConfig{
+		CacheEnabled:  true,
+		CacheTTL:      30 * time.Minute,
+		CacheSize:     100,
+		StrictMode:    false,
+		EnableAI:      false,
+		WorkspaceRoot: cfg.Workspace.Root,
+	}
+
+	config.DefaultDelims.Left = "{{"
+	config.DefaultDelims.Right = "}}"
+
+	// Override with config values if present
+	if cfg.Templates.CacheEnabled != nil {
+		config.CacheEnabled = *cfg.Templates.CacheEnabled
+	}
+	if cfg.Templates.CacheTTL != "" {
+		if duration, err := time.ParseDuration(cfg.Templates.CacheTTL); err == nil {
+			config.CacheTTL = duration
+		}
+	}
+	if cfg.Templates.CacheSize > 0 {
+		config.CacheSize = cfg.Templates.CacheSize
+	}
+	if cfg.Templates.StrictMode != nil {
+		config.StrictMode = *cfg.Templates.StrictMode
+	}
+	if cfg.Templates.EnableAI != nil {
+		config.EnableAI = *cfg.Templates.EnableAI
+	}
+	if cfg.Templates.LeftDelim != "" {
+		config.DefaultDelims.Left = cfg.Templates.LeftDelim
+	}
+	if cfg.Templates.RightDelim != "" {
+		config.DefaultDelims.Right = cfg.Templates.RightDelim
+	}
+
+	return config
 }
 
 func getAssetConfig(cfg *config.Config) assets.AssetConfig {

@@ -79,6 +79,51 @@ var Options = []ConfigOption{
 		DefaultValue:  "false",
 		Type:          "bool",
 	},
+	{
+		Key:           "templates.cache_enabled",
+		Description:   "Enable template compilation caching",
+		AllowedValues: []string{"true", "false"},
+		DefaultValue:  "true",
+		Type:          "bool",
+	},
+	{
+		Key:          "templates.cache_ttl",
+		Description:  "Template cache TTL duration",
+		DefaultValue: "30m",
+		Type:         "string",
+	},
+	{
+		Key:          "templates.cache_size",
+		Description:  "Maximum number of templates to cache",
+		DefaultValue: "100",
+		Type:         "int",
+	},
+	{
+		Key:           "templates.strict_mode",
+		Description:   "Enable strict mode (error on missing variables)",
+		AllowedValues: []string{"true", "false"},
+		DefaultValue:  "false",
+		Type:          "bool",
+	},
+	{
+		Key:           "templates.enable_ai",
+		Description:   "Enable AI enhancement features",
+		AllowedValues: []string{"true", "false"},
+		DefaultValue:  "false",
+		Type:          "bool",
+	},
+	{
+		Key:          "templates.left_delim",
+		Description:  "Left template delimiter",
+		DefaultValue: "{{",
+		Type:         "string",
+	},
+	{
+		Key:          "templates.right_delim",
+		Description:  "Right template delimiter",
+		DefaultValue: "}}",
+		Type:         "string",
+	},
 	// Assets configuration options
 	{
 		Key:          "assets.repository_url",
@@ -157,6 +202,8 @@ func (opt ConfigOption) getValueFromConfig(cfg *Config) string {
 			current = current.FieldByName("Workspace")
 		case "assets":
 			current = current.FieldByName("Assets")
+		case "templates":
+			current = current.FieldByName("Templates")
 		case "development":
 			current = current.FieldByName("Development")
 		default:
@@ -195,6 +242,20 @@ func (opt ConfigOption) getValueFromConfig(cfg *Config) string {
 					current = current.FieldByName("IntegrityChecksEnabled")
 				case "prefetch_enabled":
 					current = current.FieldByName("PrefetchEnabled")
+				case "cache_enabled":
+					current = current.FieldByName("CacheEnabled")
+				case "cache_ttl":
+					current = current.FieldByName("CacheTTL")
+				case "cache_size":
+					current = current.FieldByName("CacheSize")
+				case "strict_mode":
+					current = current.FieldByName("StrictMode")
+				case "enable_ai":
+					current = current.FieldByName("EnableAI")
+				case "left_delim":
+					current = current.FieldByName("LeftDelim")
+				case "right_delim":
+					current = current.FieldByName("RightDelim")
 				default:
 					current = current.FieldByName(fieldName)
 				}
@@ -204,6 +265,14 @@ func (opt ConfigOption) getValueFromConfig(cfg *Config) string {
 		if !current.IsValid() {
 			return ""
 		}
+	}
+
+	// Handle pointer types (used for optional bool fields)
+	if current.Kind() == reflect.Ptr {
+		if current.IsNil() {
+			return ""
+		}
+		current = current.Elem()
 	}
 
 	// Convert the value to string

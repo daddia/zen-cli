@@ -3,6 +3,7 @@ package cmdutil
 import (
 	"context"
 	"fmt"
+	"text/template"
 	"time"
 
 	"github.com/daddia/zen/internal/config"
@@ -11,6 +12,7 @@ import (
 	"github.com/daddia/zen/pkg/auth"
 	"github.com/daddia/zen/pkg/cache"
 	"github.com/daddia/zen/pkg/iostreams"
+	zentemplate "github.com/daddia/zen/pkg/template"
 	"github.com/daddia/zen/pkg/types"
 )
 
@@ -28,6 +30,7 @@ type Factory struct {
 	AuthManager      func() (auth.Manager, error)
 	AssetClient      func() (assets.AssetClientInterface, error)
 	Cache            func(basePath string) cache.Manager[string]
+	TemplateEngine   func() (TemplateEngineInterface, error)
 
 	// Global flag values
 	ConfigFile string
@@ -72,6 +75,9 @@ type AgentManager interface {
 	Execute(name string, input interface{}) (interface{}, error)
 }
 
+// TemplateEngineInterface is an alias for zentemplate.TemplateEngine
+type TemplateEngineInterface = zentemplate.TemplateEngine
+
 // NewTestFactory creates a factory for testing
 func NewTestFactory(streams *iostreams.IOStreams) *Factory {
 	if streams == nil {
@@ -106,6 +112,9 @@ func NewTestFactory(streams *iostreams.IOStreams) *Factory {
 			}
 			serializer := cache.NewStringSerializer()
 			return cache.NewManager(config, logging.NewBasic(), serializer)
+		},
+		TemplateEngine: func() (TemplateEngineInterface, error) {
+			return &testTemplateEngine{}, nil
 		},
 		BuildInfo: map[string]string{
 			"version":    "dev",
@@ -295,5 +304,51 @@ func (a *testAuthManager) GetProviderInfo(provider string) (*auth.ProviderInfo, 
 		}, nil
 	default:
 		return nil, fmt.Errorf("provider '%s' is not supported", provider)
+	}
+}
+
+// testTemplateEngine is a mock template engine for testing
+type testTemplateEngine struct{}
+
+func (e *testTemplateEngine) LoadTemplate(ctx context.Context, name string) (*zentemplate.Template, error) {
+	return &zentemplate.Template{
+		Name:    name,
+		Content: "# Test Template\nHello {{.name}}!",
+	}, nil
+}
+
+func (e *testTemplateEngine) RenderTemplate(ctx context.Context, tmpl *zentemplate.Template, variables map[string]interface{}) (string, error) {
+	return "# Test Template\nHello World!", nil
+}
+
+func (e *testTemplateEngine) ListTemplates(ctx context.Context, filter zentemplate.TemplateFilter) (*zentemplate.TemplateList, error) {
+	return &zentemplate.TemplateList{
+		Templates: []zentemplate.TemplateMetadata{
+			{
+				Name:        "test-template",
+				Description: "Test template",
+				Category:    "test",
+			},
+		},
+		Total:   1,
+		HasMore: false,
+	}, nil
+}
+
+func (e *testTemplateEngine) ValidateVariables(ctx context.Context, tmpl *zentemplate.Template, variables map[string]interface{}) error {
+	return nil
+}
+
+func (e *testTemplateEngine) CompileTemplate(ctx context.Context, name, content string, metadata *zentemplate.TemplateMetadata) (*zentemplate.Template, error) {
+	return &zentemplate.Template{
+		Name:     name,
+		Content:  content,
+		Metadata: metadata,
+	}, nil
+}
+
+func (e *testTemplateEngine) GetFunctions() template.FuncMap {
+	return template.FuncMap{
+		"upper": func(s string) string { return s },
 	}
 }
