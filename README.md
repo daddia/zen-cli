@@ -8,7 +8,7 @@
 
 ## Key Features
 
-### **Product Management Excellence**
+### **Product Management**
 - **Market Research & Analysis**: AI-powered competitive analysis and market sizing
 - **Product Strategy**: Automated strategy documentation and OKR alignment
 - **Roadmap Planning**: Intelligent prioritization using WSJF/RICE/ICE frameworks
@@ -16,7 +16,7 @@
 - **Product Analytics**: Real-time metrics tracking and AI-powered insights
 - **Stakeholder Management**: Automated communication and alignment tracking
 
-### **Engineering Workflow Automation**
+### **Engineering**
 - **AI-Powered Development Workflow**: From discovery to feedback, fully automated
 - **Robust Code Generation**: Intelligent scaffolding and pattern implementation
 - **Quality Gates**: Automated code review, testing, and security validation
@@ -35,7 +35,7 @@
 - **Communication**: Slack, Microsoft Teams, Discord
 - **Business Systems**: Salesforce, HubSpot, Tableau, Power BI
 
-## Target Personas
+## Who should use Zen?
 
 - **Product Managers**: Unified workflow, automated insights, intelligent prioritization
 - **Engineering Leaders**: Automated quality gates, intelligent code review, team analytics
