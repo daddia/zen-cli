@@ -11,6 +11,7 @@ on:
     paths-ignore:
       - 'docs/**'
       - '.cursor/**'
+
 permissions:
   contents: read
 
