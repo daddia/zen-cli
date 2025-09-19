@@ -128,6 +128,6 @@ Adapter integration showcases how the AssetCacheManager adapts the generic cache
 
 ## Related ADRs
 
-- [ADR-0024: File-Based Cache Architecture](../decisions/ADR-0024-generic-cache-architecture.md)
+- [ADR-0024: File-Based Cache Architecture](../decisions/ADR-0024-file-cache.md)
 - [ADR-0006: Factory Pattern](../decisions/ADR-0006-factory-pattern.md)
 - [ADR-0020: Library-First Development](../decisions/ADR-0020-library-first.md)

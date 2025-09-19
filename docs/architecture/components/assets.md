@@ -240,7 +240,7 @@ The asset management component maintains comprehensive testing coverage:
 
 ## Related ADRs
 
-- [ADR-0025: Manifest-Only Asset Architecture](../decisions/ADR-0025-manifest-only-asset-architecture.md) - Core architectural decision
-- [ADR-0023: Git Library Selection](../decisions/ADR-0023-git-library-selection.md) - Git CLI wrapper approach
+- [ADR-0025: Manifest-Driven Asset Architecture](../decisions/ADR-0025-asset-architecture.md) - Core architectural decision
+- [ADR-0023: Git Library Selection](../decisions/ADR-0023-git-library.md) - Git CLI wrapper approach
 - [ADR-0015: Security Model](../decisions/ADR-0015-security-model.md) - Security and authentication
 - [ADR-0020: Library-First Development](../decisions/ADR-0020-library-first.md) - Implementation philosophy

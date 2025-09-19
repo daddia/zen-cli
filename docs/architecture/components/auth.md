@@ -204,10 +204,10 @@ Memory storage enables testing and development scenarios with in-memory credenti
 
 ## Related ADRs
 
-- [ADR-0026: Shared Authentication Architecture](../decisions/ADR-0026-shared-auth-architecture.md)
+- [ADR-0026: Authentication Architecture](../decisions/ADR-0026-shared-auth.md)
 - [ADR-0006: Factory Pattern](../decisions/ADR-0006-factory-pattern.md)
 - [ADR-0020: Library-First Development](../decisions/ADR-0020-library-first.md)
-- [ADR-0024: Generic Cache Architecture](../decisions/ADR-0024-generic-cache-architecture.md)
+- [ADR-0024: File Cache Architecture](../decisions/ADR-0024-file-cache.md)
 
 ## Security Considerations
 

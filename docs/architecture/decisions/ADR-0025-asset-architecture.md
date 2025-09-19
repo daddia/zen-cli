@@ -6,7 +6,7 @@ consulted: Template Engine Team, Infrastructure Team
 informed: Engineering Leadership, Security Team
 ---
 
-# ADR-0025 - Manifest-Only Asset Architecture
+# ADR-0025 - Manifest-Driven Asset Architecture
 
 ## Context and Problem Statement
 
