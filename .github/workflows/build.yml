@@ -90,7 +90,7 @@ jobs:
         if [ "${{ matrix.goos }}" = "windows" ]; then
           PLATFORM_BINARY="${PLATFORM_BINARY}.exe"
         fi
-        
+
         mv "./bin/${BINARY_NAME}" "./bin/${PLATFORM_BINARY}"
         echo "✓ Binary built: ./bin/${PLATFORM_BINARY}"
 
