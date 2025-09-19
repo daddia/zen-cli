@@ -108,7 +108,7 @@ func TestInfoTextOutput(t *testing.T) {
 	assert.Contains(t, output, "documentation, architecture, planning")
 
 	// Check variables
-	assert.Contains(t, output, "Template Variables")
+	assert.Contains(t, output, "Template variables")
 	assert.Contains(t, output, "FEATURE_NAME")
 	assert.Contains(t, output, "(required)")
 	assert.Contains(t, output, "VERSION")
