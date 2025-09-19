@@ -151,6 +151,7 @@ jobs:
       env:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
+      shell: bash
       run: |
         echo "- Building for ${{ matrix.goos }}/${{ matrix.goarch }}"
         make build
