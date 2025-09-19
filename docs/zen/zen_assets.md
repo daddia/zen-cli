@@ -5,7 +5,7 @@ description: "CLI reference for zen assets"
 section: "CLI Reference"
 man_section: 1
 since: v0.0.0
-date: 171733-09-96
+date: 191919-09-96
 keywords:
   - zen
   - cli
@@ -20,8 +20,8 @@ Manage assets and templates
 
 Manage assets and templates for Zen CLI.
 
-Assets include templates, prompts, and other reusable content stored in 
-Git repositories. This command provides authentication, discovery, and 
+Assets include templates, prompts, and other reusable content stored in
+Git repositories. This command provides authentication, discovery, and
 synchronization capabilities for asset management.
 
 Authentication:

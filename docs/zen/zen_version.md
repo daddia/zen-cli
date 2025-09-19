@@ -5,7 +5,7 @@ description: "CLI reference for zen version"
 section: "CLI Reference"
 man_section: 1
 since: v0.0.0
-date: 171733-09-96
+date: 191919-09-96
 keywords:
   - zen
   - cli
@@ -18,11 +18,10 @@ Display version information
 
 ### Synopsis
 
-Display the version, build information, and platform details for Zen CLI.
+Display the version information for Zen CLI.
 
-This command shows comprehensive version information including the release version,
-build details, Git commit hash, build date, Go version used for compilation,
-and target platform.
+By default, shows just the version number. Use --build-options to see detailed
+build information including Git commit, build date, Go version, and platform.
 
 ```
 zen version [flags]
@@ -31,22 +30,26 @@ zen version [flags]
 ### Examples
 
 ```
-  # Display version information
+  # Display simple version
   zen version
-  
+
+  # Display detailed build information
+  zen version --build-options
+
   # Output as JSON for scripting
-  zen version --output json
-  
+  zen version --build-options --output json
+
   # Output as YAML
-  zen version --output yaml
-  
+  zen version --build-options --output yaml
+
   # Check version in scripts
-  zen version --output json | jq -r '.version'
+  zen version --build-options --output json | jq -r '.version'
 ```
 
 ### Options
 
 ```
+      --build-options   Show detailed build information
   -h, --help            help for version
   -o, --output string   Output format (text, json, yaml) (default "text")
 ```

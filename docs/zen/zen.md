@@ -5,7 +5,7 @@ description: "CLI reference for zen"
 section: "CLI Reference"
 man_section: 1
 since: v0.0.0
-date: 171733-09-96
+date: 191919-09-96
 keywords:
   - zen
   - cli
@@ -47,19 +47,19 @@ Report Issues:  https://github.com/daddia/zen/issues
 ```
   # Initialize a new workspace
   zen init
-  
+
   # Check workspace status
   zen status
-  
+
   # Configure Zen settings
   zen config set log_level debug
-  
+
   # Display version information
   zen version
-  
+
   # Get help for any command
   zen <command> --help
-  
+
   # Generate shell completion
   zen completion bash > /usr/local/etc/bash_completion.d/zen
 ```

@@ -5,7 +5,7 @@ description: "CLI reference for zen assets status"
 section: "CLI Reference"
 man_section: 1
 since: v0.0.0
-date: 171733-09-96
+date: 191919-09-96
 keywords:
   - zen
   - cli
@@ -42,7 +42,7 @@ zen assets status [flags]
   # Show status in JSON format
   zen assets status --output json
 
-  # Show status in YAML format  
+  # Show status in YAML format
   zen assets status --output yaml
 ```
 
