@@ -41,6 +41,9 @@ _These commands are planned for future implementation:_
 ### [zen assets](zen_assets.md)
 Manage assets and templates
 
+### [zen auth](zen_auth.md)
+Authenticate with Git providers
+
 ### [zen help](zen_help.md)
 Help about any command
 

@@ -388,7 +388,7 @@ func (t *TokenManager) getProviderInstructions(provider string) []string {
 			"2. Click 'Generate new token (classic)'",
 			"3. Select 'repo' scope for private repositories",
 			"4. Copy the generated token",
-			"5. Set environment variable: export GITHUB_TOKEN=your_token",
+			"5. Set environment variable: export ZEN_GITHUB_TOKEN=your_token",
 			"6. Or use: zen config set github.token your_token",
 		}
 	case "gitlab":
@@ -397,7 +397,7 @@ func (t *TokenManager) getProviderInstructions(provider string) []string {
 			"2. Navigate to Access Tokens",
 			"3. Create a Project Access Token with 'read_repository' scope",
 			"4. Copy the generated token",
-			"5. Set environment variable: export GITLAB_TOKEN=your_token",
+			"5. Set environment variable: export ZEN_GITLAB_TOKEN=your_token",
 			"6. Or use: zen config set gitlab.token your_token",
 		}
 	default:

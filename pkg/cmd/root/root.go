@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/daddia/zen/pkg/cmd/assets"
+	"github.com/daddia/zen/pkg/cmd/auth"
 	"github.com/daddia/zen/pkg/cmd/config"
 	"github.com/daddia/zen/pkg/cmd/factory"
 	cmdinit "github.com/daddia/zen/pkg/cmd/init"
@@ -86,6 +87,10 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 
 	// Add command groups
 	cmd.AddGroup(&cobra.Group{
+		ID:    "core",
+		Title: "Core Zen commands:",
+	})
+	cmd.AddGroup(&cobra.Group{
 		ID:    "start",
 		Title: "Zen commands to get you flowing:",
 	})
@@ -95,10 +100,11 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 	})
 	cmd.AddGroup(&cobra.Group{
 		ID:    "assets",
-		Title: "aceess Zen assets library:",
+		Title: "access Zen assets library:",
 	})
 
 	// Add subcommands
+	cmd.AddCommand(auth.NewCmdAuth(f))
 	cmd.AddCommand(version.NewCmdVersion(f))
 	cmd.AddCommand(cmdinit.NewCmdInit(f))
 	cmd.AddCommand(config.NewCmdConfig(f))
