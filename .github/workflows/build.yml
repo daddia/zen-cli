@@ -15,9 +15,7 @@ env:
   GO_VERSION: '1.25'
 
 jobs:
-  # ============================================================================
-  # CROSS-PLATFORM BUILD MATRIX
-  # ============================================================================
+  # Cross-Platform Build Matrix
   build:
     name: Build (${{ matrix.goos }}/${{ matrix.goarch }})
     runs-on: ${{ matrix.runs-on }}
@@ -106,9 +104,7 @@ jobs:
         path: bin/
         retention-days: 30
 
-  # ============================================================================
-  # BUILD VALIDATION
-  # ============================================================================
+  # Build Validation
   build-validation:
     name: Build Validation
     needs: build
