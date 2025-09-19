@@ -2,6 +2,7 @@ package cmdutil
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/daddia/zen/internal/config"
@@ -277,9 +278,22 @@ func (a *testAuthManager) DeleteCredentials(provider string) error {
 }
 
 func (a *testAuthManager) GetProviderInfo(provider string) (*auth.ProviderInfo, error) {
-	return &auth.ProviderInfo{
-		Name:        provider,
-		Type:        "token",
-		Description: "Test provider",
-	}, nil
+	switch provider {
+	case "github":
+		return &auth.ProviderInfo{
+			Name:        provider,
+			Type:        "token",
+			Description: "Test provider",
+			EnvVars:     []string{"ZEN_GITHUB_TOKEN", "GITHUB_TOKEN"},
+		}, nil
+	case "gitlab":
+		return &auth.ProviderInfo{
+			Name:        provider,
+			Type:        "token",
+			Description: "Test provider",
+			EnvVars:     []string{"ZEN_GITLAB_TOKEN", "GITLAB_TOKEN"},
+		}, nil
+	default:
+		return nil, fmt.Errorf("provider '%s' is not supported", provider)
+	}
 }
