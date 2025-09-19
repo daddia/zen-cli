@@ -20,6 +20,10 @@ List available assets
 
 List available assets with optional filtering.
 
+This command reads from the local manifest file (.zen/assets/manifest.yaml) for fast,
+offline asset discovery. The manifest contains metadata about all available assets
+without storing the actual content locally.
+
 Assets can be filtered by type, category, and tags. Results are paginated
 to handle large asset repositories efficiently.
 
@@ -29,8 +33,8 @@ Asset Types:
 - mcp: Model Context Protocol definitions
 - schema: JSON/YAML schemas for validation
 
-The list command works offline using cached asset metadata. Use 'zen assets sync'
-to update the cache with the latest assets from the repository.
+The list command works offline using the local manifest. Use 'zen assets sync'
+to update the manifest with the latest assets from the repository.
 
 ```
 zen assets list [flags]
