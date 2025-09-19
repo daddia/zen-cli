@@ -156,6 +156,7 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 - [x] **[ZEN-003] Workspace Detection & Init** - `zen init` command
 - [x] **[ZEN-004] Configuration Management** - Config loading system
 - [x] **[ZEN-005] Testing & CI/CD** - GitHub Actions, releases, cross-platform builds
+
 - [x] **[ZEN-006] Private Asset Repository** - Private `zen-assets` repo with manifest.yaml
 - [x] **[ZEN-007] Git-based Asset Client** - Asset client with GitHub auth
 - [x] **[ZEN-008] Asset Commands** - `zen assets auth`, `zen assets sync`, `zen assets list`

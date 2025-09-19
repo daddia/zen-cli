@@ -10,6 +10,40 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/), and this 
 
 ---
 
+## [v0.2.0] - 2025-09-19
+
+### Added
+- **Asset Management System**: Complete asset repository integration with manifest-driven architecture for private Git repositories
+  - Private asset repository support with `zen-assets` integration
+  - Manifest-only synchronization strategy for optimal storage efficiency
+  - Dynamic asset fetching with session-based caching
+  - Asset discovery and listing commands (`zen assets list`, `zen assets sync`)
+- **Authentication Component**: Centralized, secure authentication system for Git provider integrations
+  - Multi-provider support (GitHub, GitLab) with Personal Access Tokens
+  - OS-native credential storage (Keychain, Credential Manager, Secret Service)
+  - Encrypted file storage fallback with AES-256-GCM encryption
+  - Secure credential management with automatic validation and refresh
+  - Authentication commands (`zen assets auth`) for provider setup
+- **File-System Cache Component**: Type-safe, persistent caching infrastructure
+  - Generic cache manager with Go generics for type safety
+  - File-based storage with LRU eviction policies and TTL expiration
+  - Thread-safe concurrent access with optimized performance
+  - Pluggable serialization strategies (JSON, string)
+  - Factory integration for consistent access across components
+
+### Changed
+- Enhanced asset management with secure private repository access
+- Improved credential handling with multiple storage backend support
+- Streamlined caching architecture with type-safe operations
+
+### Security
+- Implemented OS-native credential storage for maximum security
+- Added encrypted credential persistence with secure defaults
+- Enhanced input validation for all authentication operations
+- Secure Git provider authentication with proper token management
+
+---
+
 ## [v0.1.0] - 2025-09-14
 
 ### Added
