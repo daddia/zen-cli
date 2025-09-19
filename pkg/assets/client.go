@@ -123,7 +123,7 @@ func (c *Client) GetAsset(ctx context.Context, name string, opts GetAssetOptions
 		c.logger.Debug("failed to load manifest", "error", err)
 		return nil, errors.Wrap(err, "failed to load manifest")
 	}
-	
+
 	// Check if we have manifest data
 	c.mu.RLock()
 	manifestCount := len(c.manifestData)
@@ -176,10 +176,10 @@ func (c *Client) GetAsset(ctx context.Context, name string, opts GetAssetOptions
 			Cached:   false,
 			CacheAge: 0,
 		}
-		
+
 		// Always include metadata since that's what we have
 		result.Metadata = *metadata
-		
+
 		return result, nil
 	}
 
@@ -487,7 +487,7 @@ func (c *Client) loadAssetFromRepository(ctx context.Context, name string, opts 
 	c.mu.RLock()
 	manifestCount := len(c.manifestData)
 	c.logger.Debug("searching for asset in manifest", "name", name, "total_assets", manifestCount)
-	
+
 	var metadata *AssetMetadata
 	for i := range c.manifestData {
 		c.logger.Debug("checking asset", "index", i, "asset_name", c.manifestData[i].Name)
