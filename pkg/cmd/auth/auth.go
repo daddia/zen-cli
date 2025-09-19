@@ -111,7 +111,7 @@ func authRun(opts *AuthOptions) error {
 
 	// Validate provider is specified for non-list operations
 	if opts.Provider == "" {
-		return fmt.Errorf("provider is required. Supported providers: %s", 
+		return fmt.Errorf("provider is required. Supported providers: %s",
 			strings.Join(authManager.ListProviders(), ", "))
 	}
 
@@ -132,9 +132,9 @@ func authRun(opts *AuthOptions) error {
 
 func listProviders(opts *AuthOptions, authManager auth.Manager) error {
 	providers := authManager.ListProviders()
-	
+
 	fmt.Fprintf(opts.IO.Out, "Configured authentication providers:\n\n")
-	
+
 	for _, provider := range providers {
 		// Check authentication status
 		isAuth := authManager.IsAuthenticated(context.Background(), provider)
@@ -142,7 +142,7 @@ func listProviders(opts *AuthOptions, authManager auth.Manager) error {
 		if isAuth {
 			status = "✓ Authenticated"
 		}
-		
+
 		// Get provider info
 		info, err := authManager.GetProviderInfo(provider)
 		if err == nil {
@@ -154,7 +154,7 @@ func listProviders(opts *AuthOptions, authManager auth.Manager) error {
 		}
 		fmt.Fprintln(opts.IO.Out)
 	}
-	
+
 	return nil
 }
 
@@ -163,7 +163,7 @@ func deleteCredentials(opts *AuthOptions, authManager auth.Manager) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to delete credentials")
 	}
-	
+
 	fmt.Fprintf(opts.IO.Out, "✓ Deleted credentials for %s\n", opts.Provider)
 	return nil
 }
@@ -200,7 +200,7 @@ func authenticateProvider(ctx context.Context, opts *AuthOptions, authManager au
 	}
 
 	// Success message
-	fmt.Fprintf(opts.IO.Out, "✓ Successfully authenticated with %s\n", 
+	fmt.Fprintf(opts.IO.Out, "✓ Successfully authenticated with %s\n",
 		strings.Title(opts.Provider))
 
 	// Show additional info
@@ -265,7 +265,7 @@ func promptForToken(opts *AuthOptions) (string, error) {
 
 	// Prompt for token
 	fmt.Fprintf(opts.IO.Out, "Enter your %s token: ", strings.Title(opts.Provider))
-	
+
 	var token string
 	_, err = fmt.Fscanln(opts.IO.In, &token)
 	if err != nil {
