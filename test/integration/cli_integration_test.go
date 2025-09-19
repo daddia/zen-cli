@@ -115,7 +115,17 @@ func TestCLIIntegration_WorkspaceLifecycle(t *testing.T) {
 
 		output := stdout.String()
 		assert.Contains(t, output, "zen version")
-		assert.Contains(t, output, "Build:")
+		// Simple version output doesn't include build info by default
+
+		// Test detailed version with --build-options
+		stdout.Reset()
+		err = zencmd.Execute(ctx, []string{"version", "--build-options"}, streams)
+		require.NoError(t, err)
+
+		output = stdout.String()
+		assert.Contains(t, output, "zen version")
+		assert.Contains(t, output, "platform:")
+		assert.Contains(t, output, "go version:")
 	})
 }
 
