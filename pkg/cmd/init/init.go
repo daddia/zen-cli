@@ -16,8 +16,9 @@ func NewCmdInit(f *cmdutil.Factory) *cobra.Command {
 	var configFile string
 
 	cmd := &cobra.Command{
-		Use:   "init",
-		Short: "Initialize a new Zen workspace",
+		Use:     "init",
+		Short:   "Initialize your new Zen workspace or reinitialize an existing one",
+		GroupID: "workspace",
 		Long: `Initialize a new Zen workspace in the current directory.
 
 This command creates a .zen/ directory structure and a zen.yaml configuration file
@@ -35,16 +36,16 @@ The .zen/ directory contains:
   - Backups directory`,
 		Example: `  # Initialize in current directory (safe to run multiple times)
   zen init
-  
+
   # Reinitialize existing workspace (safe operation like git init)
   zen init
-  
+
   # Force reinitialize with backup of existing configuration
   zen init --force
-  
+
   # Initialize with custom config file location
   zen init --config ./config/zen.yaml
-  
+
   # Initialize with verbose output to see project detection
   zen init --verbose`,
 		Args: cobra.NoArgs,

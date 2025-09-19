@@ -16,48 +16,9 @@ import (
 // NewCmdRoot creates the root command
 func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 	cmd := &cobra.Command{
-		Use:   "zen",
-		Short: "AI-Powered Productivity Suite",
-		Long: `Zen CLI - AI-Powered Productivity Suite
-
-Zen is a unified command-line interface that revolutionizes productivity across
-the entire product lifecycle. By orchestrating intelligent workflows for both
-product management and engineering teams, Zen eliminates context switching,
-automates repetitive tasks, and ensures consistent quality delivery from
-ideation to production.
-
-Key Features:
-  ✓ Product Management Excellence - Market research, strategy, and roadmap planning
-  ✓ Engineering Workflow Automation - 12-stage development workflow automation
-  ✓ AI-First Intelligence - Multi-provider LLM support with context-aware automation
-  ✓ Comprehensive Integrations - Product tools, engineering platforms, and communication
-
-Getting Started:
-  zen init          Initialize a new workspace
-  zen config        Configure Zen settings
-  zen status        Check workspace status
-  zen assets        Manage assets and templates
-  zen --help        Show detailed help for any command
-
-Documentation: https://zen.dev/docs
-Report Issues:  https://github.com/daddia/zen/issues`,
-		Example: `  # Initialize a new workspace
-  zen init
-
-  # Check workspace status
-  zen status
-
-  # Configure Zen settings
-  zen config set log_level debug
-
-  # Display version information
-  zen version
-
-  # Get help for any command
-  zen <command> --help
-
-  # Generate shell completion
-  zen completion bash > /usr/local/etc/bash_completion.d/zen`,
+		Use:           "zen",
+		Short:         "AI-Powered Productivity Suite",
+		Long:          "Zen. The unified control plane for product & engineering.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
@@ -125,16 +86,16 @@ Report Issues:  https://github.com/daddia/zen/issues`,
 
 	// Add command groups
 	cmd.AddGroup(&cobra.Group{
-		ID:    "core",
-		Title: "Core commands",
+		ID:    "start",
+		Title: "Zen commands to get you flowing:",
 	})
 	cmd.AddGroup(&cobra.Group{
-		ID:    "product",
-		Title: "Product management commands",
+		ID:    "workspace",
+		Title: "start a zenspace:",
 	})
 	cmd.AddGroup(&cobra.Group{
-		ID:    "engineering",
-		Title: "Engineering workflow commands",
+		ID:    "assets",
+		Title: "aceess Zen assets library:",
 	})
 
 	// Add subcommands
@@ -143,12 +104,6 @@ Report Issues:  https://github.com/daddia/zen/issues`,
 	cmd.AddCommand(config.NewCmdConfig(f))
 	cmd.AddCommand(status.NewCmdStatus(f))
 	cmd.AddCommand(assets.NewCmdAssets(f))
-
-	// Add placeholder commands for future development
-	cmd.AddCommand(newPlaceholderCommand("workflow", "Manage engineering workflows", f))
-	cmd.AddCommand(newPlaceholderCommand("product", "Product management commands", f))
-	cmd.AddCommand(newPlaceholderCommand("integrations", "Manage external integrations", f))
-	cmd.AddCommand(newPlaceholderCommand("agents", "AI agent management", f))
 
 	// Add shell completion command
 	cmd.AddCommand(newCompletionCommand(f))

@@ -50,8 +50,9 @@ type IntegrationStatus struct {
 // NewCmdStatus creates the status command
 func NewCmdStatus(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "status",
-		Short: "Display workspace and system status",
+		Use:     "status",
+		Short:   "Display workspace and system status",
+		GroupID: "workspace",
 		Long: `Display comprehensive status information about your Zen workspace,
 configuration, system environment, and available integrations.
 
@@ -59,13 +60,13 @@ This command provides a detailed overview of the current state of your Zen insta
 and workspace, helping you troubleshoot issues and understand your environment.`,
 		Example: `  # Display status overview
   zen status
-  
+
   # Output status as JSON for scripting
   zen status --output json
-  
+
   # Output status as YAML
   zen status --output yaml
-  
+
   # Check status with verbose output
   zen status --verbose`,
 		Args: cobra.NoArgs,

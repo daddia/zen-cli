@@ -52,7 +52,7 @@ Synchronization:
 
   # Force a full synchronization
   zen assets sync --force`,
-		GroupID: "core",
+		GroupID: "assets",
 	}
 
 	// Add subcommands

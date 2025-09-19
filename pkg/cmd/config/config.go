@@ -31,24 +31,25 @@ func NewCmdConfig(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "config <command>",
-		Short: "Manage configuration for Zen CLI",
-		Long:  longDoc.String(),
+		Use:     "config <command>",
+		Short:   "Manage configuration for Zen CLI",
+		GroupID: "workspace",
+		Long:    longDoc.String(),
 		Example: `  # Display current configuration
   zen config
-  
+
   # Get a specific configuration value
   zen config get log_level
-  
+
   # Set a configuration value
   zen config set log_level debug
-  
+
   # List all configuration with values
   zen config list
-  
+
   # Output configuration as JSON
   zen config --output json
-  
+
   # Use environment variables
   ZEN_LOG_LEVEL=debug zen config get log_level`,
 		RunE: func(cmd *cobra.Command, args []string) error {
