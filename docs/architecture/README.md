@@ -48,10 +48,13 @@ graph TB
 
 1. **Single Binary** - Zero-dependency deployment with embedded assets
 2. **Modular Design** - Clean separation of concerns and responsibilities  
-3. **Extensibility** - Plugin architecture for custom extensions
-4. **Security First** - Defense in depth with secure defaults
-5. **Developer Experience** - Clear errors, comprehensive help, debugging tools
-6. **Cross-Platform** - Native support for Linux, macOS, and Windows
+3. **Dependency Injection** - Factory pattern for consistent dependency management
+4. **Generic Infrastructure** - Type-safe, reusable components across all features
+5. **Library-First Development** - Prefer battle-tested libraries over custom implementations
+6. **Extensibility** - Plugin architecture for custom extensions
+7. **Security First** - Defense in depth with secure defaults
+8. **Developer Experience** - Clear errors, comprehensive help, debugging tools
+9. **Cross-Platform** - Native support for Linux, macOS, and Windows
 
 ## Technology Stack
 

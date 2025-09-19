@@ -42,6 +42,7 @@ The following ADRs document the architectural decisions made todate:
 | [ADR-0021](ADR-0021-cobra-maximization.md)       | Cobra CLI Framework Maximization       | Accepted | 2025-09-16 | —          | ADR-0002, ADR-0020 |
 | [ADR-0022](ADR-0022-automatic-documentation.md)  | Automatic Documentation Generation     | Accepted | 2025-09-16 | —          | ADR-0021, ADR-0002 |
 | [ADR-0023](ADR-0023-git-library-selection.md)    | Git Library Selection for Asset Client | Proposed | 2025-09-16 | —          | ADR-0006, ADR-0013 |
+| [ADR-0024](ADR-0024-generic-cache-architecture.md) | File-Based Cache Architecture          | Accepted | 2025-09-19 | —          | ADR-0006, ADR-0020 |
 
 ## Planned Architecture Decisions
 

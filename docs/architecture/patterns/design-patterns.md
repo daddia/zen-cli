@@ -2,460 +2,126 @@
 
 ## Overview
 
-Zen CLI employs several well-established design patterns to ensure maintainability, testability, and extensibility. This document details the key patterns used throughout the codebase and their specific implementations.
+Zen CLI employs several well-established design patterns to ensure maintainability, testability, and extensibility. This document details the overarching architectural patterns that govern the entire system structure and guide development decisions.
 
-## Core Design Patterns
+## System Architecture Pattern
 
-### 1. Factory Pattern
-
-The Factory Pattern is central to Zen's dependency injection and component initialization strategy.
+Zen follows a layered architecture pattern with clear separation between command interface, utility services, and core business logic.
 
 ```mermaid
-classDiagram
-    class Factory {
-        <<interface>>
-        +IOStreams() IOStreams
-        +Config() Config
-        +Logger() Logger
-        +WorkspaceManager() WorkspaceManager
-        +AgentManager() AgentManager
-    }
-    
-    class DefaultFactory {
-        -ioStreams IOStreams
-        -config Config
-        -logger Logger
-        +IOStreams() IOStreams
-        +Config() Config
-        +Logger() Logger
-        +WorkspaceManager() WorkspaceManager
-        +AgentManager() AgentManager
-    }
-    
-    class TestFactory {
-        +IOStreams() IOStreams
-        +Config() Config
-        +Logger() Logger
-        +WorkspaceManager() WorkspaceManager
-        +AgentManager() AgentManager
-    }
-    
-    Factory <|-- DefaultFactory
-    Factory <|-- TestFactory
-```
-
-**Implementation Example:**
-```go
-// pkg/cmd/factory/default.go
-func New() *cmdutil.Factory {
-    f := &cmdutil.Factory{
-        AppVersion: getVersion(),
-        ExecutableName: "zen",
-    }
-    
-    // Lazy initialization functions
-    f.Config = configFunc()
-    f.IOStreams = ioStreams(f)
-    f.Logger = loggerFunc(f)
-    f.WorkspaceManager = workspaceFunc(f)
-    f.AgentManager = agentFunc(f)
-    
-    return f
-}
-```
-
-**Benefits:**
-- Centralized dependency management
-- Lazy initialization for performance
-- Easy mocking for testing
-- Clean separation of concerns
-
-### 2. Command Pattern
-
-Cobra CLI framework naturally implements the Command Pattern for organizing CLI operations.
-
-```mermaid
-graph TD
-    subgraph "Command Hierarchy"
-        Root[RootCommand]
-        Root --> Version[VersionCommand]
-        Root --> Init[InitCommand]
-        Root --> Config[ConfigCommand]
-        Root --> Status[StatusCommand]
-        Root --> Workflow[WorkflowCommand]
-        
-        Config --> ConfigGet[GetCommand]
-        Config --> ConfigSet[SetCommand]
-        Config --> ConfigList[ListCommand]
-    end
-```
-
-**Implementation:**
-```go
-// Each command encapsulates its operation
-type InitCommand struct {
-    Factory cmdutil.Factory
-    IO      *iostreams.IOStreams
-}
-
-func (c *InitCommand) Execute(args []string) error {
-    // Command-specific logic
-    return c.initializeWorkspace()
-}
-```
-
-### 3. Strategy Pattern
-
-Used extensively for LLM provider abstraction and algorithm selection.
-
-```mermaid
-classDiagram
-    class LLMProvider {
-        <<interface>>
-        +GenerateText(prompt) Response
-        +CountTokens(text) int
-        +GetModel() string
-    }
-    
-    class OpenAIProvider {
-        -apiKey string
-        -model string
-        +GenerateText(prompt) Response
-        +CountTokens(text) int
-        +GetModel() string
-    }
-    
-    class AnthropicProvider {
-        -apiKey string
-        -model string
-        +GenerateText(prompt) Response
-        +CountTokens(text) int
-        +GetModel() string
-    }
-    
-    class ProviderManager {
-        -provider LLMProvider
-        +SetProvider(provider)
-        +Generate(prompt) Response
-    }
-    
-    LLMProvider <|-- OpenAIProvider
-    LLMProvider <|-- AnthropicProvider
-    ProviderManager --> LLMProvider
-```
-
-**Use Cases:**
-- LLM provider selection
-- Output format strategies (text, JSON, YAML)
-- Prioritization algorithms
-- Template rendering strategies
-
-### 4. Observer Pattern
-
-Implemented for event-driven workflows and progress monitoring.
-
-```mermaid
-sequenceDiagram
-    participant Workflow
-    participant EventBus
-    participant Logger
-    participant UI
-    participant Analytics
-    
-    Workflow->>EventBus: Publish(StageCompleted)
-    EventBus->>Logger: Notify(event)
-    EventBus->>UI: Notify(event)
-    EventBus->>Analytics: Notify(event)
-    
-    Logger->>Logger: Log event
-    UI->>UI: Update progress
-    Analytics->>Analytics: Track metric
-```
-
-**Implementation:**
-```go
-type EventBus struct {
-    subscribers []EventSubscriber
-}
-
-type EventSubscriber interface {
-    OnEvent(event Event)
-}
-
-func (eb *EventBus) Publish(event Event) {
-    for _, subscriber := range eb.subscribers {
-        go subscriber.OnEvent(event)
-    }
-}
-```
-
-### 5. Repository Pattern
-
-Abstracts data access for configuration and state management.
-
-```mermaid
-classDiagram
-    class ConfigRepository {
-        <<interface>>
-        +Get(key) Value
-        +Set(key, value) error
-        +List() map
-        +Delete(key) error
-    }
-    
-    class FileRepository {
-        -path string
-        +Get(key) Value
-        +Set(key, value) error
-        +List() map
-        +Delete(key) error
-    }
-    
-    class MemoryRepository {
-        -data map
-        +Get(key) Value
-        +Set(key, value) error
-        +List() map
-        +Delete(key) error
-    }
-    
-    ConfigRepository <|-- FileRepository
-    ConfigRepository <|-- MemoryRepository
-```
-
-### 6. Template Method Pattern
-
-Used in command structure for common initialization and cleanup.
-
-```mermaid
-graph TD
-    subgraph "Template Method"
-        BaseCommand[BaseCommand<br/>Template]
-        BaseCommand --> PreRun[1. PreRun<br/>Validation]
-        PreRun --> Run[2. Run<br/>Core Logic]
-        Run --> PostRun[3. PostRun<br/>Cleanup]
+graph TB
+    subgraph "Command Layer (cmd/ & pkg/cmd/)"
+        CLI[CLI Entry Points]
+        Commands[Command Implementations]
+        Parsing[Argument & Flag Parsing]
     end
     
-    subgraph "Concrete Commands"
-        InitCmd[InitCommand]
-        ConfigCmd[ConfigCommand]
-        StatusCmd[StatusCommand]
+    subgraph "Utility Layer (pkg/cmdutil/)"
+        Factory[Dependency Factory]
+        Interfaces[Common Interfaces]
+        Errors[Standardized Error Types]
     end
     
-    BaseCommand -.->|inherits| InitCmd
-    BaseCommand -.->|inherits| ConfigCmd
-    BaseCommand -.->|inherits| StatusCmd
-```
-
-### 7. Singleton Pattern
-
-Used sparingly for global configuration and logger instances.
-
-```go
-var (
-    instance *Config
-    once     sync.Once
-)
-
-func GetConfig() *Config {
-    once.Do(func() {
-        instance = loadConfig()
-    })
-    return instance
-}
-```
-
-### 8. Builder Pattern
-
-Applied for complex object construction, especially in test fixtures.
-
-```go
-type WorkflowBuilder struct {
-    workflow *Workflow
-}
-
-func NewWorkflowBuilder() *WorkflowBuilder {
-    return &WorkflowBuilder{
-        workflow: &Workflow{},
-    }
-}
-
-func (b *WorkflowBuilder) WithName(name string) *WorkflowBuilder {
-    b.workflow.Name = name
-    return b
-}
-
-func (b *WorkflowBuilder) WithStages(stages []Stage) *WorkflowBuilder {
-    b.workflow.Stages = stages
-    return b
-}
-
-func (b *WorkflowBuilder) Build() *Workflow {
-    return b.workflow
-}
-```
-
-### 9. Adapter Pattern
-
-Used for integrating external services with different APIs.
-
-```mermaid
-classDiagram
-    class ProjectTracker {
-        <<interface>>
-        +CreateIssue(issue) ID
-        +UpdateIssue(id, updates) error
-        +GetIssue(id) Issue
-    }
+    subgraph "Public API Layer (pkg/)"
+        Cache[File-Based Cache]
+        Git[Git Operations]
+        IOStreams[Input/Output Streams]
+        Types[Common Types]
+    end
     
-    class JiraAdapter {
-        -client JiraClient
-        +CreateIssue(issue) ID
-        +UpdateIssue(id, updates) error
-        +GetIssue(id) Issue
-    }
+    subgraph "Internal Layer (internal/)"
+        Config[Configuration Management]
+        Logging[Structured Logging]
+        Workspace[Workspace Management]
+        Business[Business Logic]
+    end
     
-    class LinearAdapter {
-        -client LinearClient
-        +CreateIssue(issue) ID
-        +UpdateIssue(id, updates) error
-        +GetIssue(id) Issue
-    }
-    
-    ProjectTracker <|-- JiraAdapter
-    ProjectTracker <|-- LinearAdapter
+    CLI --> Commands
+    Commands --> Factory
+    Commands --> Interfaces
+    Commands --> Errors
+    Factory --> Cache
+    Factory --> Git
+    Factory --> IOStreams
+    Factory --> Config
+    Factory --> Logging
+    Factory --> Workspace
+    Factory --> Business
 ```
 
-### 10. Chain of Responsibility
+This layered architecture ensures clear separation of concerns where each layer has specific responsibilities and well-defined interfaces. The command layer handles user interaction and CLI concerns, the utility layer provides dependency injection and common abstractions, the public API layer offers reusable components, and the internal layer manages core business logic and system services.
 
-Implemented in the validation and error handling pipeline.
+## Dependency Injection Pattern
 
-```mermaid
-graph LR
-    Request --> InputValidator
-    InputValidator --> SchemaValidator
-    SchemaValidator --> BusinessValidator
-    BusinessValidator --> SecurityValidator
-    SecurityValidator --> Response
-    
-    InputValidator -.->|error| ErrorHandler
-    SchemaValidator -.->|error| ErrorHandler
-    BusinessValidator -.->|error| ErrorHandler
-    SecurityValidator -.->|error| ErrorHandler
-```
+Zen employs a comprehensive dependency injection pattern centered around the Factory abstraction. This pattern eliminates direct service instantiation within commands, provides consistent dependency management across all components, and enables comprehensive testing through mock implementations.
 
-## Pattern Combinations
+The dependency injection pattern ensures that all commands receive their dependencies through a standardized factory interface, promoting loose coupling and enabling easy substitution of implementations for testing or different deployment scenarios.
 
-### Factory + Strategy
-The Factory creates different strategy implementations based on configuration:
+## Type-Safe Infrastructure Pattern
 
-```go
-func (f *Factory) AgentManager() (AgentManager, error) {
-    config, _ := f.Config()
-    
-    // Select strategy based on configuration
-    switch config.AIProvider {
-    case "openai":
-        return NewOpenAIManager(config.OpenAIKey), nil
-    case "anthropic":
-        return NewAnthropicManager(config.AnthropicKey), nil
-    default:
-        return NewDefaultManager(), nil
-    }
-}
-```
+Zen leverages Go generics to create reusable infrastructure components that maintain type safety while providing broad applicability across different use cases. This pattern enables the creation of type-safe file-based cache systems, strongly-typed error handling, and reusable utility functions that work across different data types.
 
-### Command + Template Method
-Commands follow a template structure with hooks:
+The type-safe infrastructure pattern reduces code duplication, improves type safety, and enables consistent behavior across different components while maintaining the flexibility to handle diverse data types and use cases.
 
-```go
-type Command struct {
-    PreRunE  func(cmd *cobra.Command, args []string) error
-    RunE     func(cmd *cobra.Command, args []string) error
-    PostRunE func(cmd *cobra.Command, args []string) error
-}
-```
+## Configuration Management Pattern
 
-### Observer + Repository
-State changes trigger events:
+Zen implements a hierarchical configuration management pattern with multiple sources and validation layers. Configuration precedence follows CLI flags, environment variables, configuration files, and default values, ensuring predictable behavior while supporting diverse deployment scenarios.
 
-```go
-func (r *WorkflowRepository) UpdateState(id string, state State) error {
-    if err := r.save(id, state); err != nil {
-        return err
-    }
-    
-    r.eventBus.Publish(StateChangedEvent{
-        WorkflowID: id,
-        NewState:   state,
-    })
-    
-    return nil
-}
-```
+The configuration management pattern provides centralized configuration with distributed access, comprehensive validation with clear error messages, and extensible configuration options that can be added without affecting existing functionality.
+
+## Error Handling Pattern
+
+Zen employs a standardized error handling pattern with typed errors, context preservation, and consistent error propagation throughout the system. This pattern ensures that errors contain sufficient context for debugging while providing clear, actionable error messages for users.
+
+The error handling pattern includes error wrapping for context preservation, typed errors for programmatic handling, and standardized error codes that enable consistent error responses across all components.
+
+## Testing Architecture Pattern
+
+Zen implements a comprehensive testing architecture pattern with unit, integration, and end-to-end testing layers. The testing pattern leverages dependency injection for comprehensive mocking, provides test factories for consistent test setup, and maintains high coverage standards across all components.
+
+The testing architecture pattern ensures that all components can be tested in isolation, integration scenarios are validated comprehensively, and the entire system behavior is verified through end-to-end testing scenarios.
+
+## Plugin Architecture Pattern
+
+Zen employs a plugin architecture pattern that enables extensibility while maintaining system stability and security. The plugin pattern provides well-defined interfaces for extensions, sandboxed execution environments, and standardized plugin lifecycle management.
+
+The plugin architecture pattern ensures that the core system remains stable while enabling customization and extension through well-controlled interfaces and execution environments.
+
+## Security Architecture Pattern
+
+Zen implements a defense-in-depth security architecture pattern with multiple layers of security controls. This pattern includes input validation at all boundaries, secure credential management through platform keystores, and comprehensive audit logging for security-relevant operations.
+
+The security architecture pattern ensures that security is considered at every layer of the system, from user input validation to external service communication, maintaining security posture throughout the entire application lifecycle.
+
+## Integration Architecture Pattern
+
+Zen employs a standardized integration architecture pattern for external system communication. This pattern includes adapter implementations for different external APIs, consistent error handling across all integrations, and standardized authentication and authorization mechanisms.
+
+The integration architecture pattern ensures that external system integrations follow consistent patterns, maintain proper error handling, and provide reliable communication channels while abstracting integration complexity from core business logic.
 
 ## Best Practices
 
-### 1. Interface Segregation
-Keep interfaces small and focused:
+The Zen architecture emphasizes interface segregation with small, focused interfaces that serve specific purposes. Dependency inversion ensures that components depend on abstractions rather than concrete implementations, promoting flexibility and testability.
 
-```go
-// Good: Focused interfaces
-type Reader interface {
-    Read(key string) (Value, error)
-}
+The open-closed principle guides extension mechanisms, allowing for system extension without modification of existing components. Clean separation of concerns ensures that each component has a single, well-defined responsibility.
 
-type Writer interface {
-    Write(key string, value Value) error
-}
-
-// Bad: Fat interface
-type Storage interface {
-    Read(key string) (Value, error)
-    Write(key string, value Value) error
-    Delete(key string) error
-    List() ([]string, error)
-    Backup() error
-    Restore() error
-}
-```
-
-### 2. Dependency Inversion
-Depend on abstractions, not concretions:
-
-```go
-// Good: Depends on interface
-type Service struct {
-    logger Logger
-    config ConfigReader
-}
-
-// Bad: Depends on concrete types
-type Service struct {
-    logger *logrus.Logger
-    config *viper.Viper
-}
-```
-
-### 3. Open-Closed Principle
-Open for extension, closed for modification:
-
-```go
-// Extensible through interface implementation
-type Plugin interface {
-    Execute(context.Context) error
-}
-
-// New plugins can be added without modifying existing code
-func RegisterPlugin(name string, plugin Plugin) {
-    plugins[name] = plugin
-}
-```
+Comprehensive error handling with context preservation enables effective debugging and monitoring. Consistent patterns across all components reduce cognitive load and improve maintainability.
 
 ## Anti-Patterns to Avoid
 
-1. **God Object**: Avoid classes/structs that do too much
-2. **Circular Dependencies**: Use interfaces to break cycles
-3. **Premature Optimization**: Don't over-engineer patterns
-4. **Pattern Overuse**: Not every problem needs a pattern
-5. **Tight Coupling**: Use dependency injection and interfaces
+Zen architecture explicitly avoids several anti-patterns that can compromise system quality. God objects that attempt to handle too many responsibilities are prevented through careful interface design and separation of concerns.
+
+Circular dependencies are avoided through proper interface abstractions and dependency ordering. Premature optimization is discouraged in favor of clear, maintainable code that can be optimized when performance requirements are clearly established.
+
+Pattern overuse is avoided by applying patterns only when they provide clear value. Tight coupling is prevented through consistent use of dependency injection and interface abstractions.
+
+Direct service instantiation within commands is prohibited in favor of factory-based dependency injection. Mixed concerns between CLI logic, business logic, and infrastructure are prevented through clear layering.
+
+Hardcoded dependencies are avoided through comprehensive configuration management and dependency injection. Error context is always preserved through proper error wrapping and propagation.
+
+## Related Documentation
+
+- [Cache Component](../components/cache.md) - File-based caching infrastructure
+- [Factory Component](../components/factory.md) - Dependency injection implementation
+- [Configuration Component](../components/configuration.md) - Configuration management
+- [ADR Register](../decisions/register.md) - Architectural decisions
