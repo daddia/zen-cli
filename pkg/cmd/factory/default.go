@@ -10,6 +10,7 @@ import (
 	"github.com/daddia/zen/internal/workspace"
 	"github.com/daddia/zen/pkg/assets"
 	"github.com/daddia/zen/pkg/cmdutil"
+	"github.com/daddia/zen/pkg/git"
 	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/spf13/cobra"
 )
@@ -245,30 +246,60 @@ func assetClientFunc(f *cmdutil.Factory) func() (assets.AssetClientInterface, er
 
 		// Set up repository path
 		repoPath := filepath.Join(cachePath, "repository")
-		git := assets.NewGitCLIRepository(repoPath, logger, auth, assetConfig.AuthProvider)
+		gitRepo := git.NewCLIRepository(repoPath, logger, auth, assetConfig.AuthProvider)
 
 		parser := assets.NewYAMLManifestParser(logger)
 
 		// Create client
-		cachedClient = assets.NewClient(assetConfig, logger, auth, cache, git, parser)
+		cachedClient = assets.NewClient(assetConfig, logger, auth, cache, gitRepo, parser)
 
 		return cachedClient, nil
 	}
 }
 
 func getAssetConfig(cfg *config.Config) assets.AssetConfig {
-	// Extract asset configuration from main config
-	// This would be enhanced to read from cfg.Assets or similar
+	// Start with defaults
 	config := assets.DefaultAssetConfig()
 
-	// Override with configuration values if available
-	// For now, use environment variables and defaults
+	// Override with values from main configuration
+	if cfg.Assets.RepositoryURL != "" {
+		config.RepositoryURL = cfg.Assets.RepositoryURL
+	}
+
+	if cfg.Assets.Branch != "" {
+		config.Branch = cfg.Assets.Branch
+	}
+
+	if cfg.Assets.AuthProvider != "" {
+		config.AuthProvider = cfg.Assets.AuthProvider
+	}
+
+	if cfg.Assets.CachePath != "" {
+		config.CachePath = cfg.Assets.CachePath
+	}
+
+	if cfg.Assets.CacheSizeMB > 0 {
+		config.CacheSizeMB = cfg.Assets.CacheSizeMB
+	}
+
+	if cfg.Assets.SyncTimeoutSeconds > 0 {
+		config.SyncTimeoutSeconds = cfg.Assets.SyncTimeoutSeconds
+	}
+
+	config.IntegrityChecksEnabled = cfg.Assets.IntegrityChecksEnabled
+	config.PrefetchEnabled = cfg.Assets.PrefetchEnabled
+
+	// Environment variable overrides (for testing and advanced users)
 	if repoURL := os.Getenv("ZEN_ASSET_REPOSITORY_URL"); repoURL != "" {
 		config.RepositoryURL = repoURL
 	}
 
 	if provider := os.Getenv("ZEN_AUTH_PROVIDER"); provider != "" {
 		config.AuthProvider = provider
+	}
+
+	if branch := os.Getenv("ZEN_ASSET_BRANCH"); branch != "" {
+		config.Branch = branch
 	}
 
 	return config
