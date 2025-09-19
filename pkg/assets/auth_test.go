@@ -130,6 +130,80 @@ func TestTokenAuthProvider_RefreshCredentials(t *testing.T) {
 	assert.Contains(t, assetErr.Message, "refresh not supported")
 }
 
+func TestTokenAuthProvider_Authenticate_WithToken(t *testing.T) {
+	logger := logging.NewBasic()
+	auth := NewTokenAuthProvider(logger)
+	ctx := context.Background()
+
+	// Set test environment variable
+	testToken := "test-token-123"
+	os.Setenv("GITHUB_TOKEN", testToken)
+	defer os.Unsetenv("GITHUB_TOKEN")
+
+	// Test that authentication attempts to validate (will fail without real API)
+	err := auth.Authenticate(ctx, "github")
+
+	// This will fail in test environment - what matters is that we reached validation
+	assert.Error(t, err) // Expected to fail without mock server
+
+	// Test that we can get credentials successfully
+	token, credErr := auth.GetCredentials("github")
+	assert.NoError(t, credErr)
+	assert.Equal(t, testToken, token)
+}
+
+func TestTokenAuthProvider_Authenticate_NoToken(t *testing.T) {
+	logger := logging.NewBasic()
+	auth := NewTokenAuthProvider(logger)
+	ctx := context.Background()
+
+	// Ensure no tokens are set
+	for _, envVar := range []string{"GITHUB_TOKEN", "GH_TOKEN", "ZEN_GITHUB_TOKEN"} {
+		os.Unsetenv(envVar)
+	}
+
+	err := auth.Authenticate(ctx, "github")
+
+	assert.Error(t, err)
+	var assetErr *AssetClientError
+	assert.ErrorAs(t, err, &assetErr)
+	assert.Equal(t, ErrorCodeAuthenticationFailed, assetErr.Code)
+	assert.Contains(t, assetErr.Message, "no authentication token found")
+}
+
+func TestTokenAuthProvider_ValidateCredentials_UnsupportedProvider(t *testing.T) {
+	logger := logging.NewBasic()
+	auth := NewTokenAuthProvider(logger)
+	ctx := context.Background()
+
+	err := auth.ValidateCredentials(ctx, "unsupported")
+
+	assert.Error(t, err)
+	var assetErr *AssetClientError
+	assert.ErrorAs(t, err, &assetErr)
+	// GetCredentials fails first for unsupported provider, not ValidateCredentials
+	assert.Equal(t, ErrorCodeAuthenticationFailed, assetErr.Code)
+	assert.Contains(t, assetErr.Message, "no authentication token found")
+}
+
+func TestTokenAuthProvider_ValidateCredentials_NoToken(t *testing.T) {
+	logger := logging.NewBasic()
+	auth := NewTokenAuthProvider(logger)
+	ctx := context.Background()
+
+	// Ensure no tokens are set
+	for _, envVar := range []string{"GITHUB_TOKEN", "GH_TOKEN", "ZEN_GITHUB_TOKEN"} {
+		os.Unsetenv(envVar)
+	}
+
+	err := auth.ValidateCredentials(ctx, "github")
+
+	assert.Error(t, err)
+	var assetErr *AssetClientError
+	assert.ErrorAs(t, err, &assetErr)
+	assert.Equal(t, ErrorCodeAuthenticationFailed, assetErr.Code)
+}
+
 // Integration test with environment variables
 func TestTokenAuthProvider_Integration_GitHub(t *testing.T) {
 	if testing.Short() {

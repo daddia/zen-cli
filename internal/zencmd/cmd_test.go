@@ -3,9 +3,11 @@ package zencmd
 import (
 	"bytes"
 	"context"
+	"errors"
 	"os"
 	"testing"
 
+	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -237,5 +239,163 @@ func TestExecuteContextCancellation(t *testing.T) {
 	// but it shouldn't panic or hang
 	if err != nil {
 		assert.Contains(t, err.Error(), "context")
+	}
+}
+
+func TestHandleError(t *testing.T) {
+	streams := iostreams.Test()
+	factory := cmdutil.NewTestFactory(streams)
+
+	tests := []struct {
+		name         string
+		err          error
+		expectedCode cmdutil.ExitCode
+	}{
+		{
+			name:         "silent error",
+			err:          cmdutil.ErrSilent,
+			expectedCode: cmdutil.ExitError,
+		},
+		{
+			name:         "pending error",
+			err:          cmdutil.ErrPending,
+			expectedCode: cmdutil.ExitError,
+		},
+		{
+			name:         "no results error",
+			err:          cmdutil.NoResultsError{Message: "no results"},
+			expectedCode: cmdutil.ExitOK,
+		},
+		{
+			name:         "flag error",
+			err:          &cmdutil.FlagError{Err: errors.New("invalid flag")},
+			expectedCode: cmdutil.ExitError,
+		},
+		{
+			name:         "generic error",
+			err:          errors.New("generic error"),
+			expectedCode: cmdutil.ExitError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := handleError(tt.err, factory)
+			assert.Equal(t, tt.expectedCode, result)
+		})
+	}
+}
+
+func TestGetErrorSuggestion(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      error
+		expected string
+	}{
+		{
+			name:     "nil error",
+			err:      nil,
+			expected: "",
+		},
+		{
+			name:     "config not found",
+			err:      errors.New("config not found"),
+			expected: "Run 'zen config' to check your configuration or 'zen init' to initialize a workspace",
+		},
+		{
+			name:     "config invalid",
+			err:      errors.New("config invalid syntax"),
+			expected: "Check your configuration file syntax with 'zen config validate'",
+		},
+		{
+			name:     "workspace not found",
+			err:      errors.New("workspace not found"),
+			expected: "Run 'zen init' to initialize a new workspace in this directory",
+		},
+		{
+			name:     "workspace invalid",
+			err:      errors.New("workspace invalid structure"),
+			expected: "Check workspace structure with 'zen status' or reinitialize with 'zen init --force'",
+		},
+		{
+			name:     "permission denied",
+			err:      errors.New("permission denied to access file"),
+			expected: "Check file permissions or try running with appropriate privileges",
+		},
+		{
+			name:     "unknown flag",
+			err:      errors.New("unknown flag: --invalid"),
+			expected: "Use 'zen --help' to see available flags and options",
+		},
+		{
+			name:     "unknown command",
+			err:      errors.New("unknown command: invalid"),
+			expected: "Use 'zen --help' to see available commands",
+		},
+		{
+			name:     "network error",
+			err:      errors.New("network connection failed"),
+			expected: "Check your internet connection and try again",
+		},
+		{
+			name:     "timeout error",
+			err:      errors.New("operation timeout"),
+			expected: "The operation timed out. Try again or check network connectivity",
+		},
+		{
+			name:     "authentication error",
+			err:      errors.New("authentication failed"),
+			expected: "Check your credentials or run authentication setup",
+		},
+		{
+			name:     "generic error",
+			err:      errors.New("something went wrong"),
+			expected: "Use 'zen --help' for usage information or check the documentation at https://zen.dev/docs",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := getErrorSuggestion(tt.err)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestPrintError(t *testing.T) {
+	var buf bytes.Buffer
+	streams := iostreams.Test()
+	streams.SetColorEnabled(false) // Disable color for predictable output
+
+	tests := []struct {
+		name string
+		err  error
+	}{
+		{
+			name: "nil error",
+			err:  nil,
+		},
+		{
+			name: "simple error",
+			err:  errors.New("test error"),
+		},
+		{
+			name: "config error with suggestion",
+			err:  errors.New("config not found"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buf.Reset()
+			printError(&buf, tt.err, streams)
+
+			output := buf.String()
+			if tt.err == nil {
+				assert.Empty(t, output)
+			} else {
+				assert.Contains(t, output, tt.err.Error())
+			}
+		})
 	}
 }

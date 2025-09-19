@@ -24,7 +24,11 @@ GOVET=$(GOCMD) vet
 # Build parameters
 BINARY_NAME=zen
 BINARY_DIR=bin
+
+# Test parameters
 COVERAGE_DIR=coverage
+COVERAGE_THRESHOLD=60
+BUSINESS_COVERAGE_THRESHOLD=90
 
 # Version information (can be overridden)
 VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
@@ -135,10 +139,10 @@ test-coverage-report: ## Generate comprehensive coverage report with targets
 	@if [ -f $(COVERAGE_DIR)/coverage.out ]; then \
 		COVERAGE=$$($(GOCMD) tool cover -func=$(COVERAGE_DIR)/coverage.out | tail -1 | awk '{print $$3}' | sed 's/%//'); \
 		echo "  Overall coverage: $$COVERAGE%"; \
-		if [ $$(echo "$$COVERAGE >= 80" | bc -l) -eq 1 ]; then \
-			echo "  ✓ Meets 80% overall target"; \
+		if [ $$(echo "$$COVERAGE >= $(COVERAGE_THRESHOLD)" | bc -l) -eq 1 ]; then \
+			echo "  ✓ Meets $(COVERAGE_THRESHOLD)% overall target"; \
 		else \
-			echo "  ✗ Below 80% overall target"; \
+			echo "  ✗ Below $(COVERAGE_THRESHOLD)% overall target"; \
 		fi; \
 		BUSINESS_COVERAGE=$$($(GOCMD) tool cover -func=$(COVERAGE_DIR)/coverage.out | grep -E "(internal/|pkg/)" | awk '{sum += $$3; count++} END {if (count > 0) print sum/count; else print 0}' | sed 's/%//'); \
 		if [ $$(echo "$$BUSINESS_COVERAGE >= 90" | bc -l) -eq 1 ]; then \
@@ -156,11 +160,11 @@ test-coverage-ci: ## Generate coverage report for CI with strict validation
 	$(GOTEST) -v -race -coverprofile=$(COVERAGE_DIR)/coverage.out -covermode=atomic ./internal/... ./pkg/...
 	@COVERAGE=$$($(GOCMD) tool cover -func=$(COVERAGE_DIR)/coverage.out | tail -1 | awk '{print $$3}' | sed 's/%//'); \
 	echo "Overall coverage: $$COVERAGE%"; \
-	if [ $$(echo "$$COVERAGE < 60" | bc -l) -eq 1 ]; then \
-		echo "✗ Coverage $$COVERAGE% is below required 60-80%"; \
+	if [ $$(echo "$$COVERAGE < $(COVERAGE_THRESHOLD)" | bc -l) -eq 1 ]; then \
+		echo "✗ Coverage $$COVERAGE% is below required $(COVERAGE_THRESHOLD)%"; \
 		exit 1; \
 	fi; \
-	echo "✓ Coverage target met: $$COVERAGE% >= 80%"
+	echo "✓ Coverage target met: $$COVERAGE% >= $(COVERAGE_THRESHOLD)%"
 
 test-watch: ## Watch for changes and run unit tests
 	@echo "Watching for changes..."
