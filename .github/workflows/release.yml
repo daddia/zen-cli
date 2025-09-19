@@ -15,9 +15,7 @@ env:
   GO_VERSION: '1.25'
 
 jobs:
-  # ============================================================================
-  # PRE-RELEASE VALIDATION
-  # ============================================================================
+  # Pre-Release Validation
   validate-release:
     name: Release Validation
     runs-on: ubuntu-latest
@@ -52,7 +50,7 @@ jobs:
         echo "Running pre-release validation..."
         make test-unit
         make test-race
-        echo "✅ All tests passed"
+        echo "✓ All tests passed"
 
     - name: Run security scan
       run: make security
@@ -63,9 +61,7 @@ jobs:
     - name: Build all platforms
       run: make build-all
 
-  # ============================================================================
-  # RELEASE CREATION
-  # ============================================================================
+  # Release Creation
   create-release:
     name: Create Release
     needs: validate-release
@@ -136,9 +132,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ============================================================================
-  # POST-RELEASE VALIDATION
-  # ============================================================================
+  # Post-Release Validation
   validate-release-artifacts:
     name: Validate Release Artifacts
     needs: create-release
@@ -183,18 +177,16 @@ jobs:
 
         for pattern in "${expected_assets[@]}"; do
           if grep -qE "$pattern" assets.txt; then
-            echo "✅ Found asset matching: $pattern"
+            echo "✓ Found asset matching: $pattern"
           else
-            echo "❌ Missing asset matching: $pattern"
+            echo "✗ Missing asset matching: $pattern"
             exit 1
           fi
         done
 
-        echo "✅ All expected release assets validated"
+        echo "✓ All expected release assets validated"
 
-  # ============================================================================
-  # CONTAINER IMAGE VALIDATION
-  # ============================================================================
+  # Container Image Validation
   validate-container-images:
     name: Validate Container Images
     needs: create-release
@@ -217,11 +209,9 @@ jobs:
         # Test version-specific tag
         docker run --rm ghcr.io/${{ github.repository }}:$VERSION version
 
-        echo "✅ Container images validated"
+        echo "✓ Container images validated"
 
-  # ============================================================================
-  # RELEASE NOTIFICATION
-  # ============================================================================
+  # Release Notification
   release-notification:
     name: Release Notification
     needs: [validate-release-artifacts, validate-container-images]
@@ -236,7 +226,7 @@ jobs:
 
     - name: Generate release summary
       run: |
-        echo "# 🚀 Release $VERSION Summary" >> $GITHUB_STEP_SUMMARY
+        echo "# Release $VERSION Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Release Validation" >> $GITHUB_STEP_SUMMARY
         echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
@@ -247,19 +237,19 @@ jobs:
         echo "| Container Images | ${{ needs.validate-container-images.result }} |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Distribution Channels" >> $GITHUB_STEP_SUMMARY
-        echo "- 📦 **GitHub Releases**: Binary downloads with checksums" >> $GITHUB_STEP_SUMMARY
-        echo "- 🐳 **Container Registry**: \`ghcr.io/${{ github.repository }}:$VERSION\`" >> $GITHUB_STEP_SUMMARY
-        echo "- 📋 **Release Notes**: Generated from changelog" >> $GITHUB_STEP_SUMMARY
+        echo "- **GitHub Releases**: Binary downloads with checksums" >> $GITHUB_STEP_SUMMARY
+        echo "- **Container Registry**: \`ghcr.io/${{ github.repository }}:$VERSION\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Release Notes**: Generated from changelog" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
         echo "- [ ] Update package managers (Homebrew, etc.)" >> $GITHUB_STEP_SUMMARY
         echo "- [ ] Announce release in communication channels" >> $GITHUB_STEP_SUMMARY
         echo "- [ ] Monitor for any post-release issues" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "🎉 **Release $VERSION is now available!**" >> $GITHUB_STEP_SUMMARY
+        echo "**Release $VERSION is now available!**" >> $GITHUB_STEP_SUMMARY
 
     - name: Check for failures
       if: needs.validate-release-artifacts.result == 'failure' || needs.validate-container-images.result == 'failure'
       run: |
-        echo "❌ Release validation failed. Please check the logs and fix issues before proceeding."
+        echo "✗ Release validation failed. Please check the logs and fix issues before proceeding."
         exit 1
