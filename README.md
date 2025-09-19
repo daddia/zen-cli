@@ -1,6 +1,8 @@
 # Zen: AI-Powered Productivity Suite
 
-Zen is the unified control plane for product & engineering.
+> Standardise. Orchestrate. Measure. Zen is the unified control plane for product & engineering.
+
+[![CI](https://github.com/daddia/zen/actions/workflows/ci.yml/badge.svg)](https://github.com/daddia/zen/actions/workflows/ci.yml)
 
 **Zen** is the definitive platform for AI-assisted productivity, enabling teams to build better products faster through intelligent automation and seamless workflow orchestration.
 
