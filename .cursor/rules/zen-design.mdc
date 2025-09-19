@@ -1,8 +1,6 @@
 ---
-description: Zen CLI design guidelines and patterns
+alwaysApply: true
 ---
-
-
 # Zen CLI Design Guidelines
 
 All development **MUST** adhere to the Zen design guidelines [docs/design/foundations/README.md](mdc:docs/design/foundations/README.md) for a cohesive user experience.
