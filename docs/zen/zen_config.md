@@ -30,6 +30,14 @@ Current configuration options:
 - `workspace.config_file`: Set the workspace configuration file name (default `zen.yaml`)
 - `development.debug`: Enable development debug mode `{true | false}` (default `false`)
 - `development.profile`: Enable development profiling `{true | false}` (default `false`)
+- `assets.repository_url`: Asset repository URL (default `https://github.com/daddia/zen-assets.git`)
+- `assets.branch`: Asset repository branch (default `main`)
+- `assets.auth_provider`: Authentication provider for assets `{github | gitlab}` (default `github`)
+- `assets.cache_path`: Local cache path for assets (default `~/.zen/assets`)
+- `assets.cache_size_mb`: Maximum cache size in MB (default `100`)
+- `assets.sync_timeout_seconds`: Sync timeout in seconds (default `30`)
+- `assets.integrity_checks_enabled`: Enable integrity checks for assets `{true | false}` (default `true`)
+- `assets.prefetch_enabled`: Enable prefetching of assets `{true | false}` (default `true`)
 
 
 ```

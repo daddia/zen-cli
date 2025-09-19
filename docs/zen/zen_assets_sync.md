@@ -18,16 +18,19 @@ Synchronize assets with remote repository
 
 ### Synopsis
 
-Synchronize the local asset cache with the remote repository.
+Synchronize the local asset metadata with the remote repository.
 
-This command fetches the latest assets from the configured Git repository
-and updates the local cache. It performs authentication, downloads new or
-updated assets, and removes assets that no longer exist in the repository.
+This command fetches the latest asset manifest (catalog) from the configured
+Git repository and updates the local metadata cache. It does NOT download
+actual asset content - assets are downloaded on-demand when requested.
 
-Synchronization modes:
-- Normal sync: Incremental update (git pull)
-- Force sync: Full re-download (git clone --force)
-- Shallow sync: Download only the latest commit (faster)
+What gets synchronized:
+- Asset manifest (manifest.yaml) - lightweight metadata only
+- Asset descriptions, categories, tags, and checksums
+- Asset availability and version information
+
+Actual asset content is downloaded only when you use 'zen assets get <name>'.
+This keeps sync operations fast and minimizes network/disk usage.
 
 The sync operation requires authentication with the Git provider.
 Use 'zen assets auth' to configure authentication first.
@@ -39,33 +42,35 @@ zen assets sync [flags]
 ### Examples
 
 ```
-  # Normal synchronization
+  # Synchronize asset metadata (manifest only)
   zen assets sync
 
-  # Force a complete re-synchronization
+  # Force refresh of cached metadata
   zen assets sync --force
-
-  # Shallow sync (faster, latest commit only)
-  zen assets sync --shallow
 
   # Sync from a specific branch
   zen assets sync --branch develop
 
   # Sync with custom timeout
-  zen assets sync --timeout 600
+  zen assets sync --timeout 60
 
   # Output sync results as JSON
   zen assets sync --output json
+
+  # After sync, list available assets
+  zen assets list
+
+  # Download specific asset content on-demand
+  zen assets get technical-spec
 ```
 
 ### Options
 
 ```
       --branch string   Branch to synchronize (default "main")
-      --force           Force complete re-synchronization
+      --force           Force refresh of cached metadata
   -h, --help            help for sync
-      --shallow         Perform shallow sync (latest commit only)
-      --timeout int     Timeout in seconds for sync operation (default 300)
+      --timeout int     Timeout in seconds for sync operation (default 60)
 ```
 
 ### Options inherited from parent commands
