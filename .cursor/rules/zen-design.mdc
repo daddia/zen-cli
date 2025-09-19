@@ -1,10 +1,25 @@
 ---
-description: Zen CLI design system guidelines and patterns
+description: Zen CLI design guidelines and patterns
 ---
 
-# Zen CLI Design System
 
-When building CLI commands and terminal interfaces, follow the zen design system principles documented in [docs/design/foundations/README.md](mdc:docs/design/foundations/README.md).
+# Zen CLI Design Guidelines
+
+All development **MUST** adhere to the Zen design guidelines [docs/design/foundations/README.md](mdc:docs/design/foundations/README.md) for a cohesive user experience.
+
+## Overview
+
+- Use clear, unambiguous language
+- Use proper indentation for hierarchical output
+- Use sentence case for consistency
+- Support both human-readable and machine-readable
+
+- Use ✓ for success messages (green when colored)
+- Use ✗ for failure messages (red when colored)
+- Use ! for alerts/warnings (yellow when colored)
+- Use - for neutral messages (default color)
+
+---
 
 ## Core Design Principles
 
@@ -26,6 +41,7 @@ Use the 8 basic ANSI colors implemented in [pkg/iostreams/colors.go](mdc:pkg/ios
 - **Semantic Colors**: Green for success, Red for errors, Yellow for warnings, Blue for info
 - **Color Functions**: Use `FormatSuccess()`, `FormatError()`, `FormatWarning()` etc.
 - Always provide `--no-color` fallback support
+- No emojis
 
 ### Terminal Experience Standards
 - Support both human-readable and machine-readable output formats
@@ -46,5 +62,3 @@ Use the 8 basic ANSI colors implemented in [pkg/iostreams/colors.go](mdc:pkg/ios
 - **Command Examples**: [pkg/cmd/status/status.go](mdc:pkg/cmd/status/status.go), [pkg/cmd/config/config.go](mdc:pkg/cmd/config/config.go)
 - **Design Foundations**: [docs/design/foundations/README.md](mdc:docs/design/foundations/README.md)
 - **Build Output**: [Makefile](mdc:Makefile) for consistent build messaging
-
-When creating new commands or modifying existing ones, ensure they align with these established patterns for a cohesive user experience.
