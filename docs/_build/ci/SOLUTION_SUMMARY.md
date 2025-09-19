@@ -23,13 +23,13 @@ Following industry best practices from GitHub CLI, Docker CLI, and KrakenD, I've
 
 ```
 📁 docs/_build/ci/workflows/
-├── ci.yml           # 🚀 Fast feedback (5-8 min)
-├── test.yml         # 🧪 Comprehensive testing (10-15 min)
-├── build.yml        # 🏗️ Cross-platform builds (8-12 min)
-├── security.yml     # 🔒 Security scanning (8-12 min)
-├── validate.yml     # ✅ Post-build validation (6-10 min)
-├── release.yml      # 📦 Release management (15-25 min)
-└── README.md        # 📚 Architecture documentation
+├── ci.yml           # Fast feedback (5-8 min)
+├── test.yml         # Comprehensive testing (10-15 min)
+├── build.yml        # Cross-platform builds (8-12 min)
+├── security.yml     # Security scanning (8-12 min)
+├── validate.yml     # Post-build validation (6-10 min)
+├── release.yml      # Release management (15-25 min)
+└── README.md        # Architecture documentation
 ```
 
 ### Workflow Execution Flow
