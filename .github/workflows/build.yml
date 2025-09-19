@@ -85,16 +85,26 @@ jobs:
           exit 1
         fi
 
-        echo "✓ Binary built: ./bin/${BINARY_NAME}"
+        # Rename binary to include platform for unique artifacts
+        PLATFORM_BINARY="zen-${{ matrix.goos }}-${{ matrix.goarch }}"
+        if [ "${{ matrix.goos }}" = "windows" ]; then
+          PLATFORM_BINARY="${PLATFORM_BINARY}.exe"
+        fi
+        
+        mv "./bin/${BINARY_NAME}" "./bin/${PLATFORM_BINARY}"
+        echo "✓ Binary built: ./bin/${PLATFORM_BINARY}"
 
     - name: Test binary (native platforms)
       if: matrix.can-test
       shell: bash
       run: |
-        BINARY_NAME=$(make binary-name)
+        PLATFORM_BINARY="zen-${{ matrix.goos }}-${{ matrix.goarch }}"
+        if [ "${{ matrix.goos }}" = "windows" ]; then
+          PLATFORM_BINARY="${PLATFORM_BINARY}.exe"
+        fi
         echo "Testing binary functionality..."
-        ./bin/${BINARY_NAME} version
-        ./bin/${BINARY_NAME} --help
+        ./bin/${PLATFORM_BINARY} version
+        ./bin/${PLATFORM_BINARY} --help
         echo "✓ Binary validation successful"
 
     - name: Upload build artifacts
@@ -123,23 +133,34 @@ jobs:
       run: |
         echo "Validating build artifacts..."
 
-        # Expected artifacts
+        # Expected artifacts with unique names
         expected_artifacts=(
-          "zen"           # Linux amd64
-          "zen"           # Linux arm64 (same name, different artifact)
-          "zen"           # Darwin amd64
-          "zen"           # Darwin arm64
-          "zen.exe"       # Windows amd64
+          "zen-linux-amd64"
+          "zen-linux-arm64"
+          "zen-darwin-amd64"
+          "zen-darwin-arm64"
+          "zen-windows-amd64.exe"
         )
 
         artifact_count=$(find artifacts/ -type f | wc -l)
         echo "Found $artifact_count artifact files"
+        echo "Artifact files:"
+        find artifacts/ -type f | sort
 
         if [ $artifact_count -lt 5 ]; then
           echo "✗ Expected at least 5 artifacts, found $artifact_count"
-          find artifacts/ -type f
           exit 1
         fi
+
+        # Check each expected artifact exists
+        for artifact in "${expected_artifacts[@]}"; do
+          if [ ! -f "artifacts/$artifact" ]; then
+            echo "✗ Missing expected artifact: $artifact"
+            exit 1
+          else
+            echo "✓ Found artifact: $artifact"
+          fi
+        done
 
         echo "✓ All build artifacts validated"
 
@@ -149,10 +170,11 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
         echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
-        echo "| Linux amd64 | ✅ Built |" >> $GITHUB_STEP_SUMMARY
-        echo "| Linux arm64 | ✅ Built |" >> $GITHUB_STEP_SUMMARY
-        echo "| macOS amd64 | ✅ Built |" >> $GITHUB_STEP_SUMMARY
-        echo "| macOS arm64 | ✅ Built |" >> $GITHUB_STEP_SUMMARY
-        echo "| Windows amd64 | ✅ Built |" >> $GITHUB_STEP_SUMMARY
+        echo "| Linux amd64 | ✓ Built |" >> $GITHUB_STEP_SUMMARY
+        echo "| Linux arm64 | ✓ Built |" >> $GITHUB_STEP_SUMMARY
+        echo "| macOS amd64 | ✓ Built |" >> $GITHUB_STEP_SUMMARY
+        echo "| macOS arm64 | ✓ Built |" >> $GITHUB_STEP_SUMMARY
+        echo "| Windows amd64 | ✓ Built |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "All cross-platform builds completed successfully!" >> $GITHUB_STEP_SUMMARY
+
