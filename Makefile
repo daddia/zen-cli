@@ -27,7 +27,7 @@ BINARY_DIR=bin
 
 # Test parameters
 COVERAGE_DIR=coverage
-COVERAGE_THRESHOLD=60
+COVERAGE_THRESHOLD=70
 BUSINESS_COVERAGE_THRESHOLD=90
 
 # Version information (can be overridden)

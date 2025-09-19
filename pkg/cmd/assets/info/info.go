@@ -154,14 +154,14 @@ func displayInfoText(opts *InfoOptions, content *assets.AssetContent) error {
 	cs := internal.NewColorScheme(opts.IO)
 	meta := content.Metadata
 
-	// Header
-	fmt.Fprintf(opts.IO.Out, "%s %s\n\n", cs.Bold("Asset:"), cs.Bold(meta.Name))
+	// Header with proper Zen formatting
+	fmt.Fprintf(opts.IO.Out, "%s %s\n\n", cs.Bold("Asset"), cs.Bold(meta.Name))
 
-	// Basic information
-	fmt.Fprintf(opts.IO.Out, "%s Basic Information\n", cs.Bold("Info"))
+	// Basic information section
+	fmt.Fprintf(opts.IO.Out, "%s\n", cs.Bold("Basic information"))
 	fmt.Fprintf(opts.IO.Out, "  Name: %s\n", meta.Name)
 
-	// Color code asset type
+	// Color code asset type according to Zen standards
 	var typeDisplay string
 	switch meta.Type {
 	case assets.AssetTypeTemplate:
@@ -171,7 +171,7 @@ func displayInfoText(opts *InfoOptions, content *assets.AssetContent) error {
 	case assets.AssetTypeMCP:
 		typeDisplay = cs.Yellow(string(meta.Type))
 	case assets.AssetTypeSchema:
-		typeDisplay = cs.Magenta(string(meta.Type))
+		typeDisplay = cs.Blue(string(meta.Type))
 	default:
 		typeDisplay = string(meta.Type)
 	}
@@ -186,16 +186,16 @@ func displayInfoText(opts *InfoOptions, content *assets.AssetContent) error {
 	}
 	fmt.Fprintln(opts.IO.Out)
 
-	// Tags
+	// Tags section
 	if len(meta.Tags) > 0 {
-		fmt.Fprintf(opts.IO.Out, "%s Tags\n", cs.Bold("Tags"))
+		fmt.Fprintf(opts.IO.Out, "%s\n", cs.Bold("Tags"))
 		fmt.Fprintf(opts.IO.Out, "  %s\n", strings.Join(meta.Tags, ", "))
 		fmt.Fprintln(opts.IO.Out)
 	}
 
-	// Variables (for templates)
+	// Variables section (for templates)
 	if len(meta.Variables) > 0 {
-		fmt.Fprintf(opts.IO.Out, "%s Template Variables\n", cs.Bold("🔧"))
+		fmt.Fprintf(opts.IO.Out, "%s\n", cs.Bold("Template variables"))
 		for _, variable := range meta.Variables {
 			required := ""
 			if variable.Required {
@@ -220,8 +220,8 @@ func displayInfoText(opts *InfoOptions, content *assets.AssetContent) error {
 		fmt.Fprintln(opts.IO.Out)
 	}
 
-	// File information
-	fmt.Fprintf(opts.IO.Out, "%s File Information\n", cs.Bold("📁"))
+	// File information section
+	fmt.Fprintf(opts.IO.Out, "%s\n", cs.Bold("File information"))
 	fmt.Fprintf(opts.IO.Out, "  Path: %s\n", meta.Path)
 
 	// Calculate content size
@@ -238,12 +238,12 @@ func displayInfoText(opts *InfoOptions, content *assets.AssetContent) error {
 	}
 
 	if !meta.UpdatedAt.IsZero() {
-		fmt.Fprintf(opts.IO.Out, "  Last Updated: %s\n", formatTime(meta.UpdatedAt))
+		fmt.Fprintf(opts.IO.Out, "  Last updated: %s\n", formatTime(meta.UpdatedAt))
 	}
 	fmt.Fprintln(opts.IO.Out)
 
-	// Cache information
-	fmt.Fprintf(opts.IO.Out, "%s Cache Status\n", cs.Bold("💾"))
+	// Cache status section
+	fmt.Fprintf(opts.IO.Out, "%s\n", cs.Bold("Cache status"))
 	if content.Cached {
 		fmt.Fprintf(opts.IO.Out, "  Status: %s Cached\n", cs.Green("✓"))
 		if content.CacheAge > 0 {
@@ -251,7 +251,7 @@ func displayInfoText(opts *InfoOptions, content *assets.AssetContent) error {
 			fmt.Fprintf(opts.IO.Out, "  Age: %s\n", formatDuration(cacheAge))
 		}
 	} else {
-		fmt.Fprintf(opts.IO.Out, "  Status: %s Not cached\n", cs.Yellow("⚠"))
+		fmt.Fprintf(opts.IO.Out, "  Status: %s Not cached\n", cs.Yellow("-"))
 	}
 
 	// Integrity status

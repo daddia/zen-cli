@@ -13,7 +13,6 @@ import (
 	"github.com/daddia/zen/pkg/auth"
 	"github.com/daddia/zen/pkg/cache"
 	"github.com/daddia/zen/pkg/cmdutil"
-	"github.com/daddia/zen/pkg/git"
 	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/spf13/cobra"
 )
@@ -290,14 +289,13 @@ func assetClientFunc(f *cmdutil.Factory) func() (assets.AssetClientInterface, er
 			logger,
 		)
 
-		// Set up repository path
-		repoPath := filepath.Join(cachePath, "repository")
-		gitRepo := git.NewCLIRepository(repoPath, logger, authProvider, assetConfig.AuthProvider)
+		// Use HTTP client for individual file fetching (no repository cloning needed)
+		httpClient := assets.NewHTTPManifestClient(logger, authProvider, assetConfig.AuthProvider)
 
 		parser := assets.NewYAMLManifestParser(logger)
 
-		// Create client
-		cachedClient = assets.NewClient(assetConfig, logger, authProvider, cache, gitRepo, parser)
+		// Create client with HTTP-based file fetching
+		cachedClient = assets.NewClientWithHTTP(assetConfig, logger, authProvider, cache, httpClient, parser)
 
 		return cachedClient, nil
 	}

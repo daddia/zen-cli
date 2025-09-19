@@ -165,17 +165,21 @@ func getAuthenticationInfo(ctx context.Context, authManagerFunc func() (interfac
 		Status:        "not_authenticated",
 	}
 
-	// Try to get the auth manager
+	// Try to get the auth manager and check actual authentication status
 	if authManagerFunc != nil {
 		authManagerInterface, err := authManagerFunc()
 		if err == nil && authManagerInterface != nil {
-			// Check if we have credentials for GitHub (most common provider)
-			// In a real implementation, we'd check the auth manager interface
-			// For now, we'll check environment variables as a proxy
-			if hasGitHubToken() {
-				authInfo.Authenticated = true
-				authInfo.Status = "authenticated"
-				authInfo.LastValidated = time.Now()
+			// Cast to auth.Manager interface - we know this is safe
+			if authManager, ok := authManagerInterface.(interface {
+				IsAuthenticated(context.Context, string) bool
+				GetCredentials(string) (string, error)
+			}); ok {
+				// Check if authenticated with GitHub
+				if authManager.IsAuthenticated(ctx, "github") {
+					authInfo.Authenticated = true
+					authInfo.Status = "authenticated"
+					authInfo.LastValidated = time.Now()
+				}
 			}
 		}
 	}

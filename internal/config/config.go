@@ -54,6 +54,9 @@ type WorkspaceConfig struct {
 	// Root directory for workspace detection
 	Root string `mapstructure:"root"`
 
+	// Zen directory path relative to workspace root
+	ZenPath string `mapstructure:"zen_path"`
+
 	// Configuration file name
 	ConfigFile string `mapstructure:"config_file"`
 }

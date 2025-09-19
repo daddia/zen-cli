@@ -22,6 +22,7 @@ type Client struct {
 	auth   AuthProvider
 	cache  CacheManager
 	git    git.Repository
+	http   *HTTPManifestClient // For individual file fetching
 	parser ManifestParser
 
 	// Internal state
@@ -46,6 +47,18 @@ func NewClient(config AssetConfig, logger logging.Logger, auth AuthProvider, cac
 		auth:   auth,
 		cache:  cache,
 		git:    gitRepo,
+		parser: parser,
+	}
+}
+
+// NewClientWithHTTP creates a new asset client with HTTP-based file fetching
+func NewClientWithHTTP(config AssetConfig, logger logging.Logger, auth AuthProvider, cache CacheManager, httpClient *HTTPManifestClient, parser ManifestParser) *Client {
+	return &Client{
+		config: config,
+		logger: logger,
+		auth:   auth,
+		cache:  cache,
+		http:   httpClient,
 		parser: parser,
 	}
 }
@@ -104,6 +117,19 @@ func (c *Client) GetAsset(ctx context.Context, name string, opts GetAssetOptions
 		}
 	}
 
+	// Ensure we have current manifest data
+	c.logger.Debug("ensuring manifest is loaded for GetAsset")
+	if err := c.ensureManifestLoaded(ctx); err != nil {
+		c.logger.Debug("failed to load manifest", "error", err)
+		return nil, errors.Wrap(err, "failed to load manifest")
+	}
+	
+	// Check if we have manifest data
+	c.mu.RLock()
+	manifestCount := len(c.manifestData)
+	c.mu.RUnlock()
+	c.logger.Debug("manifest loaded for GetAsset", "asset_count", manifestCount)
+
 	// Always try cache first (session-based caching)
 	// Cache is used for the duration of the CLI session
 	if content, err := c.cache.Get(ctx, name); err == nil {
@@ -130,8 +156,35 @@ func (c *Client) GetAsset(ctx context.Context, name string, opts GetAssetOptions
 	c.metrics.cacheMisses++
 	c.mu.Unlock()
 
-	// Load from repository (dynamic fetch)
-	c.logger.Debug("fetching asset from repository", "name", name)
+	// First try to get metadata from manifest without loading content
+	c.mu.RLock()
+	var metadata *AssetMetadata
+	for i := range c.manifestData {
+		if c.manifestData[i].Name == name {
+			metadata = &c.manifestData[i]
+			break
+		}
+	}
+	c.mu.RUnlock()
+
+	if metadata != nil {
+		// For info command, we can return just the metadata without loading content
+		result := &AssetContent{
+			Metadata: *metadata,
+			Content:  "", // Will be loaded on demand if needed
+			Checksum: metadata.Checksum,
+			Cached:   false,
+			CacheAge: 0,
+		}
+		
+		// Always include metadata since that's what we have
+		result.Metadata = *metadata
+		
+		return result, nil
+	}
+
+	// If not found in manifest, try repository loading as fallback
+	c.logger.Debug("asset not found in manifest, trying repository fetch", "name", name)
 	content, err := c.loadAssetFromRepository(ctx, name, opts)
 	if err != nil {
 		c.mu.Lock()
@@ -189,7 +242,19 @@ func (c *Client) SyncRepository(ctx context.Context, req SyncRequest) (*SyncResu
 
 	// Always fetch manifest (lightweight operation)
 	c.logger.Info("fetching manifest from repository")
-	manifestContent, err := c.git.GetFile(syncCtx, "manifest.yaml")
+	var manifestContent []byte
+	var err error
+
+	// Use HTTP client if available (preferred for individual file fetching)
+	if c.http != nil {
+		manifestContent, err = c.http.DownloadManifest(syncCtx, c.config.RepositoryURL, c.config.Branch)
+	} else if c.git != nil {
+		// Fallback to Git CLI (requires repository clone)
+		manifestContent, err = c.git.GetFile(syncCtx, "manifest.yaml")
+	} else {
+		err = fmt.Errorf("no repository access method configured")
+	}
+
 	if err != nil {
 		c.mu.Lock()
 		c.metrics.errorCount++
@@ -344,9 +409,23 @@ func (c *Client) ensureManifestLoaded(ctx context.Context) error {
 
 		// If local manifest doesn't exist or is invalid, fetch from repository
 		c.logger.Debug("fetching manifest from repository")
-		manifestContent, err := c.git.GetFile(ctx, "manifest.yaml")
-		if err != nil {
-			return errors.Wrap(err, "failed to load manifest file from repository")
+		var manifestContent []byte
+		var err error
+
+		// Use HTTP client if available (preferred for individual file fetching)
+		if c.http != nil {
+			manifestContent, err = c.http.DownloadManifest(ctx, c.config.RepositoryURL, c.config.Branch)
+			if err != nil {
+				return errors.Wrap(err, "failed to download manifest via HTTP API")
+			}
+		} else if c.git != nil {
+			// Fallback to Git CLI (requires repository clone)
+			manifestContent, err = c.git.GetFile(ctx, "manifest.yaml")
+			if err != nil {
+				return errors.Wrap(err, "failed to load manifest file from repository")
+			}
+		} else {
+			return errors.New("no repository access method configured")
 		}
 
 		manifest, err := c.parser.Parse(ctx, manifestContent)
@@ -406,16 +485,22 @@ func (c *Client) filterAssets(assets []AssetMetadata, filter AssetFilter) []Asse
 func (c *Client) loadAssetFromRepository(ctx context.Context, name string, opts GetAssetOptions) (*AssetContent, error) {
 	// Find asset metadata
 	c.mu.RLock()
+	manifestCount := len(c.manifestData)
+	c.logger.Debug("searching for asset in manifest", "name", name, "total_assets", manifestCount)
+	
 	var metadata *AssetMetadata
 	for i := range c.manifestData {
+		c.logger.Debug("checking asset", "index", i, "asset_name", c.manifestData[i].Name)
 		if c.manifestData[i].Name == name {
 			metadata = &c.manifestData[i]
+			c.logger.Debug("found matching asset", "name", name, "path", metadata.Path)
 			break
 		}
 	}
 	c.mu.RUnlock()
 
 	if metadata == nil {
+		c.logger.Debug("asset not found in manifest", "name", name, "searched_assets", manifestCount)
 		return nil, &AssetClientError{
 			Code:    ErrorCodeAssetNotFound,
 			Message: fmt.Sprintf("asset '%s' not found", name),
@@ -478,35 +563,20 @@ func (c *Client) verifyIntegrity(content *AssetContent) error {
 	return nil
 }
 
-// getManifestPath returns the path to the local manifest file
+// getManifestPath returns the path to the local manifest file in workspace
 func (c *Client) getManifestPath() string {
-	var assetsDir string
+	// Always use workspace-local .zen/assets directory
+	assetsDir := c.config.CachePath
 
-	if c.config.CachePath != "" {
-		// If a custom cache path is configured, derive assets directory from it
-		// CachePath is typically ~/.zen/cache/assets, we want ~/.zen/assets
-		if strings.Contains(c.config.CachePath, "cache") {
-			// Replace "cache/assets" with "assets" or "cache" with "assets"
-			basePath := strings.Replace(c.config.CachePath, "/cache/assets", "/assets", 1)
-			if basePath == c.config.CachePath {
-				// If no replacement happened, try replacing just "cache"
-				basePath = strings.Replace(c.config.CachePath, "/cache", "/assets", 1)
-			}
-			assetsDir = basePath
-		} else {
-			// Fallback: assume cache path is the base and add assets
-			assetsDir = filepath.Join(filepath.Dir(c.config.CachePath), "assets")
-		}
-	} else {
-		// Default path
+	// If cache path is not set or is a home directory path, use workspace default
+	if assetsDir == "" || strings.HasPrefix(assetsDir, "~/") {
 		assetsDir = filepath.Join(".zen", "assets")
 	}
 
-	// Expand home directory if needed
-	if strings.HasPrefix(assetsDir, "~/") {
-		if home, err := os.UserHomeDir(); err == nil {
-			assetsDir = filepath.Join(home, assetsDir[2:])
-		}
+	// Ensure it's relative to current workspace, not absolute or home-based
+	if filepath.IsAbs(assetsDir) {
+		// Convert absolute path to workspace-relative
+		assetsDir = filepath.Join(".zen", "assets")
 	}
 
 	return filepath.Join(assetsDir, "manifest.yaml")
