@@ -7,6 +7,7 @@ import (
 	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/internal/logging"
 	"github.com/daddia/zen/pkg/assets"
+	"github.com/daddia/zen/pkg/auth"
 	"github.com/daddia/zen/pkg/cache"
 	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/daddia/zen/pkg/types"
@@ -23,6 +24,7 @@ type Factory struct {
 	Config           func() (*config.Config, error)
 	WorkspaceManager func() (WorkspaceManager, error)
 	AgentManager     func() (AgentManager, error)
+	AuthManager      func() (auth.Manager, error)
 	AssetClient      func() (assets.AssetClientInterface, error)
 	Cache            func(basePath string) cache.Manager[string]
 
@@ -88,6 +90,9 @@ func NewTestFactory(streams *iostreams.IOStreams) *Factory {
 		},
 		AgentManager: func() (AgentManager, error) {
 			return &testAgentManager{}, nil
+		},
+		AuthManager: func() (auth.Manager, error) {
+			return &testAuthManager{}, nil
 		},
 		AssetClient: func() (assets.AssetClientInterface, error) {
 			return &testAssetClient{}, nil
@@ -238,4 +243,43 @@ func (c *testAssetClient) ClearCache(ctx context.Context) error {
 
 func (c *testAssetClient) Close() error {
 	return nil
+}
+
+// testAuthManager is a mock auth manager for testing
+type testAuthManager struct{}
+
+func (a *testAuthManager) Authenticate(ctx context.Context, provider string) error {
+	return nil
+}
+
+func (a *testAuthManager) GetCredentials(provider string) (string, error) {
+	return "test-token", nil
+}
+
+func (a *testAuthManager) ValidateCredentials(ctx context.Context, provider string) error {
+	return nil
+}
+
+func (a *testAuthManager) RefreshCredentials(ctx context.Context, provider string) error {
+	return nil
+}
+
+func (a *testAuthManager) IsAuthenticated(ctx context.Context, provider string) bool {
+	return true
+}
+
+func (a *testAuthManager) ListProviders() []string {
+	return []string{"github", "gitlab"}
+}
+
+func (a *testAuthManager) DeleteCredentials(provider string) error {
+	return nil
+}
+
+func (a *testAuthManager) GetProviderInfo(provider string) (*auth.ProviderInfo, error) {
+	return &auth.ProviderInfo{
+		Name:        provider,
+		Type:        "token",
+		Description: "Test provider",
+	}, nil
 }

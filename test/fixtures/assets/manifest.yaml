@@ -1,0 +1,126 @@
+# Zen Assets Manifest
+# Central registry for all assets with rich metadata for discovery and filtering
+
+schema_version: "1.0"
+generated: "2024-12-20T00:00:00Z"
+
+# Asset registry with comprehensive metadata
+assets:
+  # Templates - Structured document templates
+  templates:
+    # Core Task Structure Templates
+    - name: "task-overview"
+      template: "index.md.template"
+      description: "Task overview and status tracking (human-readable)"
+      format: "markdown"
+      category: "task-management"
+      workflow_stages: ["01-align", "02-discover", "03-prioritize", "04-design", "05-build", "06-ship", "07-learn"]
+      streams: ["i2d", "c2m", "d2s"]
+      tags: ["task", "overview", "status", "tracking"]
+      variables:
+        - name: "TASK_ID"
+          description: "Unique task identifier"
+          required: true
+        - name: "TASK_TITLE"
+          description: "Task title"
+          required: true
+        - name: "WORKFLOW_STAGES"
+          description: "Array of workflow stage statuses"
+          required: true
+          type: "array"
+      related_prompts: []
+      
+    - name: "task-manifest"
+      template: "manifest.yaml.template"
+      description: "Task metadata and workflow state (machine-readable)"
+      format: "yaml"
+      category: "task-management"
+      workflow_stages: ["01-align", "02-discover", "03-prioritize", "04-design", "05-build", "06-ship", "07-learn"]
+      streams: ["i2d", "c2m", "d2s"]
+      tags: ["task", "metadata", "workflow", "automation"]
+      variables:
+        - name: "TASK_ID"
+          description: "Unique task identifier"
+          required: true
+        - name: "WORKFLOW_STATE"
+          description: "Current workflow state"
+          required: true
+        - name: "QUALITY_GATES"
+          description: "Quality gate configurations"
+          type: "object"
+      related_prompts: ["task-manifest-generation"]
+
+  # Prompts - AI assistant prompts
+  prompts:
+    - name: "strategy-definition"
+      prompt: "strategy-definition.md.prompt"
+      description: "AI prompt for strategic planning and goal definition"
+      format: "markdown"
+      category: "planning"
+      workflow_stages: ["01-align"]
+      streams: ["i2d"]
+      tags: ["strategy", "planning", "ai", "goals"]
+      use_cases:
+        - "Define product strategy"
+        - "Set OKRs and success metrics"
+        - "Align stakeholders"
+      related_templates: ["strategy-definition", "pr-faq"]
+      
+    - name: "api-design"
+      prompt: "api-design.md.prompt"
+      description: "AI prompt for API contract design"
+      format: "markdown"
+      category: "development"
+      workflow_stages: ["04-design"]
+      streams: ["c2m"]
+      tags: ["api", "design", "contracts", "ai"]
+      use_cases:
+        - "Design REST APIs"
+        - "Create GraphQL schemas"
+        - "Generate OpenAPI specifications"
+      related_templates: ["api-contract"]
+
+# Categories used for filtering
+categories:
+  - name: "planning"
+    description: "Strategic planning and alignment"
+    workflow_stages: ["01-align", "03-prioritize"]
+    
+  - name: "development"
+    description: "Technical design and implementation"
+    workflow_stages: ["04-design", "05-build"]
+    
+  - name: "task-management"
+    description: "Task structure and workflow management"
+    workflow_stages: ["01-align", "02-discover", "03-prioritize", "04-design", "05-build", "06-ship", "07-learn"]
+
+# Workflow stage definitions
+workflow_stages:
+  - id: "01-align"
+    name: "Align"
+    description: "Strategic framing and goal setting"
+    
+  - id: "02-discover"
+    name: "Discover"
+    description: "Research and requirements gathering"
+    
+  - id: "04-design"
+    name: "Design"
+    description: "Technical and UX specification"
+
+# Stream definitions
+streams:
+  - id: "i2d"
+    name: "Idea to Delivery"
+    description: "Product discovery and validation stream"
+    focus: ["user-research", "design", "validation"]
+    
+  - id: "c2m"
+    name: "Code to Market"
+    description: "Engineering implementation stream"
+    focus: ["development", "testing", "quality"]
+    
+  - id: "d2s"
+    name: "Deploy to Scale"
+    description: "Production deployment and scaling stream"
+    focus: ["operations", "monitoring", "reliability"]

@@ -1,0 +1,128 @@
+package auth
+
+import (
+	"context"
+	"time"
+
+	"github.com/daddia/zen/internal/logging"
+)
+
+// Manager represents the authentication interface for all providers
+type Manager interface {
+	// Authenticate authenticates with the specified provider
+	Authenticate(ctx context.Context, provider string) error
+
+	// GetCredentials returns credentials for the specified provider
+	GetCredentials(provider string) (string, error)
+
+	// ValidateCredentials validates stored credentials for the provider
+	ValidateCredentials(ctx context.Context, provider string) error
+
+	// RefreshCredentials refreshes expired credentials if possible
+	RefreshCredentials(ctx context.Context, provider string) error
+
+	// IsAuthenticated checks if credentials are available and valid for the provider
+	IsAuthenticated(ctx context.Context, provider string) bool
+
+	// ListProviders returns all configured providers
+	ListProviders() []string
+
+	// DeleteCredentials removes stored credentials for the provider
+	DeleteCredentials(provider string) error
+
+	// GetProviderInfo returns information about the provider
+	GetProviderInfo(provider string) (*ProviderInfo, error)
+}
+
+// ProviderInfo contains information about an authentication provider
+type ProviderInfo struct {
+	Name         string            `json:"name"`
+	Type         string            `json:"type"`
+	Description  string            `json:"description"`
+	Instructions []string          `json:"instructions"`
+	EnvVars      []string          `json:"env_vars"`
+	ConfigKeys   []string          `json:"config_keys"`
+	Scopes       []string          `json:"scopes,omitempty"`
+	Metadata     map[string]string `json:"metadata,omitempty"`
+}
+
+// Credential represents stored authentication credentials
+type Credential struct {
+	Provider      string            `json:"provider"`
+	Token         string            `json:"token"`
+	Type          string            `json:"type"`
+	ExpiresAt     *time.Time        `json:"expires_at,omitempty"`
+	Scopes        []string          `json:"scopes,omitempty"`
+	Metadata      map[string]string `json:"metadata,omitempty"`
+	CreatedAt     time.Time         `json:"created_at"`
+	LastUsed      time.Time         `json:"last_used"`
+	LastValidated *time.Time        `json:"last_validated,omitempty"`
+}
+
+// IsExpired checks if the credential is expired
+func (c *Credential) IsExpired() bool {
+	if c.ExpiresAt == nil {
+		return false
+	}
+	return time.Now().After(*c.ExpiresAt)
+}
+
+// IsValid checks if the credential is valid (not expired and has token)
+func (c *Credential) IsValid() bool {
+	return c.Token != "" && !c.IsExpired()
+}
+
+// Config represents authentication configuration
+type Config struct {
+	// Storage configuration
+	StorageType   string `yaml:"storage_type" json:"storage_type"`     // keychain, file, memory
+	StoragePath   string `yaml:"storage_path" json:"storage_path"`     // For file storage
+	EncryptionKey string `yaml:"encryption_key" json:"encryption_key"` // For file encryption
+
+	// Validation configuration
+	ValidationTimeout time.Duration `yaml:"validation_timeout" json:"validation_timeout"`
+	CacheTimeout      time.Duration `yaml:"cache_timeout" json:"cache_timeout"`
+
+	// Provider configuration
+	Providers map[string]ProviderConfig `yaml:"providers" json:"providers"`
+}
+
+// ProviderConfig represents provider-specific configuration
+type ProviderConfig struct {
+	Type       string            `yaml:"type" json:"type"`
+	BaseURL    string            `yaml:"base_url" json:"base_url"`
+	Scopes     []string          `yaml:"scopes" json:"scopes"`
+	EnvVars    []string          `yaml:"env_vars" json:"env_vars"`
+	ConfigKeys []string          `yaml:"config_keys" json:"config_keys"`
+	Metadata   map[string]string `yaml:"metadata" json:"metadata"`
+}
+
+// DefaultConfig returns default authentication configuration
+func DefaultConfig() Config {
+	return Config{
+		StorageType:       "keychain",
+		ValidationTimeout: 10 * time.Second,
+		CacheTimeout:      1 * time.Hour,
+		Providers: map[string]ProviderConfig{
+			"github": {
+				Type:       "token",
+				BaseURL:    "https://api.github.com",
+				Scopes:     []string{"repo"},
+				EnvVars:    []string{"GITHUB_TOKEN", "GH_TOKEN", "ZEN_GITHUB_TOKEN"},
+				ConfigKeys: []string{"github.token"},
+			},
+			"gitlab": {
+				Type:       "token",
+				BaseURL:    "https://gitlab.com/api/v4",
+				Scopes:     []string{"read_repository"},
+				EnvVars:    []string{"GITLAB_TOKEN", "GL_TOKEN", "ZEN_GITLAB_TOKEN"},
+				ConfigKeys: []string{"gitlab.token"},
+			},
+		},
+	}
+}
+
+// NewManager creates a new authentication manager with the specified configuration
+func NewManager(config Config, logger logging.Logger, storage CredentialStorage) Manager {
+	return NewTokenManager(config, logger, storage)
+}

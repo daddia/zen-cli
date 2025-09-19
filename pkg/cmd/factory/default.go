@@ -10,6 +10,7 @@ import (
 	"github.com/daddia/zen/internal/logging"
 	"github.com/daddia/zen/internal/workspace"
 	"github.com/daddia/zen/pkg/assets"
+	"github.com/daddia/zen/pkg/auth"
 	"github.com/daddia/zen/pkg/cache"
 	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/daddia/zen/pkg/git"
@@ -31,7 +32,8 @@ func New() *cmdutil.Factory {
 	f.Logger = loggerFunc(f)              // Depends on Config
 	f.WorkspaceManager = workspaceFunc(f) // Depends on Config, Logger
 	f.AgentManager = agentFunc(f)         // Depends on Config, Logger
-	f.AssetClient = assetClientFunc(f)    // Depends on Config, Logger
+	f.AuthManager = authFunc(f)           // Depends on Config, Logger
+	f.AssetClient = assetClientFunc(f)    // Depends on Config, Logger, AuthManager
 	f.Cache = cacheFunc(f)                // Depends on Logger
 
 	return f
@@ -117,6 +119,40 @@ func agentFunc(f *cmdutil.Factory) func() (cmdutil.AgentManager, error) {
 		return &agentManager{
 			logger: f.Logger,
 		}, nil
+	}
+}
+
+func authFunc(f *cmdutil.Factory) func() (auth.Manager, error) {
+	var cachedAuth auth.Manager
+	var authError error
+
+	return func() (auth.Manager, error) {
+		if cachedAuth != nil || authError != nil {
+			return cachedAuth, authError
+		}
+
+		cfg, err := f.Config()
+		if err != nil {
+			authError = err
+			return nil, authError
+		}
+
+		logger := f.Logger
+
+		// Get auth configuration from main config
+		authConfig := getAuthConfig(cfg)
+
+		// Create storage backend
+		storage, err := auth.NewStorage(authConfig.StorageType, authConfig, logger)
+		if err != nil {
+			authError = err
+			return nil, authError
+		}
+
+		// Create auth manager
+		cachedAuth = auth.NewManager(authConfig, logger, storage)
+
+		return cachedAuth, nil
 	}
 }
 
@@ -226,8 +262,15 @@ func assetClientFunc(f *cmdutil.Factory) func() (assets.AssetClientInterface, er
 		// Get asset configuration from main config
 		assetConfig := getAssetConfig(cfg)
 
-		// Create components
-		auth := assets.NewTokenAuthProvider(logger)
+		// Get shared auth manager
+		authManager, err := f.AuthManager()
+		if err != nil {
+			clientError = err
+			return nil, clientError
+		}
+
+		// Create adapter for assets interface compatibility
+		authProvider := assets.NewAuthProviderAdapter(authManager)
 
 		// Set up cache path
 		cachePath := assetConfig.CachePath
@@ -249,12 +292,12 @@ func assetClientFunc(f *cmdutil.Factory) func() (assets.AssetClientInterface, er
 
 		// Set up repository path
 		repoPath := filepath.Join(cachePath, "repository")
-		gitRepo := git.NewCLIRepository(repoPath, logger, auth, assetConfig.AuthProvider)
+		gitRepo := git.NewCLIRepository(repoPath, logger, authProvider, assetConfig.AuthProvider)
 
 		parser := assets.NewYAMLManifestParser(logger)
 
 		// Create client
-		cachedClient = assets.NewClient(assetConfig, logger, auth, cache, gitRepo, parser)
+		cachedClient = assets.NewClient(assetConfig, logger, authProvider, cache, gitRepo, parser)
 
 		return cachedClient, nil
 	}
@@ -303,6 +346,42 @@ func getAssetConfig(cfg *config.Config) assets.AssetConfig {
 
 	if branch := os.Getenv("ZEN_ASSET_BRANCH"); branch != "" {
 		config.Branch = branch
+	}
+
+	return config
+}
+
+func getAuthConfig(cfg *config.Config) auth.Config {
+	// Start with defaults
+	config := auth.DefaultConfig()
+
+	// Override with values from main configuration
+	if cfg.Assets.AuthProvider != "" {
+		// Map asset auth provider to auth storage type
+		switch cfg.Assets.AuthProvider {
+		case "github", "gitlab":
+			config.StorageType = "keychain" // Prefer keychain for security
+		default:
+			config.StorageType = "file"
+		}
+	}
+
+	// Environment variable overrides (for testing and advanced users)
+	if storageType := os.Getenv("ZEN_AUTH_STORAGE_TYPE"); storageType != "" {
+		config.StorageType = storageType
+	}
+
+	if storagePath := os.Getenv("ZEN_AUTH_STORAGE_PATH"); storagePath != "" {
+		config.StoragePath = storagePath
+	}
+
+	if encryptionKey := os.Getenv("ZEN_AUTH_ENCRYPTION_KEY"); encryptionKey != "" {
+		config.EncryptionKey = encryptionKey
+	}
+
+	// Set default storage path if not specified
+	if config.StoragePath == "" {
+		config.StoragePath = "~/.zen/auth"
 	}
 
 	return config

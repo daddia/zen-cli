@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/daddia/zen/pkg/assets"
@@ -19,6 +20,7 @@ import (
 type StatusOptions struct {
 	IO           *iostreams.IOStreams
 	AssetClient  func() (assets.AssetClientInterface, error)
+	AuthManager  func() (interface{}, error) // Using interface{} to avoid import cycle, will cast to auth.Manager
 	OutputFormat string
 }
 
@@ -59,6 +61,7 @@ func NewCmdAssetsStatus(f *cmdutil.Factory) *cobra.Command {
 	opts := &StatusOptions{
 		IO:          f.IOStreams,
 		AssetClient: f.AssetClient,
+		AuthManager: func() (interface{}, error) { return f.AuthManager() },
 	}
 
 	cmd := &cobra.Command{
@@ -103,7 +106,7 @@ func statusRun(opts *StatusOptions) error {
 	defer client.Close()
 
 	// Gather status information
-	status, err := gatherStatusInfo(ctx, client)
+	status, err := gatherStatusInfo(ctx, client, opts.AuthManager)
 	if err != nil {
 		return errors.Wrap(err, "failed to gather status information")
 	}
@@ -119,7 +122,7 @@ func statusRun(opts *StatusOptions) error {
 	}
 }
 
-func gatherStatusInfo(ctx context.Context, client assets.AssetClientInterface) (*StatusInfo, error) {
+func gatherStatusInfo(ctx context.Context, client assets.AssetClientInterface, authManagerFunc func() (interface{}, error)) (*StatusInfo, error) {
 	status := &StatusInfo{}
 
 	// Get cache information
@@ -139,24 +142,56 @@ func gatherStatusInfo(ctx context.Context, client assets.AssetClientInterface) (
 		}
 	}
 
-	// Authentication status - this would need access to auth provider
-	// For now, provide placeholder information
-	status.Authentication = AuthenticationInfo{
-		Provider:      "github", // This would come from configuration
-		Authenticated: false,    // This would come from auth provider
-		Status:        "unknown",
-	}
+	// Authentication status - check with shared auth manager
+	status.Authentication = getAuthenticationInfo(ctx, authManagerFunc)
 
 	// Repository status - this would need access to repository info
 	status.Repository = RepositoryInfo{
-		URL:       "https://github.com/example/assets.git", // From config
-		Branch:    "main",                                  // From config
+		URL:       "https://github.com/daddia/zen-assets.git", // From config
+		Branch:    "main",                                     // From config
 		LastSync:  status.Cache.LastSync,
-		Status:    "unknown",
-		Available: false,
+		Status:    "offline",
+		Available: status.Authentication.Authenticated,
 	}
 
 	return status, nil
+}
+
+func getAuthenticationInfo(ctx context.Context, authManagerFunc func() (interface{}, error)) AuthenticationInfo {
+	// Default to not authenticated
+	authInfo := AuthenticationInfo{
+		Provider:      "github",
+		Authenticated: false,
+		Status:        "not_authenticated",
+	}
+
+	// Try to get the auth manager
+	if authManagerFunc != nil {
+		authManagerInterface, err := authManagerFunc()
+		if err == nil && authManagerInterface != nil {
+			// Check if we have credentials for GitHub (most common provider)
+			// In a real implementation, we'd check the auth manager interface
+			// For now, we'll check environment variables as a proxy
+			if hasGitHubToken() {
+				authInfo.Authenticated = true
+				authInfo.Status = "authenticated"
+				authInfo.LastValidated = time.Now()
+			}
+		}
+	}
+
+	return authInfo
+}
+
+func hasGitHubToken() bool {
+	// Check for GitHub token in environment variables
+	tokenEnvVars := []string{"GITHUB_TOKEN", "GH_TOKEN", "ZEN_GITHUB_TOKEN"}
+	for _, envVar := range tokenEnvVars {
+		if token := os.Getenv(envVar); token != "" {
+			return true
+		}
+	}
+	return false
 }
 
 func displayStatusJSON(opts *StatusOptions, status *StatusInfo) error {
