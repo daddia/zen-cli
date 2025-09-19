@@ -141,7 +141,7 @@ keywords:
 				title,
 				slug,
 				title,
-				time.Now().Format("2006-01-02"),
+				time.Now().UTC().Format("2006-01-02"),
 				strings.ReplaceAll(strings.ToLower(title), " ", "-"),
 			)
 		}
@@ -200,7 +200,7 @@ keywords:
   - documentation
 ---
 
-`, time.Now().Format("2006-01-02"))
+`, time.Now().UTC().Format("2006-01-02"))
 	}
 
 	// Write header
@@ -276,7 +276,7 @@ keywords:
 	fmt.Fprintln(file, "---")
 	fmt.Fprintln(file)
 	fmt.Fprintln(file, "_This documentation is automatically generated from the Zen command definitions._")
-	fmt.Fprintf(file, "_Last updated: %s_\n", time.Now().Format("2006-01-02"))
+	fmt.Fprintf(file, "_Last updated: %s_\n", time.Now().UTC().Format("2006-01-02"))
 
 	return nil
 }
