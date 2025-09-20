@@ -80,17 +80,18 @@ nfpms:
         file_info:
           mode: 0644
 
-brews:
-  - name: zen
-    repository:
-      owner: daddia
-      name: homebrew-zen
-    directory: Formula
-    homepage: https://github.com/daddia/zen
-    description: AI-Powered Productivity Suite
-    license: MIT
-    test: |
-      system "#{bin}/zen --version"
+# Homebrew tap disabled - repository doesn't exist yet
+# brews:
+#   - name: zen
+#     repository:
+#       owner: daddia
+#       name: homebrew-zen
+#     directory: Formula
+#     homepage: https://github.com/daddia/zen
+#     description: AI-Powered Productivity Suite
+#     license: MIT
+#     test: |
+#       system "#{bin}/zen --version"
 
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
@@ -131,13 +132,14 @@ release:
 
     ### Installation
 
-    #### Homebrew (macOS/Linux)
-    ```bash
-    brew install daddia/zen/zen
-    ```
-
     #### Direct Download
     Download the appropriate binary for your platform from the assets below.
+
+    #### Package Managers
+    - **Debian/Ubuntu**: Download the `.deb` package
+    - **RHEL/CentOS/Fedora**: Download the `.rpm` package
+    - **Alpine**: Download the `.apk` package
+    - **Arch Linux**: Download the `.pkg.tar.zst` package
 
     #### Docker
     ```bash
