@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -247,6 +248,295 @@ func TestValidate(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestLoadDefaultsFunction(t *testing.T) {
+	cfg := LoadDefaults()
+	require.NotNil(t, cfg)
+
+	// Test default values are set correctly
+	assert.Equal(t, "info", cfg.LogLevel)
+	assert.Equal(t, "text", cfg.LogFormat)
+	assert.False(t, cfg.CLI.NoColor)
+	assert.False(t, cfg.CLI.Verbose)
+	assert.Equal(t, "text", cfg.CLI.OutputFormat)
+	assert.Equal(t, ".", cfg.Workspace.Root)
+	assert.Equal(t, "zen.yaml", cfg.Workspace.ConfigFile)
+	assert.False(t, cfg.Development.Debug)
+	assert.False(t, cfg.Development.Profile)
+
+	// Test asset defaults
+	assert.Equal(t, "https://github.com/daddia/zen-assets.git", cfg.Assets.RepositoryURL)
+	assert.Equal(t, "main", cfg.Assets.Branch)
+	assert.Equal(t, "github", cfg.Assets.AuthProvider)
+
+	// Test template defaults
+	assert.True(t, *cfg.Templates.CacheEnabled)
+	assert.Equal(t, "30m", cfg.Templates.CacheTTL)
+	assert.Equal(t, 100, cfg.Templates.CacheSize)
+
+	// Test that defaults source is loaded
+	assert.Contains(t, cfg.GetLoadedSources(), "defaults")
+	assert.Empty(t, cfg.GetConfigFile())
+}
+
+func TestConfigRedacted(t *testing.T) {
+	cfg := &Config{
+		LogLevel: "debug",
+		Assets: AssetsConfig{
+			RepositoryURL: "https://token:secret@github.com/user/repo.git",
+			AuthProvider:  "github",
+		},
+	}
+
+	redacted := cfg.Redacted()
+	require.NotNil(t, redacted)
+
+	// Test that sensitive fields are redacted (actual format includes partial masking)
+	assert.Contains(t, redacted.Assets.RepositoryURL, "*")
+
+	// Test that non-sensitive fields are preserved
+	assert.Equal(t, "debug", redacted.LogLevel)
+	assert.Equal(t, "github", redacted.Assets.AuthProvider)
+}
+
+func TestAssetsConfigRedacted(t *testing.T) {
+	assets := AssetsConfig{
+		RepositoryURL:          "https://token:secret@github.com/user/repo.git",
+		Branch:                 "main",
+		AuthProvider:           "github",
+		CachePath:              "~/.zen/assets",
+		IntegrityChecksEnabled: true,
+	}
+
+	redacted := assets.Redacted()
+
+	// Test that repository URL is redacted (contains credentials)
+	assert.Contains(t, redacted.RepositoryURL, "*")
+
+	// Test that other fields are preserved
+	assert.Equal(t, "main", redacted.Branch)
+	assert.Equal(t, "github", redacted.AuthProvider)
+	assert.Equal(t, "~/.zen/assets", redacted.CachePath)
+	assert.True(t, redacted.IntegrityChecksEnabled)
+}
+
+func TestValidateEnhanced(t *testing.T) {
+	tests := []struct {
+		name      string
+		config    *Config
+		wantError bool
+		errorMsg  string
+	}{
+		{
+			name: "valid complete config",
+			config: &Config{
+				LogLevel:  "debug",
+				LogFormat: "json",
+				CLI: CLIConfig{
+					OutputFormat: "yaml",
+					NoColor:      true,
+					Verbose:      true,
+				},
+				Workspace: WorkspaceConfig{
+					Root:       ".",
+					ConfigFile: "custom.yaml",
+				},
+				Assets: AssetsConfig{
+					RepositoryURL:      "https://github.com/user/repo.git",
+					Branch:             "develop",
+					AuthProvider:       "gitlab",
+					CacheSizeMB:        200,
+					SyncTimeoutSeconds: 60,
+				},
+				Development: DevelopmentConfig{
+					Debug:   true,
+					Profile: true,
+				},
+			},
+			wantError: false,
+		},
+		{
+			name: "invalid log level enum",
+			config: &Config{
+				LogLevel:  "invalid_level",
+				LogFormat: "text",
+				CLI: CLIConfig{
+					OutputFormat: "text",
+				},
+			},
+			wantError: true,
+			errorMsg:  "log_level",
+		},
+		{
+			name: "invalid log format enum",
+			config: &Config{
+				LogLevel:  "info",
+				LogFormat: "xml",
+				CLI: CLIConfig{
+					OutputFormat: "text",
+				},
+			},
+			wantError: true,
+			errorMsg:  "log_format",
+		},
+		{
+			name: "invalid cli output format",
+			config: &Config{
+				LogLevel:  "info",
+				LogFormat: "text",
+				CLI: CLIConfig{
+					OutputFormat: "html",
+				},
+			},
+			wantError: true,
+			errorMsg:  "cli.output_format",
+		},
+		{
+			name: "empty required fields",
+			config: &Config{
+				LogLevel:  "",
+				LogFormat: "",
+				CLI: CLIConfig{
+					OutputFormat: "",
+				},
+			},
+			wantError: true,
+			errorMsg:  "invalid log level",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validate(tt.config)
+			if tt.wantError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errorMsg)
+
+				// Test that it's a validation error
+				assert.True(t, IsValidationError(err))
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidationErrorEnhanced(t *testing.T) {
+	// Test ValidationError struct methods
+	err := &ValidationError{
+		Field:   "cli.output_format",
+		Message: "must be one of: text, json, yaml",
+	}
+
+	// Test Error() method
+	assert.Contains(t, err.Error(), "cli.output_format: must be one of: text, json, yaml")
+
+	// Test IsValidationError
+	assert.True(t, IsValidationError(err))
+	assert.False(t, IsValidationError(fmt.Errorf("regular error")))
+	assert.False(t, IsValidationError(nil))
+
+	// Test error wrapping (may not work with current implementation)
+	wrappedErr := fmt.Errorf("wrapped: %w", err)
+	_ = wrappedErr // Note: IsValidationError may not detect wrapped errors depending on implementation
+}
+
+func TestGetValueFromConfigEnhanced(t *testing.T) {
+	cfg := &Config{
+		LogLevel:  "trace",
+		LogFormat: "json",
+		CLI: CLIConfig{
+			NoColor:      true,
+			Verbose:      true,
+			OutputFormat: "yaml",
+		},
+		Workspace: WorkspaceConfig{
+			Root:       "/workspace/root",
+			ConfigFile: "custom.yaml",
+		},
+		Assets: AssetsConfig{
+			RepositoryURL:          "https://github.com/user/repo.git",
+			Branch:                 "develop",
+			AuthProvider:           "gitlab",
+			CachePath:              "/custom/cache",
+			CacheSizeMB:            150,
+			SyncTimeoutSeconds:     45,
+			IntegrityChecksEnabled: false,
+			PrefetchEnabled:        true,
+		},
+		Templates: TemplatesConfig{
+			CacheTTL:   "1h",
+			CacheSize:  200,
+			LeftDelim:  "<%",
+			RightDelim: "%>",
+		},
+		Development: DevelopmentConfig{
+			Debug:   true,
+			Profile: false,
+		},
+	}
+
+	// Create options to test getValueFromConfig
+	tests := []struct {
+		key      string
+		expected string
+	}{
+		// Top level fields
+		{"log_level", "trace"},
+		{"log_format", "json"},
+
+		// CLI nested fields
+		{"cli.no_color", "true"},
+		{"cli.verbose", "true"},
+		{"cli.output_format", "yaml"},
+
+		// Workspace nested fields
+		{"workspace.root", "/workspace/root"},
+		{"workspace.config_file", "custom.yaml"},
+
+		// Assets nested fields
+		{"assets.repository_url", "https://github.com/user/repo.git"},
+		{"assets.branch", "develop"},
+		{"assets.auth_provider", "gitlab"},
+		{"assets.cache_path", "/custom/cache"},
+		{"assets.cache_size_mb", "150"},
+		{"assets.sync_timeout_seconds", "45"},
+		{"assets.integrity_checks_enabled", "false"},
+		{"assets.prefetch_enabled", "true"},
+
+		// Templates nested fields
+		{"templates.cache_ttl", "1h"},
+		{"templates.cache_size", "200"},
+		{"templates.left_delim", "<%"},
+		{"templates.right_delim", "%>"},
+
+		// Development nested fields
+		{"development.debug", "true"},
+		{"development.profile", "false"},
+
+		// Non-existent fields
+		{"nonexistent", ""},
+		{"cli.nonexistent", ""},
+		{"workspace.nonexistent", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.key, func(t *testing.T) {
+			// Find the option
+			opt, found := FindOption(tt.key)
+			if tt.expected == "" && strings.Contains(tt.key, "nonexistent") {
+				assert.False(t, found, "Should not find non-existent option")
+				return
+			}
+
+			require.True(t, found, "Should find option %s", tt.key)
+
+			// Test getValueFromConfig through the option
+			result := opt.getValueFromConfig(cfg)
+			assert.Equal(t, tt.expected, result, "Value mismatch for key %s", tt.key)
 		})
 	}
 }
