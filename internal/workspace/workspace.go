@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/daddia/zen/internal/logging"
+	"github.com/daddia/zen/pkg/filesystem"
 	"gopkg.in/yaml.v3"
 )
 
@@ -17,6 +18,7 @@ type Manager struct {
 	root       string
 	configFile string
 	logger     logging.Logger
+	fsManager  *filesystem.Manager
 }
 
 // New creates a new workspace manager
@@ -33,6 +35,7 @@ func New(root, configFile string, logger logging.Logger) *Manager {
 		root:       root,
 		configFile: configFile,
 		logger:     logger,
+		fsManager:  filesystem.New(logger),
 	}
 }
 
@@ -356,37 +359,7 @@ func (m *Manager) Status() (Status, error) {
 
 // createZenDirectory creates the .zen directory structure
 func (m *Manager) createZenDirectory() error {
-	zenDir := m.ZenDirectory()
-
-	// Create main .zen directory
-	if err := os.MkdirAll(zenDir, 0755); err != nil {
-		return err
-	}
-
-	// Create subdirectories
-	subdirs := []string{
-		"tasks",     // Per-task workspaces
-		"cache",     // CLI caches
-		"templates", // Scaffolds for new tasks
-		"scripts",   // CLI helper scripts
-		"logs",      // CLI run logs, sync traces
-	}
-
-	for _, subdir := range subdirs {
-		if err := os.MkdirAll(filepath.Join(zenDir, subdir), 0755); err != nil {
-			return err
-		}
-	}
-
-	// Create .gitkeep files to ensure directories are tracked
-	// for _, subdir := range subdirs {
-	// 	gitkeepPath := filepath.Join(zenDir, subdir, ".gitkeep")
-	// 	if err := os.WriteFile(gitkeepPath, []byte(""), 0644); err != nil {
-	// 		return err
-	// 	}
-	// }
-
-	return nil
+	return m.fsManager.CreateZenWorkspace(m.ZenDirectory())
 }
 
 // createDefaultConfig creates a default workspace configuration

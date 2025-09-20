@@ -198,14 +198,21 @@ func TestInitialize_NewWorkspace(t *testing.T) {
 	err := manager.Initialize(false)
 	require.NoError(t, err)
 
-	// Check .zen directory was created
+	// Check .zen directory was created with simplified structure
 	zenDir := filepath.Join(tempDir, ".zen")
 	assert.DirExists(t, zenDir)
-	assert.DirExists(t, filepath.Join(zenDir, "tasks"))
+
+	// Check essential directories exist
+	assert.DirExists(t, filepath.Join(zenDir, "assets"))
 	assert.DirExists(t, filepath.Join(zenDir, "cache"))
-	assert.DirExists(t, filepath.Join(zenDir, "templates"))
-	assert.DirExists(t, filepath.Join(zenDir, "scripts"))
 	assert.DirExists(t, filepath.Join(zenDir, "logs"))
+	assert.DirExists(t, filepath.Join(zenDir, "work"))
+	assert.DirExists(t, filepath.Join(zenDir, "metadata"))
+
+	// Check that old directories are not created
+	assert.NoDirExists(t, filepath.Join(zenDir, "tasks"))     // Now under work/
+	assert.NoDirExists(t, filepath.Join(zenDir, "templates")) // Not created by default
+	assert.NoDirExists(t, filepath.Join(zenDir, "scripts"))   // Not created by default
 
 	// Check config file was created
 	configFile := manager.ConfigFile()
