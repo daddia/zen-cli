@@ -144,7 +144,7 @@ func authFunc(f *cmdutil.Factory) func() (auth.Manager, error) {
 		logger := f.Logger
 
 		// Get auth configuration from main config
-		authConfig := getAuthConfig(cfg)
+		authConfig := getAuthConfig(cfg, f)
 
 		// Create storage backend
 		storage, err := auth.NewStorage(authConfig.StorageType, authConfig, logger)
@@ -194,6 +194,13 @@ func (w *workspaceManager) Root() string {
 
 func (w *workspaceManager) ConfigFile() string {
 	return w.configFile
+}
+
+func (w *workspaceManager) ZenDirectory() string {
+	if w.manager == nil {
+		w.manager = workspace.New(w.root, w.configFile, w.logger)
+	}
+	return w.manager.ZenDirectory()
 }
 
 func (w *workspaceManager) Initialize() error {
@@ -458,7 +465,7 @@ func getAssetConfig(cfg *config.Config) assets.AssetConfig {
 	return config
 }
 
-func getAuthConfig(cfg *config.Config) auth.Config {
+func getAuthConfig(cfg *config.Config, f *cmdutil.Factory) auth.Config {
 	// Start with defaults
 	config := auth.DefaultConfig()
 
@@ -488,7 +495,13 @@ func getAuthConfig(cfg *config.Config) auth.Config {
 
 	// Set default storage path if not specified
 	if config.StoragePath == "" {
-		config.StoragePath = "~/.zen/auth"
+		// Use project .zen directory for project-specific credentials
+		if wm, err := f.WorkspaceManager(); err == nil {
+			config.StoragePath = filepath.Join(wm.ZenDirectory(), "auth")
+		} else {
+			// Fallback to home directory if workspace is not available (for testing/edge cases)
+			config.StoragePath = "~/.zen/auth"
+		}
 	}
 
 	return config

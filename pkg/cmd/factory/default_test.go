@@ -438,7 +438,8 @@ func TestGetAuthConfig(t *testing.T) {
 			defer tt.cleanupEnv()
 
 			cfg := tt.setupConfig()
-			authConfig := getAuthConfig(cfg)
+			f := New()
+			authConfig := getAuthConfig(cfg, f)
 
 			tt.validate(t, authConfig)
 		})
