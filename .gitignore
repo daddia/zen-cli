@@ -1,6 +1,10 @@
 # .gitignore
 
-# Zen CLI Project
+# Zen CLI workspace directory
+.zen/
+
+# Backup files
+*.backup
 
 # Binaries for programs and plugins
 *.exe
@@ -74,6 +78,3 @@ plugins/**/*.dylib
 .local/
 dev/
 scratch/
-
-# Zen CLI workspace directory
-.zen/
