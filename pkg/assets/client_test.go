@@ -949,6 +949,16 @@ func TestClient_SyncRepository_WithRealManifest(t *testing.T) {
 	tempDir, cleanup := setupTestEnvironment(t)
 	defer cleanup()
 
+	// Get current working directory for manifest path
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
+	
+	// Clean up any existing manifest file in project directory
+	projectManifestPath := filepath.Join(cwd, ".zen", "assets", "manifest.yaml")
+	defer func() {
+		os.Remove(projectManifestPath) // Clean up test artifacts
+	}()
+
 	// Create client with temp directory
 	config := DefaultAssetConfig()
 	config.CachePath = filepath.Join(tempDir, ".zen", "cache", "assets")
@@ -980,9 +990,8 @@ func TestClient_SyncRepository_WithRealManifest(t *testing.T) {
 	assert.Equal(t, "success", result.Status)
 	assert.True(t, result.AssetsAdded > 0, "Should have added assets from real manifest")
 
-	// Verify manifest was saved to disk
-	manifestPath := filepath.Join(tempDir, ".zen", "assets", "manifest.yaml")
-	savedContent, err := os.ReadFile(manifestPath)
+	// Verify manifest was saved to disk in the project directory
+	savedContent, err := os.ReadFile(projectManifestPath)
 	require.NoError(t, err)
 	assert.Equal(t, manifestContent, savedContent)
 
@@ -994,6 +1003,26 @@ func TestClient_SyncRepository_WithRealManifest(t *testing.T) {
 func TestClient_ListAssets_LoadsFromDisk(t *testing.T) {
 	tempDir, cleanup := setupTestEnvironmentWithManifest(t)
 	defer cleanup()
+
+	// Get current working directory
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
+	
+	// Copy manifest to project directory for this test
+	projectManifestPath := filepath.Join(cwd, ".zen", "assets", "manifest.yaml")
+	tempManifestPath := filepath.Join(tempDir, ".zen", "assets", "manifest.yaml")
+	
+	// Ensure project .zen/assets directory exists
+	require.NoError(t, os.MkdirAll(filepath.Dir(projectManifestPath), 0755))
+	
+	// Copy manifest from temp to project directory
+	manifestContent, err := os.ReadFile(tempManifestPath)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(projectManifestPath, manifestContent, 0644))
+	
+	defer func() {
+		os.Remove(projectManifestPath) // Clean up test artifacts
+	}()
 
 	// Create client with temp directory - this will make getManifestPath point to our temp dir
 	config := DefaultAssetConfig()
