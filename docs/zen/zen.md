@@ -39,5 +39,6 @@ Zen. The unified control plane for product & engineering.
 * [zen config](zen-config.md.md)	 - Manage configuration for Zen CLI
 * [zen init](zen-init.md.md)	 - Initialize your new Zen workspace or reinitialize an existing one
 * [zen status](zen-status.md.md)	 - Display workspace and system status
+* [zen task](zen-task.md.md)	 - Manage tasks and workflow
 * [zen version](zen-version.md.md)	 - Display version information
 

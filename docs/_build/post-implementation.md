@@ -12,6 +12,8 @@ This target runs all required validation steps in sequence and will fail fast if
 
 ## Individual Validation Requirements
 
+Run all validation checks.
+
 **MUST** All dependencies must download (`make deps`)
 **MUST** All code must be formatted (`make fmt`)
 **MUST** All linting must pass (`make lint`)

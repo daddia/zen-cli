@@ -47,6 +47,9 @@ Authenticate with Git providers
 ### [zen help](zen_help.md)
 Help about any command
 
+### [zen task](zen_task.md)
+Manage tasks and workflow
+
 ## Shell Completion
 
 ### [zen completion](zen_completion.md)
