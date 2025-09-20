@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 # Zen CLI Release Configuration
 version: 2
 
@@ -35,9 +36,7 @@ universal_binaries:
 
 archives:
   - id: zen-archive
-    builds:
-      - zen
-    format: tar.gz
+    formats: [tar.gz]
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
@@ -47,59 +46,39 @@ archives:
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [zip]
     files:
       - README.md
       - LICENSE
       - CHANGELOG.md
 
-checksum:
-  name_template: 'checksums.txt'
-
-snapshot:
-  name_template: "{{ incpatch .Version }}-next"
-
-changelog:
-  sort: asc
-  use: github
-  filters:
-    exclude:
-      - '^docs:'
-      - '^test:'
-      - '^ci:'
-      - '^chore:'
-      - '^style:'
-      - '^refactor:'
-  groups:
-    - title: Features
-      regexp: "^.*feat[(\\w)]*:+.*$"
-      order: 0
-    - title: 'Bug fixes'
-      regexp: "^.*fix[(\\w)]*:+.*$"
-      order: 1
-    - title: 'Performance improvements'
-      regexp: "^.*perf[(\\w)]*:+.*$"
-      order: 2
-    - title: Others
-      order: 999
-
-dockers:
-  - image_templates:
-      - "ghcr.io/jonathandaddia/zen:{{ .Tag }}"
-      - "ghcr.io/jonathandaddia/zen:v{{ .Major }}"
-      - "ghcr.io/jonathandaddia/zen:v{{ .Major }}.{{ .Minor }}"
-      - "ghcr.io/jonathandaddia/zen:latest"
-    dockerfile: Dockerfile
-    build_flag_templates:
-      - --platform=linux/amd64
-      - --label=org.opencontainers.image.title={{ .ProjectName }}
-      - --label=org.opencontainers.image.description=AI-Powered Productivity Suite
-      - --label=org.opencontainers.image.url=https://github.com/daddia/zen
-      - --label=org.opencontainers.image.source=https://github.com/daddia/zen
-      - --label=org.opencontainers.image.version={{ .Version }}
-      - --label=org.opencontainers.image.created={{ time "2006-01-02T15:04:05Z07:00" }}
-      - --label=org.opencontainers.image.revision={{ .FullCommit }}
-      - --label=org.opencontainers.image.licenses=MIT
+nfpms:
+  - id: zen-packages
+    package_name: zen
+    vendor: Zen
+    homepage: https://github.com/daddia/zen
+    maintainer: daddia. <https://github.com/daddia>
+    description: AI-Powered Productivity Suite for Modern Development Teams
+    license: MIT
+    formats:
+      - deb
+      - rpm
+      - apk
+      - archlinux
+    bindir: /usr/bin
+    section: utils
+    priority: optional
+    meta: false
+    file_name_template: "{{ .ConventionalFileName }}"
+    contents:
+      - src: ./README.md
+        dst: /usr/share/doc/zen/README.md
+        file_info:
+          mode: 0644
+      - src: ./LICENSE
+        dst: /usr/share/doc/zen/LICENSE
+        file_info:
+          mode: 0644
 
 brews:
   - name: zen
@@ -112,41 +91,35 @@ brews:
     license: MIT
     test: |
       system "#{bin}/zen --version"
-    install: |-
-      bin.install "zen"
 
-nfpms:
-  - file_name_template: '{{ .ConventionalFileName }}'
-    id: packages
-    builds:
-      - zen
-    homepage: https://github.com/daddia/zen
-    description: AI-Powered Productivity Suite
-    maintainer: Jonathan Daddia <your-email@example.com>
-    license: MIT
-    vendor: Zen CLI
-    bindir: /usr/bin
-    section: utils
-    contents:
-      - src: ./README.md
-        dst: /usr/share/doc/zen/README.md
-      - src: ./LICENSE
-        dst: /usr/share/doc/zen/LICENSE
-    formats:
-      - apk
-      - deb
-      - rpm
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
 
-publishers:
-  - name: fury.io
-    ids:
-      - packages
-    dir: "{{ dir .ArtifactPath }}"
-    cmd: curl -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/jonathandaddia/
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+      - "^build:"
+      - "^style:"
+      - "^refactor:"
+  groups:
+    - title: Features
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: Bug fixes
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: Others
+      order: 999
 
 release:
   github:
-    owner: jonathandaddia
+    owner: daddia
     name: zen
   draft: false
   prerelease: auto
@@ -154,13 +127,13 @@ release:
   header: |
     ## Zen CLI {{ .Tag }} Release
 
-    AI-Powered Productivity Suite
+    Welcome to Zen CLI {{ .Tag }}! This release includes new features, improvements, and bug fixes.
 
     ### Installation
 
     #### Homebrew (macOS/Linux)
     ```bash
-    brew install jonathandaddia/zen/zen
+    brew install daddia/zen/zen
     ```
 
     #### Direct Download
@@ -168,12 +141,14 @@ release:
 
     #### Docker
     ```bash
-    docker run --rm ghcr.io/jonathandaddia/zen:{{ .Tag }} --help
+    docker pull ghcr.io/daddia/zen:{{ .Tag }}
     ```
 
   footer: |
+    ### Full Changelog
     **Full Changelog**: https://github.com/daddia/zen/compare/{{ .PreviousTag }}...{{ .Tag }}
 
     ---
+    **Thanks to all contributors who made this release possible!**
 
-    **Zen. The AI-powered control plane for product & engineering.**
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser) 🚀
