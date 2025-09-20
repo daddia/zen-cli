@@ -46,6 +46,7 @@ type Factory struct {
 type WorkspaceManager interface {
 	Root() string
 	ConfigFile() string
+	ZenDirectory() string
 	Initialize() error
 	InitializeWithForce(force bool) error
 	Status() (WorkspaceStatus, error)
@@ -165,6 +166,10 @@ func (m *testWorkspaceManager) Root() string {
 
 func (m *testWorkspaceManager) ConfigFile() string {
 	return ".zen/config.yaml"
+}
+
+func (m *testWorkspaceManager) ZenDirectory() string {
+	return ".zen"
 }
 
 func (m *testWorkspaceManager) Initialize() error {
