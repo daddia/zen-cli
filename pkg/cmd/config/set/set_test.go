@@ -372,7 +372,7 @@ func TestSetRun_PermissionError(t *testing.T) {
 	}()
 
 	// This should work normally, but tests the error handling paths
-	err = setRun(opts)
+	_ = setRun(opts)
 	// This might succeed or fail depending on permissions, but tests the code paths
 	// The important thing is that it doesn't panic
 }

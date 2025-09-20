@@ -684,7 +684,7 @@ func TestExecute_RootCommandCreationError(t *testing.T) {
 }
 
 func TestExecute_ContextCancellation(t *testing.T) {
-	// Test Execute with cancelled context
+	// Test Execute with canceled context
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately
 
@@ -693,7 +693,7 @@ func TestExecute_ContextCancellation(t *testing.T) {
 	// This should either succeed quickly or handle cancellation gracefully
 	err := Execute(ctx, []string{"version"}, streams)
 
-	// Either succeeds (command was fast) or gets cancelled
+	// Either succeeds (command was fast) or gets canceled
 	if err != nil {
 		// If error, should be context-related
 		assert.True(t, errors.Is(err, context.Canceled) || strings.Contains(err.Error(), "context"))
@@ -713,7 +713,6 @@ func TestExecute_RootCommandError(t *testing.T) {
 }
 
 func TestHandleError_AllErrorTypes(t *testing.T) {
-
 	tests := []struct {
 		name         string
 		err          error
