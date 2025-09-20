@@ -29,10 +29,10 @@ type FileStorage struct {
 
 // NewFileStorage creates a new file-based credential storage
 func NewFileStorage(config Config, logger logging.Logger) (*FileStorage, error) {
-	// Expand tilde in storage path
+	// Use the provided storage path (factory should set this to project .zen/auth)
 	storePath := config.StoragePath
 	if storePath == "" {
-		storePath = "~/.zen/auth"
+		return nil, NewStorageError("storage path not configured", "auth storage path must be provided")
 	}
 
 	if strings.HasPrefix(storePath, "~/") {
