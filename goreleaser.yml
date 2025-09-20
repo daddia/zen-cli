@@ -103,10 +103,10 @@ dockers:
 
 brews:
   - name: zen
-    tap:
-      owner: jonathandaddia
+    repository:
+      owner: daddia
       name: homebrew-zen
-    folder: Formula
+    directory: Formula
     homepage: https://github.com/daddia/zen
     description: AI-Powered Productivity Suite
     license: MIT
