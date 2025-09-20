@@ -431,6 +431,7 @@ func TestCreateRun_Success(t *testing.T) {
 		IO:               streams,
 		WorkspaceManager: factory.WorkspaceManager,
 		TemplateEngine:   factory.TemplateEngine,
+		Factory:          factory,
 		TaskID:           "PROJ-123",
 		TaskType:         "story",
 		Title:            "Test Story",
@@ -529,7 +530,21 @@ func (m *mockWorkspaceManager) Status() (cmdutil.WorkspaceStatus, error) {
 }
 
 func (m *mockWorkspaceManager) CreateTaskDirectory(taskDir string) error {
-	return nil // Mock implementation
+	// Actually create the directories for testing
+	if err := os.MkdirAll(taskDir, 0755); err != nil {
+		return fmt.Errorf("failed to create task directory: %w", err)
+	}
+
+	// Create essential subdirectories
+	essentialDirs := []string{".zenflow", "metadata"}
+	for _, dir := range essentialDirs {
+		dirPath := filepath.Join(taskDir, dir)
+		if err := os.MkdirAll(dirPath, 0755); err != nil {
+			return fmt.Errorf("failed to create directory %s: %w", dirPath, err)
+		}
+	}
+
+	return nil
 }
 
 func (m *mockWorkspaceManager) CreateWorkTypeDirectory(taskDir, workType string) error {
