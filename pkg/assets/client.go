@@ -603,19 +603,14 @@ func (c *Client) verifyIntegrity(content *AssetContent) error {
 func (c *Client) getManifestPath() string {
 	// Always use workspace-local .zen/assets directory for manifest
 	// The manifest is separate from the cache - it's the source of truth
-	assetsDir := filepath.Join(".zen", "assets")
-
-	// If we have a cache path that looks like it contains .zen/assets,
-	// extract the base workspace path
-	if c.config.CachePath != "" && strings.Contains(c.config.CachePath, ".zen") {
-		// Extract base path before .zen
-		parts := strings.Split(c.config.CachePath, ".zen")
-		if len(parts) > 0 && parts[0] != "" {
-			assetsDir = filepath.Join(parts[0], ".zen", "assets")
-		}
+	// Use current working directory as the base for workspace-local assets
+	cwd, err := os.Getwd()
+	if err != nil {
+		// Fallback to relative path if we can't get current directory
+		return filepath.Join(".zen", "assets", "manifest.yaml")
 	}
 
-	return filepath.Join(assetsDir, "manifest.yaml")
+	return filepath.Join(cwd, ".zen", "assets", "manifest.yaml")
 }
 
 // saveManifestToDisk saves the manifest content to .zen/assets/manifest.yaml
