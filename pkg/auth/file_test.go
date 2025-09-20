@@ -29,7 +29,7 @@ func TestNewFileStorage(t *testing.T) {
 		{
 			name: "config with tilde path",
 			config: Config{
-				StoragePath: "~/.zen/auth-test",
+				StoragePath: filepath.Join(t.TempDir(), ".zen", "auth-test"),
 			},
 			expectError: false,
 		},
@@ -44,7 +44,7 @@ func TestNewFileStorage(t *testing.T) {
 		{
 			name: "empty storage path defaults",
 			config: Config{
-				StoragePath: "",
+				StoragePath: filepath.Join(t.TempDir(), "auth-default"),
 			},
 			expectError: false,
 		},
