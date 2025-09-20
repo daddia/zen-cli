@@ -432,7 +432,20 @@ func (m *mockManifestParser) Validate(ctx context.Context, content []byte) error
 // Test helper functions
 
 func createTestClient() (*Client, *mockAuthProvider, *mockCacheManager, *mockGitRepository, *mockManifestParser) {
+	client, auth, cache, git, parser, _ := createTestClientWithCleanup()
+	return client, auth, cache, git, parser
+}
+
+func createTestClientWithCleanup() (*Client, *mockAuthProvider, *mockCacheManager, *mockGitRepository, *mockManifestParser, func()) {
+	// Create temporary directory for isolated testing
+	tempDir, err := os.MkdirTemp("", "zen-assets-test-*")
+	if err != nil {
+		panic(fmt.Sprintf("Failed to create temp dir: %v", err))
+	}
+
 	config := DefaultAssetConfig()
+	// Use temp directory for cache to isolate tests
+	config.CachePath = filepath.Join(tempDir, ".zen", "cache", "assets")
 	logger := logging.NewBasic()
 
 	auth := &mockAuthProvider{}
@@ -442,7 +455,11 @@ func createTestClient() (*Client, *mockAuthProvider, *mockCacheManager, *mockGit
 
 	client := NewClient(config, logger, auth, cache, git, parser)
 
-	return client, auth, cache, git, parser
+	cleanup := func() {
+		os.RemoveAll(tempDir)
+	}
+
+	return client, auth, cache, git, parser, cleanup
 }
 
 // Tests
@@ -598,7 +615,8 @@ func TestClient_GetAsset_FromRepository(t *testing.T) {
 }
 
 func TestClient_GetAsset_NotFound(t *testing.T) {
-	client, _, cache, git, parser := createTestClient()
+	client, _, cache, git, parser, cleanup := createTestClientWithCleanup()
+	defer cleanup()
 	ctx := context.Background()
 
 	// Set up mocks
