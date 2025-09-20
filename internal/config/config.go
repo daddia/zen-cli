@@ -34,6 +34,9 @@ type Config struct {
 	// Development configuration
 	Development DevelopmentConfig `mapstructure:"development"`
 
+	// Integration configuration
+	Integrations IntegrationsConfig `mapstructure:"integrations"`
+
 	// Internal fields for configuration management
 	viper      *viper.Viper `mapstructure:"-" json:"-" yaml:"-"`
 	configFile string       `mapstructure:"-" json:"-" yaml:"-"`
@@ -123,6 +126,78 @@ type DevelopmentConfig struct {
 
 	// Enable profiling
 	Profile bool `mapstructure:"profile"`
+}
+
+// IntegrationsConfig contains external integration configuration
+type IntegrationsConfig struct {
+	// Task system of record (jira, github, monday, asana, none)
+	TaskSystem string `mapstructure:"task_system" validate:"oneof=jira github monday asana none ''"`
+
+	// Enable synchronization
+	SyncEnabled bool `mapstructure:"sync_enabled"`
+
+	// Sync frequency (hourly, daily, manual)
+	SyncFrequency string `mapstructure:"sync_frequency" validate:"oneof=hourly daily manual ''"`
+
+	// Plugin directories for discovery
+	PluginDirectories []string `mapstructure:"plugin_directories"`
+
+	// Provider-specific configurations
+	Providers map[string]IntegrationProviderConfig `mapstructure:"providers"`
+}
+
+// IntegrationProviderConfig contains provider-specific integration settings
+type IntegrationProviderConfig struct {
+	// Server URL for the integration
+	ServerURL string `mapstructure:"server_url"`
+
+	// Project key or identifier
+	ProjectKey string `mapstructure:"project_key"`
+
+	// Authentication type (basic, oauth2, token)
+	AuthType string `mapstructure:"auth_type" validate:"oneof=basic oauth2 token ''"`
+
+	// Credentials reference for auth system
+	CredentialsRef string `mapstructure:"credentials_ref"`
+
+	// Field mappings for data synchronization
+	FieldMapping map[string]string `mapstructure:"field_mapping"`
+
+	// Sync direction (pull, push, bidirectional)
+	SyncDirection string `mapstructure:"sync_direction" validate:"oneof=pull push bidirectional ''"`
+
+	// Additional provider-specific settings
+	Settings map[string]interface{} `mapstructure:"settings"`
+}
+
+// DefaultIntegrationsConfig returns default integration configuration
+func DefaultIntegrationsConfig() IntegrationsConfig {
+	return IntegrationsConfig{
+		TaskSystem:    "",
+		SyncEnabled:   false,
+		SyncFrequency: "manual",
+		PluginDirectories: []string{
+			"~/.zen/plugins",
+			".zen/plugins",
+		},
+		Providers: map[string]IntegrationProviderConfig{
+			"jira": {
+				AuthType:      "basic",
+				SyncDirection: "bidirectional",
+				FieldMapping: map[string]string{
+					"task_id":     "key",
+					"title":       "summary",
+					"status":      "status.name",
+					"priority":    "priority.name",
+					"assignee":    "assignee.displayName",
+					"created":     "created",
+					"updated":     "updated",
+					"description": "description",
+				},
+				Settings: make(map[string]interface{}),
+			},
+		},
+	}
 }
 
 // Load loads configuration from various sources with precedence handling

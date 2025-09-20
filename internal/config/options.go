@@ -176,6 +176,28 @@ var Options = []ConfigOption{
 		DefaultValue:  "true",
 		Type:          "bool",
 	},
+	// Integration configuration options
+	{
+		Key:           "integrations.task_system",
+		Description:   "Task system of record for external integration",
+		AllowedValues: []string{"jira", "github", "monday", "asana", "none", ""},
+		DefaultValue:  "",
+		Type:          "string",
+	},
+	{
+		Key:           "integrations.sync_enabled",
+		Description:   "Enable task synchronization with external systems",
+		AllowedValues: []string{"true", "false"},
+		DefaultValue:  "false",
+		Type:          "bool",
+	},
+	{
+		Key:           "integrations.sync_frequency",
+		Description:   "Frequency of automatic synchronization",
+		AllowedValues: []string{"hourly", "daily", "manual", ""},
+		DefaultValue:  "manual",
+		Type:          "string",
+	},
 }
 
 // GetCurrentValue returns the current value of a configuration option

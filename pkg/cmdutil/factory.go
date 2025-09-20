@@ -24,13 +24,14 @@ type Factory struct {
 	IOStreams *iostreams.IOStreams
 	Logger    logging.Logger
 
-	Config           func() (*config.Config, error)
-	WorkspaceManager func() (WorkspaceManager, error)
-	AgentManager     func() (AgentManager, error)
-	AuthManager      func() (auth.Manager, error)
-	AssetClient      func() (assets.AssetClientInterface, error)
-	Cache            func(basePath string) cache.Manager[string]
-	TemplateEngine   func() (TemplateEngineInterface, error)
+	Config             func() (*config.Config, error)
+	WorkspaceManager   func() (WorkspaceManager, error)
+	AgentManager       func() (AgentManager, error)
+	AuthManager        func() (auth.Manager, error)
+	AssetClient        func() (assets.AssetClientInterface, error)
+	Cache              func(basePath string) cache.Manager[string]
+	TemplateEngine     func() (TemplateEngineInterface, error)
+	IntegrationManager func() (IntegrationManagerInterface, error)
 
 	// Global flag values
 	ConfigFile string
@@ -78,6 +79,19 @@ type AgentManager interface {
 // TemplateEngineInterface is an alias for zentemplate.TemplateEngine
 type TemplateEngineInterface = zentemplate.TemplateEngine
 
+// IntegrationManagerInterface defines the interface for integration management
+// This is a minimal interface that avoids circular dependencies
+type IntegrationManagerInterface interface {
+	// IsConfigured checks if integration is properly configured
+	IsConfigured() bool
+
+	// GetTaskSystem returns the configured task system of record
+	GetTaskSystem() string
+
+	// IsSyncEnabled returns true if sync is enabled
+	IsSyncEnabled() bool
+}
+
 // NewTestFactory creates a factory for testing
 func NewTestFactory(streams *iostreams.IOStreams) *Factory {
 	if streams == nil {
@@ -115,6 +129,9 @@ func NewTestFactory(streams *iostreams.IOStreams) *Factory {
 		},
 		TemplateEngine: func() (TemplateEngineInterface, error) {
 			return &testTemplateEngine{}, nil
+		},
+		IntegrationManager: func() (IntegrationManagerInterface, error) {
+			return &testIntegrationManager{}, nil
 		},
 		BuildInfo: map[string]string{
 			"version":    "dev",
@@ -351,4 +368,19 @@ func (e *testTemplateEngine) GetFunctions() template.FuncMap {
 	return template.FuncMap{
 		"upper": func(s string) string { return s },
 	}
+}
+
+// testIntegrationManager is a mock integration manager for testing
+type testIntegrationManager struct{}
+
+func (i *testIntegrationManager) IsConfigured() bool {
+	return false // Default to not configured for tests
+}
+
+func (i *testIntegrationManager) GetTaskSystem() string {
+	return ""
+}
+
+func (i *testIntegrationManager) IsSyncEnabled() bool {
+	return false
 }

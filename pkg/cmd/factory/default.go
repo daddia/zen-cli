@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/daddia/zen/internal/config"
+	"github.com/daddia/zen/internal/integration"
+	"github.com/daddia/zen/internal/integration/providers"
 	"github.com/daddia/zen/internal/logging"
 	"github.com/daddia/zen/internal/workspace"
 	"github.com/daddia/zen/pkg/assets"
@@ -27,15 +29,16 @@ func New() *cmdutil.Factory {
 	}
 
 	// Build dependency chain (order matters)
-	f.Config = configFunc()                  // No dependencies
-	f.IOStreams = ioStreams(f)               // Depends on Config
-	f.Logger = loggerFunc(f)                 // Depends on Config
-	f.WorkspaceManager = workspaceFunc(f)    // Depends on Config, Logger
-	f.AgentManager = agentFunc(f)            // Depends on Config, Logger
-	f.AuthManager = authFunc(f)              // Depends on Config, Logger
-	f.AssetClient = assetClientFunc(f)       // Depends on Config, Logger, AuthManager
-	f.Cache = cacheFunc(f)                   // Depends on Logger
-	f.TemplateEngine = templateEngineFunc(f) // Depends on Config, Logger, AssetClient
+	f.Config = configFunc()                   // No dependencies
+	f.IOStreams = ioStreams(f)                // Depends on Config
+	f.Logger = loggerFunc(f)                  // Depends on Config
+	f.WorkspaceManager = workspaceFunc(f)     // Depends on Config, Logger
+	f.AgentManager = agentFunc(f)             // Depends on Config, Logger
+	f.AuthManager = authFunc(f)               // Depends on Config, Logger
+	f.AssetClient = assetClientFunc(f)        // Depends on Config, Logger, AuthManager
+	f.Cache = cacheFunc(f)                    // Depends on Logger
+	f.TemplateEngine = templateEngineFunc(f)  // Depends on Config, Logger, AssetClient
+	f.IntegrationManager = integrationFunc(f) // Depends on Config, Logger, AuthManager, Cache
 
 	return f
 }
@@ -479,5 +482,55 @@ func cacheFunc(f *cmdutil.Factory) func(basePath string) cache.Manager[string] {
 		}
 		serializer := cache.NewStringSerializer()
 		return cache.NewManager(config, f.Logger, serializer)
+	}
+}
+
+func integrationFunc(f *cmdutil.Factory) func() (cmdutil.IntegrationManagerInterface, error) {
+	var cachedIntegration cmdutil.IntegrationManagerInterface
+	var integrationError error
+
+	return func() (cmdutil.IntegrationManagerInterface, error) {
+		if cachedIntegration != nil || integrationError != nil {
+			return cachedIntegration, integrationError
+		}
+
+		cfg, err := f.Config()
+		if err != nil {
+			integrationError = err
+			return nil, integrationError
+		}
+
+		logger := f.Logger
+
+		authManager, err := f.AuthManager()
+		if err != nil {
+			integrationError = err
+			return nil, integrationError
+		}
+
+		// Create cache for sync records
+		cacheConfig := cache.Config{
+			BasePath:    filepath.Join(os.TempDir(), "zen", "integration"),
+			SizeLimitMB: 10, // 10MB for sync records
+			DefaultTTL:  24 * time.Hour,
+		}
+		serializer := cache.NewJSONSerializer[*integration.TaskSyncRecord]()
+		syncCache := cache.NewManager(cacheConfig, logger, serializer)
+
+		// Create integration service
+		integrationService := integration.NewService(&cfg.Integrations, logger, authManager, syncCache)
+
+		// Register Jira provider if configured
+		if cfg.Integrations.TaskSystem == "jira" {
+			if providerConfig, ok := cfg.Integrations.Providers["jira"]; ok {
+				jiraProvider := providers.NewJiraProvider(&providerConfig, logger, authManager)
+				if err := integrationService.RegisterProvider(jiraProvider); err != nil {
+					logger.Warn("failed to register Jira provider", "error", err)
+				}
+			}
+		}
+
+		cachedIntegration = integrationService
+		return cachedIntegration, nil
 	}
 }

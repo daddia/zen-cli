@@ -22,6 +22,7 @@ type CreateOptions struct {
 	IO               *iostreams.IOStreams
 	WorkspaceManager func() (cmdutil.WorkspaceManager, error)
 	TemplateEngine   func() (cmdutil.TemplateEngineInterface, error)
+	Factory          *cmdutil.Factory
 
 	TaskID   string
 	TaskType string
@@ -70,6 +71,7 @@ func NewCmdTaskCreate(f *cmdutil.Factory) *cobra.Command {
 		IO:               f.IOStreams,
 		WorkspaceManager: f.WorkspaceManager,
 		TemplateEngine:   f.TemplateEngine,
+		Factory:          f,
 		DryRun:           f.DryRun,
 	}
 
@@ -250,6 +252,13 @@ func createRun(opts *CreateOptions) error {
 	// Generate task files from templates
 	if err := generateTaskFiles(ctx, opts, taskDir); err != nil {
 		return fmt.Errorf("failed to generate task files: %w", err)
+	}
+
+	// Try to sync with external system if configured
+	if err := tryIntegrationSync(ctx, opts); err != nil {
+		// Log the error but don't fail the task creation
+		fmt.Fprintf(opts.IO.Out, "%s Integration sync failed: %v\n",
+			opts.IO.FormatWarning("!"), err)
 	}
 
 	// Success output
@@ -1018,4 +1027,33 @@ custom: {}
 
 	taskrcPath := filepath.Join(taskDir, ".taskrc.yaml")
 	return os.WriteFile(taskrcPath, []byte(content), 0644)
+}
+
+// tryIntegrationSync attempts to sync the newly created task with external systems
+func tryIntegrationSync(ctx context.Context, opts *CreateOptions) error {
+	// Check if factory has integration manager (may not be available in tests)
+	if opts.Factory == nil || opts.Factory.IntegrationManager == nil {
+		// Integration not available, skip silently
+		return nil
+	}
+
+	// Get integration manager from factory
+	integrationManager, err := opts.Factory.IntegrationManager()
+	if err != nil {
+		// Integration manager not available, skip silently
+		return nil
+	}
+
+	// Check if integration is configured and enabled
+	if !integrationManager.IsConfigured() || !integrationManager.IsSyncEnabled() {
+		// Integration not configured, skip silently
+		return nil
+	}
+
+	// For now, just log that integration would happen
+	taskSystem := integrationManager.GetTaskSystem()
+	fmt.Fprintf(opts.IO.Out, "%s Integration with %s is configured (sync functionality coming soon)\n",
+		opts.IO.ColorInfo("ℹ"), taskSystem)
+
+	return nil
 }

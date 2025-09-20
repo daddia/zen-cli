@@ -27,7 +27,7 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 ### **Task Enhanced** → Target Release v0.5.0
 
 - [ ] **[ZEN-025] Jira Integration**
-  - **Deliverable**: Optional Jira synchronization
+  - **Deliverable**: Jira synchronization
   - **Acceptance**: Tasks can sync with external project tracking
 
 - [ ] **[ZEN-011] AI Client Foundation**
@@ -108,9 +108,13 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 ### **External Integration** → Target Release [TBD]
 
-- [ ] **[ZEN-024] GitHub Integration**
+- [ ] **[ZEN-025] Task Integration**
+  - **Deliverable**: Task synchronization with popular platform e.g. Jira, GitHub Issues, Monday, Asana etc.
+  - **Acceptance**: Tasks can sync with external project tracking (Jira first)
+
+- [ ] **[ZEN-024] Repo Integration**
   - **Deliverable**: Link tasks with issues, PRs, commits
-  - **Acceptance**: Bidirectional sync with GitHub
+  - **Acceptance**: Bidirectional sync with popular platform e.g. GitHub or GitLab
   - **Priority**: P1
 
 - [ ] **[ZEN-026] Documentation Publishing**

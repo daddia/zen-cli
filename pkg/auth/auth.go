@@ -118,6 +118,17 @@ func DefaultConfig() Config {
 				EnvVars:    []string{"ZEN_GITLAB_TOKEN", "GITLAB_TOKEN", "GL_TOKEN"},
 				ConfigKeys: []string{"gitlab.token"},
 			},
+			"jira": {
+				Type:       "basic",
+				BaseURL:    "", // Will be configured per instance
+				Scopes:     []string{"read", "write"},
+				EnvVars:    []string{"ZEN_JIRA_TOKEN", "JIRA_TOKEN", "ZEN_JIRA_EMAIL", "JIRA_EMAIL"},
+				ConfigKeys: []string{"jira.token", "jira.email", "jira.server_url"},
+				Metadata: map[string]string{
+					"auth_method": "basic", // Jira Cloud uses email + API token
+					"token_type":  "api_token",
+				},
+			},
 		},
 	}
 }
