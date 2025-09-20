@@ -603,7 +603,7 @@ func (c *Client) verifyIntegrity(content *AssetContent) error {
 func (c *Client) getManifestPath() string {
 	// Always use workspace-local .zen/assets directory for manifest
 	// The manifest is separate from the cache - it's the source of truth
-	
+
 	// If we have a cache path that contains a workspace path, use that workspace
 	if c.config.CachePath != "" {
 		// Check if cache path points to a workspace-local cache
@@ -617,7 +617,7 @@ func (c *Client) getManifestPath() string {
 			}
 		}
 	}
-	
+
 	// Default to current working directory for workspace-local assets
 	cwd, err := os.Getwd()
 	if err != nil {
