@@ -24,14 +24,11 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 ## Release Candidate
 
-## Next
+### **Task Enhanced** → Target Release v0.5.0
 
-### **Task Creation** → Target Release v0.4.0
-
-- [ ] **[ZEN-010] Task Creation Command**
-  - **Deliverable**: `zen task create [TASK-ID] --type [story|bug|epic]` with template-driven structure
-  - **Acceptance**: Creates proper `.zen/work/tasks/{TASK-ID}/` structure with index.md and manifest.yaml
-  - **Priority**: P0 (Critical for Golden Path)
+- [ ] **[ZEN-025] Jira Integration**
+  - **Deliverable**: Optional Jira synchronization
+  - **Acceptance**: Tasks can sync with external project tracking
 
 - [ ] **[ZEN-011] AI Client Foundation**
   - **Deliverable**: Multi-provider LLM client (OpenAI, Anthropic, Azure) with strategy pattern
@@ -116,11 +113,6 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
   - **Acceptance**: Bidirectional sync with GitHub
   - **Priority**: P1
 
-- [ ] **[ZEN-025] Jira Integration**
-  - **Deliverable**: Optional Jira synchronization
-  - **Acceptance**: Tasks can sync with external project tracking
-  - **Priority**: P2
-
 - [ ] **[ZEN-026] Documentation Publishing**
   - **Deliverable**: Publish to Confluence, GitHub Wiki, etc.
   - **Acceptance**: Automated documentation distribution
@@ -132,7 +124,7 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 ### Phase 1: Golden Path Proven
 - [ ] Create task with `zen task create --type story`
-- [ ] Progress through all 7 workflow stages
+- [ ] Progress through all workflow stages
 - [ ] Generate technical artifacts (ADRs, designs, docs)
 - [ ] Ship complete Zen feature developed with Zen
 - [ ] Measurable time-to-ship reduction
@@ -146,7 +138,7 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 ## Key Principles
 
 1. **Task-Centric**: Everything organized around tasks with types (story, bug, epic)
-2. **Workflow-Driven**: All tasks follow the 7-stage Zen workflow
+2. **Workflow-Driven**: All tasks follow the Zen workflow
 3. **Template-Powered**: Templates + AI for rapid artifact generation
 4. **Dogfooding**: Every feature used to build Zen itself
 5. **Value-First**: Each feature must improve productivity
@@ -167,3 +159,5 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 - [x] **[ZEN-008] Asset Commands** - `zen assets auth`, `zen assets sync`, `zen assets list`
 
 - [x] **[ZEN-009] Template Engine Core** - Go template engine with custom functions integrated with Asset Client
+
+- [x] **[ZEN-010] Task Creation Command** - `zen task create [TASK-ID] --type [story|bug|epic]` with template-driven structure.

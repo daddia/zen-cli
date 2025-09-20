@@ -10,6 +10,49 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/), and this 
 
 ---
 
+## [v0.4.0] - 2025-09-20
+
+### Added
+- **Task Management System**: Complete task creation and workflow management with template-driven structure
+  - `zen task create` command with support for multiple task types (story, bug, epic, spike, task)
+  - Structured task directory creation in `.zen/work/tasks/{TASK-ID}/`
+  - Template-driven file generation with index.md, manifest.yaml, and .taskrc.yaml
+  - Task ID validation with support for alphanumeric and hyphenated formats
+  - Priority levels (P0-P3) with P2 as default
+  - Owner and team assignment capabilities
+  - Interactive title prompting when not provided via flag
+- **Task Directory Structure**: Comprehensive workspace organization for task artifacts
+  - Main task directory with metadata files
+  - Work-type subdirectories created on-demand (research/, spikes/, design/, execution/, outcomes/)
+  - .zenflow/ directory for workflow state tracking
+  - metadata/ directory for external system snapshots
+- **Task Validation System**: Robust input validation and error handling
+  - Task ID format validation (minimum 3 characters, alphanumeric with hyphens/underscores)
+  - Task type validation against supported types
+  - Priority validation with clear error messages
+  - Workspace initialization checks before task creation
+  - Duplicate task detection and prevention
+- **Template Integration**: Seamless integration with the Template Engine for task file generation
+  - Template-driven content generation with variable substitution
+  - Fallback file generation when templates are unavailable
+  - Support for custom task templates via Asset Client
+  - Dynamic variable building with task metadata
+
+### Changed
+- Enhanced Factory pattern to include task management components
+- Improved filesystem utilities with task-specific directory creation
+- Extended error handling with task-specific error types and messages
+- Updated CLI help system with comprehensive task management examples
+
+### Technical
+- Comprehensive test coverage: 89.5% for task creation package
+- Performance-optimized directory creation with proper error handling
+- Thread-safe task operations with workspace validation
+- Integration with existing Asset Client and Template Engine systems
+- Proper cleanup and rollback on task creation failures
+
+---
+
 ## [v0.3.0] - 2025-09-20
 
 ### Added
