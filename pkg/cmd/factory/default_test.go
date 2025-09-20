@@ -207,29 +207,26 @@ func TestAuthManagerFunctionality(t *testing.T) {
 
 // Test asset client functionality
 func TestAssetClientFunctionality(t *testing.T) {
-	f := New()
+	// Use test factory which provides mocked asset client
+	f := cmdutil.NewTestFactory(nil)
 
 	client, err := f.AssetClient()
-	// May fail if asset dependencies are not available in test environment
-	if err != nil {
-		t.Skipf("Asset client not available in test environment: %v", err)
-		return
-	}
-
+	require.NoError(t, err)
 	require.NotNil(t, client)
 	defer client.Close()
 
 	ctx := context.Background()
 
-	// Test cache info
+	// Test cache info (should work with mock)
 	cacheInfo, err := client.GetCacheInfo(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, cacheInfo)
 
-	// Test list assets
+	// Test list assets (should work with mock)
 	assetList, err := client.ListAssets(ctx, assets.AssetFilter{})
 	assert.NoError(t, err)
 	assert.NotNil(t, assetList)
+	assert.Equal(t, 1, assetList.Total) // Mock returns 1 asset
 }
 
 // Test cache functionality
