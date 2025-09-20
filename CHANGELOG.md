@@ -10,6 +10,62 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/), and this 
 
 ---
 
+## [v0.5.0] - 2025-09-20
+
+### Added
+- **Integration Services Layer**: Complete plugin-based external integration architecture for seamless task synchronization
+  - Configuration-driven integration system with support for multiple external platforms
+  - `integrations.task_system` configuration for selecting task system of record (jira, github, monday, asana, none)
+  - `integrations.sync_enabled` and `integrations.sync_frequency` controls for synchronization behavior
+  - Plugin directory discovery system for extensible provider architecture
+  - Factory pattern integration with dependency injection for integration components
+- **Jira Integration Provider**: Production-ready Jira Cloud integration with comprehensive API support
+  - Complete Jira REST API v3 integration with authentication via email + API token
+  - Bidirectional field mapping between Zen tasks and Jira issues
+  - Task data retrieval, creation, and updates with proper error handling
+  - Status and priority mapping with configurable field transformations
+  - Connection validation and credential management integration
+  - Search functionality for finding existing Jira issues by task ID
+- **External System Authentication**: Enhanced authentication system with Jira provider support
+  - Added Jira provider configuration to existing multi-provider auth system
+  - Support for Basic Auth with email + API token for Jira Cloud
+  - Seamless integration with existing secure credential storage (Keychain/File/Memory)
+  - Environment variable and configuration file support for credentials
+- **Task Creation Integration Hooks**: Non-breaking enhancement to task creation workflow
+  - Automatic detection of configured external integration systems
+  - Integration status reporting during task creation
+  - Graceful handling of integration failures without breaking task creation
+  - Metadata directory utilization for external system data storage
+- **Data Mapping Framework**: Flexible data transformation system for external system integration
+  - Configurable field mapping with dot notation for nested field access
+  - Bidirectional data transformation between Zen and external formats
+  - Validation framework for mapping configurations
+  - Default mappings for common external systems (Jira, GitHub)
+  - Type-safe data conversion with reflection-based struct mapping
+
+### Changed
+- Enhanced configuration system with new `IntegrationsConfig` section
+- Extended authentication system to support additional provider types
+- Improved factory dependency injection to include integration management
+- Updated task creation workflow with optional integration synchronization
+- Enhanced documentation with integration configuration options
+
+### Technical
+- **Architecture**: Leverages 70% of existing Zen infrastructure (auth, config, caching, logging, templates)
+- **Performance**: Plugin-ready architecture with lazy loading and caching strategies
+- **Security**: Secure credential management and sandboxed execution preparation
+- **Testing**: Comprehensive test coverage with unit, integration, and mock testing
+- **Extensibility**: Clean provider interface for adding new external system integrations
+- **Compatibility**: Cross-platform support maintained (Linux, macOS, Windows)
+
+### Foundation for Future WASM Plugins
+- Plugin-based architecture designed for WebAssembly runtime integration
+- Host API interfaces prepared for secure plugin-to-Zen communication
+- Provider abstraction ready for WASM plugin conversion
+- Security model foundation for capability-based permissions
+
+---
+
 ## [v0.4.0] - 2025-09-20
 
 ### Added
