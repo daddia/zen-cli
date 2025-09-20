@@ -128,7 +128,7 @@ The external integration architecture follows a plugin-based design with clear s
 - **Technology:** File system discovery with metadata validation
 - **Interfaces:** PluginDiscoveryInterface, PluginValidatorInterface
 - **Dependencies:** Filesystem Manager (✅ **EXISTS**), Configuration (✅ **EXISTS**), Security Validator
-- **Implementation:** Leverages existing `filesystem.Manager` for directory operations
+- **Implementation:** Leverages existing `fs.Manager` for directory operations
 
 ### Existing Components Integration
 
@@ -287,7 +287,7 @@ const (
 
 #### Data Flow ✅ **LEVERAGES EXISTING SYSTEMS**
 
-1. **Plugin Discovery**: System scans plugin directories using existing `filesystem.Manager`
+1. **Plugin Discovery**: System scans plugin directories using existing `fs.Manager`
    - **Existing Component:** `pkg/filesystem/directories.go` for directory operations
    - **Enhancement:** New plugin discovery logic in `pkg/plugin/registry.go`
 
@@ -743,7 +743,7 @@ No data migration required. Integration creates new sync relationships without m
 - **Milestone 2:** Plugin Registry and Discovery (Week 2)
   - **Deliverables:** Plugin discovery using existing filesystem manager
   - **Status:** ⚠️ **NEW WITH EXISTING FOUNDATION** - Uses existing directory operations
-  - **Dependencies:** Existing `filesystem.Manager` and `config` systems
+  - **Dependencies:** Existing `fs.Manager` and `config` systems
 
 - **Milestone 3:** WASM Runtime Integration (Week 3-4)
   - **Deliverables:** Plugin loading, security framework, Host API using existing auth/logging

@@ -133,7 +133,6 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 ---
 
 ## Complete
-
 - [x] **[ZEN-001] Go Project Setup** - CLI framework with Cobra
 - [x] **[ZEN-002] Core CLI Framework** - Root command, version, help
 - [x] **[ZEN-003] Workspace Detection & Init** - `zen init` command
@@ -144,9 +143,8 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 - [x] **[ZEN-007] Git-based Asset Client** - Asset client with GitHub auth
 - [x] **[ZEN-008] Asset Commands** - `zen assets auth`, `zen assets sync`, `zen assets list`
 
-- [x] **[ZEN-009] Template Engine Core** - Go template engine with custom functions integrated with Asset Client
+- [x] **[ZEN-009] Template Engine Core** - Go template engine with custom functions
+- [x] **[ZEN-010] Task Creation Command** - `zen task create` with template-driven structure.
 
-- [x] **[ZEN-010] Task Creation Command** - `zen task create [TASK-ID] --type [story|bug|epic]` with template-driven structure.
-
-- [x] **[ZEN-025] Integration Services Layer** Plugin-based external integration architecture with configuration-driven provider system
-- [x] **[ZEN-026] Task Integration** Task synchronization foundation with Jira provider implementation
+- [x] **[ZEN-025] Integration Services Layer** Plugin-based external integration architecture
+- [x] **[ZEN-026] Task Integration** Task synchronization foundation
