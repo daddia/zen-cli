@@ -109,6 +109,9 @@ jobs:
             binary: zen-windows-amd64.exe
 
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
     - name: Download build artifact
       run: |
         echo "Downloading artifact ${{ matrix.artifact }} from workflow run ${{ github.event.workflow_run.id }}"
