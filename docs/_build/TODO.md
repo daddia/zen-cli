@@ -1,6 +1,6 @@
-# TODO - Zen CLI Golden Path
+# TODO - Zen CLI
 
-_Last updated: 20 September, 2025_
+_Last updated: 21 September, 2025_
 
 ## Mission: Prove Zen's Value Through Direct Usage
 
@@ -10,13 +10,13 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 - **Story ID:** ZEN-### (sequential numbering)
 - **Status:** Not started · In progress · Blocked · In review · Done
-- **Priority:** P0 (MVP Critical) · P1 (High) · P2 (Medium) · P3 (Low)
-- **Estimates:** S/M/L/XL (T-shirt sizes)
+- **Priority:** P0 (Critical) · P1 (High) · P2 (Medium) · P3 (Low) · P4 (Lowest)
+- **Estimates:** Story points (Fibonacci)
 - **DoD:** Working in Zen project · Tests pass · Docs updated · Released
 
 ---
 
-## Phase 1: Golden Path Foundation
+## Phase 1: Zen CLI Foundation (Golden Path)
 
 **Objective**: Build the minimum viable Golden Path to take a task from idea to shipped artifact using Zen on the Zen project itself.
 
@@ -24,26 +24,19 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 ## Release Candidate
 
-### **Task Enhanced** → Target Release v0.5.0
-
-- [ ] **[ZEN-025] Jira Integration**
-  - **Deliverable**: Jira synchronization
-  - **Acceptance**: Tasks can sync with external project tracking
+### **Task Enhanced** → Target Release [v0.6.0]
 
 - [ ] **[ZEN-011] AI Client Foundation**
   - **Deliverable**: Multi-provider LLM client (OpenAI, Anthropic, Azure) with strategy pattern
   - **Acceptance**: Unified interface for content enhancement, cost tracking, and provider switching
-  - **Priority**: P0 (Core AI capability)
 
 - [ ] **[ZEN-012] Content Generation Commands**
   - **Deliverable**: `zen write <template>` and `zen draft <template>` for content creation
   - **Acceptance**: Generate content from templates with AI enhancement and variable prompting
-  - **Priority**: P1 (User workflow efficiency)
 
 - [ ] **[ZEN-013] Template Viewing Command**
   - **Deliverable**: `zen template view <template>` renders template as plain markdown
   - **Acceptance**: Shows template structure and variables for user reference
-  - **Priority**: P2 (User experience enhancement)
 
 ### **Work Management & Workflow** → Target Release [TBD]
 
@@ -62,7 +55,6 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 - [ ] **[ZEN-017] Stage Validation**
   - **Deliverable**: Basic quality gates for stage progression
   - **Acceptance**: Validates required artifacts before stage completion
-  - **Priority**: P1
 
 ### **Golden Path Completion** → Target Release [TBD]
 
@@ -77,7 +69,6 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 - [ ] **[ZEN-020] Documentation Generation**
   - **Deliverable**: Auto-generate README, CHANGELOG from task artifacts
   - **Acceptance**: Documentation stays in sync with task progress
-  - **Priority**: P1
 
 - [ ] **[ZEN-021] End-to-End Validation**
   - **Deliverable**: Complete Golden Path validation
@@ -94,46 +85,37 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 - [ ] **[ZEN-021] Context Awareness**
   - **Deliverable**: Commands understand current task and stage context
   - **Acceptance**: Reduced need for explicit task/stage specification
-  - **Priority**: P1
 
 - [ ] **[ZEN-022] Template Library Expansion**
   - **Deliverable**: Comprehensive templates based on real usage
   - **Acceptance**: Templates cover 80% of common scenarios
-  - **Priority**: P1
 
 - [ ] **[ZEN-023] AI Prompt Optimization**
   - **Deliverable**: Refined prompts for better AI assistance
   - **Acceptance**: Less manual editing of AI-generated content
-  - **Priority**: P1
 
-### **External Integration** → Target Release [TBD]
+### **External Integration Enhancement** → Target Release [TBD]
 
-- [ ] **[ZEN-025] Task Integration**
-  - **Deliverable**: Task synchronization with popular platform e.g. Jira, GitHub Issues, Monday, Asana etc.
-  - **Acceptance**: Tasks can sync with external project tracking (Jira first)
-
-- [ ] **[ZEN-024] Repo Integration**
+- [ ] **[ZEN-027] Repo Integration**
   - **Deliverable**: Link tasks with issues, PRs, commits
   - **Acceptance**: Bidirectional sync with popular platform e.g. GitHub or GitLab
-  - **Priority**: P1
 
-- [ ] **[ZEN-026] Documentation Publishing**
+- [ ] **[ZEN-028] Documentation Publishing**
   - **Deliverable**: Publish to Confluence, GitHub Wiki, etc.
   - **Acceptance**: Automated documentation distribution
-  - **Priority**: P2
 
 ---
 
 ## Success Criteria
 
 ### Phase 1: Golden Path Proven
-- [ ] Create task with `zen task create --type story`
+- [x] Create task with `zen task create --type story`
 - [ ] Progress through all workflow stages
 - [ ] Generate technical artifacts (ADRs, designs, docs)
 - [ ] Ship complete Zen feature developed with Zen
 - [ ] Measurable time-to-ship reduction
 
-### Phase 2: Workflow Refined  
+### Phase 2: Workflow Refined and Enhanced  
 - [ ] 80% of new Zen features use Golden Path
 - [ ] User satisfaction >4.0/5
 - [ ] Template library covers common scenarios
@@ -141,7 +123,7 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 ## Key Principles
 
-1. **Task-Centric**: Everything organized around tasks with types (story, bug, epic)
+1. **Task-Centric**: Everything organized around tasks with types (story, task, bug, epic)
 2. **Workflow-Driven**: All tasks follow the Zen workflow
 3. **Template-Powered**: Templates + AI for rapid artifact generation
 4. **Dogfooding**: Every feature used to build Zen itself
@@ -165,3 +147,6 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 - [x] **[ZEN-009] Template Engine Core** - Go template engine with custom functions integrated with Asset Client
 
 - [x] **[ZEN-010] Task Creation Command** - `zen task create [TASK-ID] --type [story|bug|epic]` with template-driven structure.
+
+- [x] **[ZEN-025] Integration Services Layer** Plugin-based external integration architecture with configuration-driven provider system
+- [x] **[ZEN-026] Task Integration** Task synchronization foundation with Jira provider implementation
