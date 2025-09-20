@@ -115,7 +115,7 @@ test-unit: ## Run unit tests with coverage (70% of test suite)
 test-integration: ## Run integration tests (20% of test suite)
 	@echo "🔗 Running integration tests..."
 	@mkdir -p $(COVERAGE_DIR)
-	$(GOTEST) -v -tags=integration -timeout=60s \
+	CGO_ENABLED=0 $(GOTEST) -v -tags=integration -timeout=60s \
 		-coverprofile=$(COVERAGE_DIR)/integration-coverage.out \
 		-covermode=atomic \
 		./test/integration/...
