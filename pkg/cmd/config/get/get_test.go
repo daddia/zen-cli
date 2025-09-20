@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/daddia/zen/internal/config"
+	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -94,4 +95,63 @@ func TestGetRun_ConfigError(t *testing.T) {
 	err := getRun(opts)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to load configuration")
+}
+
+func TestNewCmdConfigGet(t *testing.T) {
+	streams := iostreams.Test()
+	factory := cmdutil.NewTestFactory(streams)
+
+	cmd := NewCmdConfigGet(factory, nil)
+
+	require.NotNil(t, cmd)
+	assert.Equal(t, "get <key>", cmd.Use)
+	assert.Equal(t, "Print the value of a given configuration key", cmd.Short)
+	assert.Contains(t, cmd.Long, "Print the value of a configuration key")
+	assert.Contains(t, cmd.Example, "zen config get log_level")
+
+	// Test that it requires exactly one argument
+	assert.NotNil(t, cmd.Args)
+}
+
+func TestNewCmdConfigGet_WithRunFunc(t *testing.T) {
+	streams := iostreams.Test()
+	factory := cmdutil.NewTestFactory(streams)
+
+	// Custom run function for testing
+	var capturedOpts *GetOptions
+	runFunc := func(opts *GetOptions) error {
+		capturedOpts = opts
+		return nil
+	}
+
+	cmd := NewCmdConfigGet(factory, runFunc)
+	cmd.SetArgs([]string{"log_level"})
+
+	err := cmd.Execute()
+	require.NoError(t, err)
+
+	// Verify the options were passed correctly
+	require.NotNil(t, capturedOpts)
+	assert.Equal(t, "log_level", capturedOpts.Key)
+	assert.NotNil(t, capturedOpts.IO)
+	assert.NotNil(t, capturedOpts.Config)
+}
+
+func TestNewCmdConfigGet_InvalidArgs(t *testing.T) {
+	streams := iostreams.Test()
+	factory := cmdutil.NewTestFactory(streams)
+
+	cmd := NewCmdConfigGet(factory, nil)
+
+	// Test with no arguments
+	cmd.SetArgs([]string{})
+	err := cmd.Execute()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "accepts 1 arg(s), received 0")
+
+	// Test with too many arguments
+	cmd.SetArgs([]string{"key1", "key2"})
+	err = cmd.Execute()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "accepts 1 arg(s), received 2")
 }

@@ -4,7 +4,11 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/pkg/cmd/factory"
+	"github.com/daddia/zen/pkg/cmdutil"
+	"github.com/daddia/zen/pkg/iostreams"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -167,4 +171,119 @@ func TestConfigCommand_Integration(t *testing.T) {
 
 	// Test flags
 	assert.NotNil(t, cmd.Flags())
+}
+
+func TestDisplayCurrentConfig(t *testing.T) {
+	streams := iostreams.Test()
+	factory := cmdutil.NewTestFactory(streams)
+
+	cmd := NewCmdConfig(factory)
+	cmd.SetArgs([]string{})
+
+	// Test the default behavior (no subcommand)
+	err := cmd.Execute()
+	require.NoError(t, err)
+
+	output := streams.Out.(*bytes.Buffer).String()
+	assert.Contains(t, output, "Zen Configuration")
+}
+
+func TestDisplayCurrentConfig_ConfigError(t *testing.T) {
+	streams := iostreams.Test()
+	factory := cmdutil.NewTestFactory(streams)
+
+	// Mock factory to return config error
+	factory.Config = func() (*config.Config, error) {
+		return nil, assert.AnError
+	}
+
+	cmd := NewCmdConfig(factory)
+	cmd.SetArgs([]string{})
+
+	err := cmd.Execute()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to load configuration")
+}
+
+func TestDisplayCurrentConfig_JSONOutput(t *testing.T) {
+	streams := iostreams.Test()
+	factory := cmdutil.NewTestFactory(streams)
+
+	// Create a root command with output flag and proper groups
+	rootCmd := &cobra.Command{Use: "zen"}
+	rootCmd.PersistentFlags().StringP("output", "o", "text", "Output format")
+
+	// Add the workspace group that config command expects
+	rootCmd.AddGroup(&cobra.Group{
+		ID:    "workspace",
+		Title: "Workspace commands:",
+	})
+
+	cmd := NewCmdConfig(factory)
+	rootCmd.AddCommand(cmd)
+
+	// Set the output flag to JSON
+	rootCmd.SetArgs([]string{"config", "--output", "json"})
+
+	err := rootCmd.Execute()
+	require.NoError(t, err)
+
+	output := streams.Out.(*bytes.Buffer).String()
+	assert.Contains(t, output, `"LogLevel"`)
+	assert.Contains(t, output, `"LogFormat"`)
+}
+
+func TestDisplayCurrentConfig_YAMLOutput(t *testing.T) {
+	streams := iostreams.Test()
+	factory := cmdutil.NewTestFactory(streams)
+
+	// Create a root command with output flag and proper groups
+	rootCmd := &cobra.Command{Use: "zen"}
+	rootCmd.PersistentFlags().StringP("output", "o", "text", "Output format")
+
+	// Add the workspace group that config command expects
+	rootCmd.AddGroup(&cobra.Group{
+		ID:    "workspace",
+		Title: "Workspace commands:",
+	})
+
+	cmd := NewCmdConfig(factory)
+	rootCmd.AddCommand(cmd)
+
+	// Set the output flag to YAML
+	rootCmd.SetArgs([]string{"config", "--output", "yaml"})
+
+	err := rootCmd.Execute()
+	require.NoError(t, err)
+
+	output := streams.Out.(*bytes.Buffer).String()
+	assert.Contains(t, output, "loglevel:")
+	assert.Contains(t, output, "logformat:")
+}
+
+func TestDisplayCurrentConfig_InvalidOutputFormat(t *testing.T) {
+	streams := iostreams.Test()
+	factory := cmdutil.NewTestFactory(streams)
+
+	// Create a root command with output flag and proper groups
+	rootCmd := &cobra.Command{Use: "zen"}
+	rootCmd.PersistentFlags().StringP("output", "o", "text", "Output format")
+
+	// Add the workspace group that config command expects
+	rootCmd.AddGroup(&cobra.Group{
+		ID:    "workspace",
+		Title: "Workspace commands:",
+	})
+
+	cmd := NewCmdConfig(factory)
+	rootCmd.AddCommand(cmd)
+
+	// Set invalid output format - should fall back to text
+	rootCmd.SetArgs([]string{"config", "--output", "xml"})
+
+	err := rootCmd.Execute()
+	require.NoError(t, err)
+
+	output := streams.Out.(*bytes.Buffer).String()
+	assert.Contains(t, output, "Zen Configuration")
 }

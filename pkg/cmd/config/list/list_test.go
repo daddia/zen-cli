@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/daddia/zen/internal/config"
+	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -81,4 +82,43 @@ func TestListRun_ConfigError(t *testing.T) {
 	err := listRun(opts)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to load configuration")
+}
+
+func TestNewCmdConfigList(t *testing.T) {
+	streams := iostreams.Test()
+	factory := cmdutil.NewTestFactory(streams)
+
+	cmd := NewCmdConfigList(factory, nil)
+
+	require.NotNil(t, cmd)
+	assert.Equal(t, "list", cmd.Use)
+	assert.Equal(t, "Print a list of configuration keys and values", cmd.Short)
+	assert.Contains(t, cmd.Long, "List all configuration keys")
+	assert.Contains(t, cmd.Long, "effective configuration")
+
+	// Test that it accepts no arguments
+	assert.NotNil(t, cmd.Args)
+}
+
+func TestNewCmdConfigList_WithRunFunc(t *testing.T) {
+	streams := iostreams.Test()
+	factory := cmdutil.NewTestFactory(streams)
+
+	// Custom run function for testing
+	var capturedOpts *ListOptions
+	runFunc := func(opts *ListOptions) error {
+		capturedOpts = opts
+		return nil
+	}
+
+	cmd := NewCmdConfigList(factory, runFunc)
+	cmd.SetArgs([]string{})
+
+	err := cmd.Execute()
+	require.NoError(t, err)
+
+	// Verify the options were passed correctly
+	require.NotNil(t, capturedOpts)
+	assert.NotNil(t, capturedOpts.IO)
+	assert.NotNil(t, capturedOpts.Config)
 }
