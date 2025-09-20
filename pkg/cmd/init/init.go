@@ -9,6 +9,7 @@ import (
 
 	"github.com/daddia/zen/pkg/assets"
 	"github.com/daddia/zen/pkg/cmdutil"
+	"github.com/daddia/zen/pkg/fs"
 	"github.com/daddia/zen/pkg/types"
 	"github.com/spf13/cobra"
 )
@@ -189,6 +190,9 @@ func fetchManifestBestEffort(f *cmdutil.Factory, ctx context.Context, wasReinit 
 	}
 	defer assetClient.Close()
 
+	// Create filesystem manager for file existence checks
+	fsManager := fs.New(f.Logger)
+
 	// Check if manifest already exists and is recent (< 24 hours)
 	manifestPath := filepath.Join(".zen", "assets", "manifest.yaml")
 	if !wasReinit {
@@ -214,13 +218,17 @@ func fetchManifestBestEffort(f *cmdutil.Factory, ctx context.Context, wasReinit 
 		return nil
 	}
 
-	// Show success message if sync worked
+	// Show success message only if sync worked AND manifest file actually exists
 	if result.Status == "success" {
-		if result.AssetsUpdated > 0 {
-			fmt.Fprintf(f.IOStreams.Out, "✓ Assets manifest synchronized (%d assets available)\n", result.AssetsUpdated)
-		} else {
-			fmt.Fprintf(f.IOStreams.Out, "✓ Assets manifest is up to date\n")
+		// Verify the manifest file actually exists on disk using filesystem manager
+		if fsManager.FileExists(manifestPath) {
+			if result.AssetsUpdated > 0 {
+				fmt.Fprintf(f.IOStreams.Out, "✓ Zen library synchronized (%d assets available)\n", result.AssetsUpdated)
+			} else {
+				fmt.Fprintf(f.IOStreams.Out, "✓ Zen library is up to date\n")
+			}
 		}
+		// If manifest doesn't exist, don't show any success message
 	}
 
 	return nil
