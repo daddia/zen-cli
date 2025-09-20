@@ -1,3 +1,7 @@
+# .gitignore
+
+# Zen CLI Project
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -51,9 +55,7 @@ logs/
 # Configuration files with secrets
 .env
 .env.local
-.env.*.local
-zen.yaml
-!zen.example.yaml
+.env.*
 
 # Build artifacts
 build/artifacts/
