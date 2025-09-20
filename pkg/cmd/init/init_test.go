@@ -899,6 +899,18 @@ func (m *mockWorkspaceManager) Status() (cmdutil.WorkspaceStatus, error) {
 	}, nil
 }
 
+func (m *mockWorkspaceManager) CreateTaskDirectory(taskDir string) error {
+	return nil // Mock implementation
+}
+
+func (m *mockWorkspaceManager) CreateWorkTypeDirectory(taskDir, workType string) error {
+	return nil // Mock implementation
+}
+
+func (m *mockWorkspaceManager) GetWorkTypeDirectories() []string {
+	return []string{"research", "spikes", "design", "execution", "outcomes"}
+}
+
 // Test command flag validation
 func TestInitCommandFlagValidation(t *testing.T) {
 	tests := []struct {

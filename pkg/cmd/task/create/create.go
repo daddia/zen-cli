@@ -9,9 +9,7 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/daddia/zen/internal/logging"
 	"github.com/daddia/zen/pkg/cmdutil"
-	"github.com/daddia/zen/pkg/filesystem"
 	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/daddia/zen/pkg/types"
 	"github.com/spf13/cobra"
@@ -242,10 +240,13 @@ func createRun(opts *CreateOptions) error {
 		return nil
 	}
 
-	// Create task directory structure using shared filesystem utilities
-	logger := logging.NewBasic() // Use a basic logger for filesystem operations
-	fsManager := filesystem.New(logger)
-	if err := fsManager.CreateTaskDirectory(taskDir); err != nil {
+	// Create task directory structure using workspace manager
+	ws, err := opts.Factory.WorkspaceManager()
+	if err != nil {
+		return fmt.Errorf("failed to get workspace manager: %w", err)
+	}
+
+	if err := ws.CreateTaskDirectory(taskDir); err != nil {
 		return fmt.Errorf("failed to create task directories: %w", err)
 	}
 

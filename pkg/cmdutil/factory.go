@@ -49,6 +49,9 @@ type WorkspaceManager interface {
 	Initialize() error
 	InitializeWithForce(force bool) error
 	Status() (WorkspaceStatus, error)
+	CreateTaskDirectory(taskDir string) error
+	CreateWorkTypeDirectory(taskDir, workType string) error
+	GetWorkTypeDirectories() []string
 }
 
 // WorkspaceStatus represents the current workspace state
@@ -197,6 +200,24 @@ func (m *testWorkspaceManager) Status() (WorkspaceStatus, error) {
 			Language: "go",
 		},
 	}, nil
+}
+
+func (m *testWorkspaceManager) CreateTaskDirectory(taskDir string) error {
+	if m.shouldError {
+		return fmt.Errorf("test error creating task directory")
+	}
+	return nil
+}
+
+func (m *testWorkspaceManager) CreateWorkTypeDirectory(taskDir, workType string) error {
+	if m.shouldError {
+		return fmt.Errorf("test error creating work type directory")
+	}
+	return nil
+}
+
+func (m *testWorkspaceManager) GetWorkTypeDirectories() []string {
+	return []string{"research", "spikes", "design", "execution", "outcomes"}
 }
 
 // testAgentManager is a mock agent manager for testing

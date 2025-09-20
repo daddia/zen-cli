@@ -117,7 +117,7 @@ func (p *YAMLManifestParser) Parse(ctx context.Context, content []byte) ([]Asset
 		assets = append(assets, asset)
 	}
 
-	p.logger.Info("manifest parsed successfully", "assets", len(assets))
+	p.logger.Debug("manifest parsed successfully", "assets", len(assets))
 	return assets, nil
 }
 

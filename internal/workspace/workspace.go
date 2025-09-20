@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/daddia/zen/internal/logging"
-	"github.com/daddia/zen/pkg/filesystem"
+	"github.com/daddia/zen/pkg/fs"
 	"gopkg.in/yaml.v3"
 )
 
@@ -18,7 +18,7 @@ type Manager struct {
 	root       string
 	configFile string
 	logger     logging.Logger
-	fsManager  *filesystem.Manager
+	fsManager  *fs.Manager
 }
 
 // New creates a new workspace manager
@@ -35,7 +35,7 @@ func New(root, configFile string, logger logging.Logger) *Manager {
 		root:       root,
 		configFile: configFile,
 		logger:     logger,
-		fsManager:  filesystem.New(logger),
+		fsManager:  fs.New(logger),
 	}
 }
 
@@ -300,7 +300,7 @@ func (m *Manager) Initialize(force bool) error {
 	}
 
 	// Create .zen directory structure
-	if err := m.createZenDirectory(); err != nil {
+	if err := m.createWorkspace(); err != nil {
 		return fmt.Errorf("failed to create .zen directory: %w", err)
 	}
 
@@ -357,9 +357,76 @@ func (m *Manager) Status() (Status, error) {
 	return status, nil
 }
 
-// createZenDirectory creates the .zen directory structure
-func (m *Manager) createZenDirectory() error {
-	return m.fsManager.CreateZenWorkspace(m.ZenDirectory())
+// createWorkspace creates the workspace directory structure
+func (m *Manager) createWorkspace() error {
+	m.logger.Debug("Creating workspace structure", "zen_dir", m.ZenDirectory())
+
+	// Get workspace directory configuration
+	config := DefaultWorkspaceDirectoryConfig()
+
+	// Create main .zen directory
+	if err := m.fsManager.CreateDirectory(m.ZenDirectory(), 0755); err != nil {
+		return fmt.Errorf("failed to create .zen directory: %w", err)
+	}
+
+	// Create essential subdirectories
+	var dirs []string
+	for _, dirSpec := range config.EssentialDirectories {
+		dirs = append(dirs, dirSpec.Name)
+	}
+
+	if err := m.fsManager.CreateDirectories(m.ZenDirectory(), dirs, 0755); err != nil {
+		return fmt.Errorf("failed to create essential directories: %w", err)
+	}
+
+	return nil
+}
+
+// CreateTaskDirectory creates the minimal task directory structure
+func (m *Manager) CreateTaskDirectory(taskDir string) error {
+	m.logger.Debug("Creating task directory structure", "task_dir", taskDir)
+
+	// Get workspace directory configuration
+	config := DefaultWorkspaceDirectoryConfig()
+
+	// Create main task directory
+	if err := m.fsManager.CreateDirectory(taskDir, 0755); err != nil {
+		return fmt.Errorf("failed to create task directory: %w", err)
+	}
+
+	// Create task subdirectories
+	var dirs []string
+	for _, dirSpec := range config.TaskDirectories {
+		dirs = append(dirs, dirSpec.Name)
+	}
+
+	if err := m.fsManager.CreateDirectories(taskDir, dirs, 0755); err != nil {
+		return fmt.Errorf("failed to create task directories: %w", err)
+	}
+
+	return nil
+}
+
+// CreateWorkTypeDirectory creates a work-type directory on demand
+func (m *Manager) CreateWorkTypeDirectory(taskDir, workType string) error {
+	dirPath := filepath.Join(taskDir, workType)
+	m.logger.Debug("Creating work-type directory", "path", dirPath)
+
+	if err := m.fsManager.CreateDirectory(dirPath, 0755); err != nil {
+		return fmt.Errorf("failed to create work-type directory %s: %w", dirPath, err)
+	}
+
+	return nil
+}
+
+// GetWorkTypeDirectories returns the list of work-type directories that can be created on demand
+func (m *Manager) GetWorkTypeDirectories() []string {
+	config := DefaultWorkspaceDirectoryConfig()
+	var dirs []string
+	for _, dirSpec := range config.WorkTypeDirectories {
+		dirs = append(dirs, dirSpec.Name)
+	}
+	return dirs
 }
 
 // createDefaultConfig creates a default workspace configuration

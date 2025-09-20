@@ -241,7 +241,7 @@ func (c *Client) GetAsset(ctx context.Context, name string, opts GetAssetOptions
 // SyncRepository synchronizes the manifest with the remote repository
 // This only syncs the manifest.yaml file, not the actual asset content
 func (c *Client) SyncRepository(ctx context.Context, req SyncRequest) (*SyncResult, error) {
-	c.logger.Info("starting manifest sync", "request", req)
+	c.logger.Debug("starting manifest sync", "request", req)
 
 	startTime := time.Now()
 	result := &SyncResult{
@@ -275,7 +275,7 @@ func (c *Client) SyncRepository(ctx context.Context, req SyncRequest) (*SyncResu
 	defer cancel()
 
 	// Always fetch manifest (lightweight operation)
-	c.logger.Info("fetching manifest from repository")
+	c.logger.Debug("fetching manifest from repository")
 	var manifestContent []byte
 	var err error
 
@@ -304,7 +304,7 @@ func (c *Client) SyncRepository(ctx context.Context, req SyncRequest) (*SyncResu
 			result.CacheSizeMB = float64(cacheInfo.TotalSize) / (1024 * 1024)
 		}
 
-		c.logger.Info("manifest sync completed with errors", "result", result)
+		c.logger.Debug("manifest sync completed with errors", "result", result)
 		return result, nil // Don't fail the sync, just return partial status
 	}
 
@@ -370,7 +370,7 @@ func (c *Client) SyncRepository(ctx context.Context, req SyncRequest) (*SyncResu
 	result.DurationMS = time.Since(startTime).Milliseconds()
 	result.LastSync = c.lastSync
 
-	c.logger.Info("repository sync completed", "result", result)
+	c.logger.Debug("repository sync completed", "result", result)
 	return result, nil
 }
 
@@ -396,13 +396,13 @@ func (c *Client) GetCacheInfo(ctx context.Context) (*CacheInfo, error) {
 
 // ClearCache removes all cached assets
 func (c *Client) ClearCache(ctx context.Context) error {
-	c.logger.Info("clearing asset cache")
+	c.logger.Debug("clearing asset cache")
 
 	if err := c.cache.Clear(ctx); err != nil {
 		return errors.Wrap(err, "failed to clear cache")
 	}
 
-	c.logger.Info("asset cache cleared")
+	c.logger.Debug("asset cache cleared")
 	return nil
 }
 

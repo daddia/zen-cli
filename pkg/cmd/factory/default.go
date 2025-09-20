@@ -231,6 +231,27 @@ func (w *workspaceManager) Status() (cmdutil.WorkspaceStatus, error) {
 	}, nil
 }
 
+func (w *workspaceManager) CreateTaskDirectory(taskDir string) error {
+	if w.manager == nil {
+		w.manager = workspace.New(w.root, w.configFile, w.logger)
+	}
+	return w.manager.CreateTaskDirectory(taskDir)
+}
+
+func (w *workspaceManager) CreateWorkTypeDirectory(taskDir, workType string) error {
+	if w.manager == nil {
+		w.manager = workspace.New(w.root, w.configFile, w.logger)
+	}
+	return w.manager.CreateWorkTypeDirectory(taskDir, workType)
+}
+
+func (w *workspaceManager) GetWorkTypeDirectories() []string {
+	if w.manager == nil {
+		w.manager = workspace.New(w.root, w.configFile, w.logger)
+	}
+	return w.manager.GetWorkTypeDirectories()
+}
+
 // agentManager implements cmdutil.AgentManager
 type agentManager struct {
 	logger logging.Logger
