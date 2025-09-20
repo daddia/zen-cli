@@ -45,6 +45,9 @@ Current configuration options:
 - `assets.sync_timeout_seconds`: Sync timeout in seconds (default `30`)
 - `assets.integrity_checks_enabled`: Enable integrity checks for assets `{true | false}` (default `true`)
 - `assets.prefetch_enabled`: Enable prefetching of assets `{true | false}` (default `true`)
+- `integrations.task_system`: Task system of record for external integration `{jira | github | monday | asana | none | }`
+- `integrations.sync_enabled`: Enable task synchronization with external systems `{true | false}` (default `false`)
+- `integrations.sync_frequency`: Frequency of automatic synchronization `{hourly | daily | manual | }` (default `manual`)
 
 
 ```
