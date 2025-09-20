@@ -494,9 +494,15 @@ func TestSetupAssetsInfrastructure(t *testing.T) {
 					return mockAuth, nil
 				}
 
-				// Mock asset client with successful sync
+				// Mock asset client with successful sync that creates manifest file
 				mockAsset := &MockAssetClient{}
-				mockAsset.On("SyncRepository", mock.AnythingOfType("*context.timerCtx"), mock.AnythingOfType("assets.SyncRequest")).Return(&assets.SyncResult{
+				mockAsset.On("SyncRepository", mock.AnythingOfType("*context.timerCtx"), mock.AnythingOfType("assets.SyncRequest")).Run(func(args mock.Arguments) {
+					// Create manifest file to simulate successful sync
+					cwd, _ := os.Getwd()
+					manifestPath := filepath.Join(cwd, ".zen", "assets", "manifest.yaml")
+					os.MkdirAll(filepath.Dir(manifestPath), 0755)
+					os.WriteFile(manifestPath, []byte("test manifest content"), 0644)
+				}).Return(&assets.SyncResult{
 					Status:        "success",
 					AssetsUpdated: 5,
 				}, nil)
@@ -601,7 +607,7 @@ func TestSetupAssetsInfrastructure(t *testing.T) {
 
 			if tt.expectAssetSync {
 				output := stdout.String()
-				assert.Contains(t, output, "Assets manifest")
+				assert.Contains(t, output, "Zen library")
 			}
 		})
 	}
@@ -624,7 +630,13 @@ func TestFetchManifestBestEffort(t *testing.T) {
 				factory := cmdutil.NewTestFactory(streams)
 
 				mockAsset := &MockAssetClient{}
-				mockAsset.On("SyncRepository", mock.AnythingOfType("*context.timerCtx"), mock.AnythingOfType("assets.SyncRequest")).Return(&assets.SyncResult{
+				mockAsset.On("SyncRepository", mock.AnythingOfType("*context.timerCtx"), mock.AnythingOfType("assets.SyncRequest")).Run(func(args mock.Arguments) {
+					// Create manifest file to simulate successful sync
+					cwd, _ := os.Getwd()
+					manifestPath := filepath.Join(cwd, ".zen", "assets", "manifest.yaml")
+					os.MkdirAll(filepath.Dir(manifestPath), 0755)
+					os.WriteFile(manifestPath, []byte("test manifest content"), 0644)
+				}).Return(&assets.SyncResult{
 					Status:        "success",
 					AssetsUpdated: 3,
 				}, nil)
@@ -662,7 +674,13 @@ func TestFetchManifestBestEffort(t *testing.T) {
 				mockAsset := &MockAssetClient{}
 				mockAsset.On("SyncRepository", mock.AnythingOfType("*context.timerCtx"), mock.MatchedBy(func(req assets.SyncRequest) bool {
 					return req.Force == true && req.Shallow == true
-				})).Return(&assets.SyncResult{
+				})).Run(func(args mock.Arguments) {
+					// Create manifest file to simulate successful sync
+					cwd, _ := os.Getwd()
+					manifestPath := filepath.Join(cwd, ".zen", "assets", "manifest.yaml")
+					os.MkdirAll(filepath.Dir(manifestPath), 0755)
+					os.WriteFile(manifestPath, []byte("test manifest content updated"), 0644)
+				}).Return(&assets.SyncResult{
 					Status:        "success",
 					AssetsUpdated: 0, // No updates but still success
 				}, nil)
@@ -753,7 +771,7 @@ func TestFetchManifestBestEffort(t *testing.T) {
 
 			if tt.expectSync {
 				output := stdout.String()
-				assert.True(t, strings.Contains(output, "Assets manifest") || strings.Contains(output, "up to date"))
+				assert.True(t, strings.Contains(output, "Zen library") || strings.Contains(output, "up to date"))
 			}
 		})
 	}
