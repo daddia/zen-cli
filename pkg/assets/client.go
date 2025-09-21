@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/daddia/zen/internal/logging"
+	"github.com/daddia/zen/pkg/clients/git"
 	"github.com/daddia/zen/pkg/errors"
-	"github.com/daddia/zen/pkg/git"
 )
 
 // Client implements AssetClientInterface

@@ -1,0 +1,145 @@
+# Task Manifest - Machine-readable metadata for workflow automation
+schema_version: "1.0"
+
+# Basic task information
+task:
+  id: "{{.TASK_ID}}"
+  title: "{{.TASK_TITLE}}"
+  type: "{{.TASK_TYPE}}"
+  status: "{{.TASK_STATUS}}"
+  priority: "{{.PRIORITY}}"
+  size: "{{.SIZE}}"
+  points: {{.STORY_POINTS}}
+
+# Ownership and team
+owner:
+  name: "{{.OWNER_NAME}}"
+  email: "{{.OWNER_EMAIL}}"
+  github: "{{.GITHUB_USERNAME}}"
+
+team:
+  name: "{{.TEAM_NAME}}"
+  stream: "{{.STREAM_TYPE}}"
+  members: []
+
+# Important dates
+dates:
+  created: "{{.CREATED_DATE}}"
+  started: null
+  target: "{{.TARGET_DATE}}"
+  completed: null
+  last_updated: "{{.LAST_UPDATED}}"
+
+# Zen workflow state
+workflow:
+  current_stage: "{{.CURRENT_STAGE}}"
+  completed_stages: []
+
+  # Detailed stage progress
+  stages:
+    01-align:
+      name: "Align"
+      status: "not_started"
+      progress: 0
+      started: null
+      completed: null
+      artifacts: []
+    02-discover:
+      name: "Discover"
+      status: "not_started"
+      progress: 0
+      started: null
+      completed: null
+      artifacts: []
+    03-prioritize:
+      name: "Prioritize"
+      status: "not_started"
+      progress: 0
+      started: null
+      completed: null
+      artifacts: []
+    04-design:
+      name: "Design"
+      status: "not_started"
+      progress: 0
+      started: null
+      completed: null
+      artifacts: []
+    05-build:
+      name: "Build"
+      status: "not_started"
+      progress: 0
+      started: null
+      completed: null
+      artifacts: []
+    06-ship:
+      name: "Ship"
+      status: "not_started"
+      progress: 0
+      started: null
+      completed: null
+      artifacts: []
+    07-learn:
+      name: "Learn"
+      status: "not_started"
+      progress: 0
+      started: null
+      completed: null
+      artifacts: []
+
+# Quality gates
+quality_gates: {}
+
+# Success criteria
+success_criteria:
+  business:
+    - "Define business value"
+  technical:
+    - "Define technical approach"
+  user_experience:
+    - "Define user experience"
+
+# External integrations
+integrations: {}
+
+# Dependencies and relationships
+dependencies:
+  upstream: []
+  downstream: []
+
+# Risk assessment
+risk:
+  level: "low"
+  factors: []
+
+# Metrics and measurements
+metrics:
+  velocity:
+    planned: 1.0
+    actual: null
+  cycle_time:
+    days: null
+  defect_rate: null
+  custom: {}
+
+# Automation configuration
+automation:
+  sync_enabled: {{.SYNC_ENABLED}}
+  quality_gates_enforced: {{.QUALITY_GATES_ENFORCED}}
+  notifications:
+    channels: []
+    events: []
+  agents:
+    enabled: []
+    context_sharing: false
+
+# Labels and tags for search/filter
+labels:
+  - "{{.TASK_TYPE}}"
+
+tags:
+  - "{{.TASK_TYPE}}"
+  - "{{.TEAM_NAME}}"
+
+# Custom fields for organization-specific needs
+custom_fields: {}

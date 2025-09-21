@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/daddia/zen/internal/logging"
-	"github.com/daddia/zen/pkg/git"
+	"github.com/daddia/zen/pkg/clients/git"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

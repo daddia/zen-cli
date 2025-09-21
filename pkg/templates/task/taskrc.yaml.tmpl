@@ -1,0 +1,130 @@
+# Task Configuration - .taskrc.yaml
+# Task-specific configuration and automation settings
+
+# Task identification
+task:
+  id: "{{.TASK_ID}}"
+  type: "{{.TASK_TYPE}}"
+
+# Automation settings
+automation:
+  # External system synchronization
+  sync:
+    enabled: {{.SYNC_ENABLED}}
+    frequency: "{{.SYNC_FREQUENCY}}"
+    direction: "{{.SYNC_DIRECTION}}"
+    systems: []
+
+  # Workflow automation
+  workflow:
+    auto_progress: {{.AUTO_PROGRESS}}
+    validate_on_transition: {{.VALIDATE_ON_TRANSITION}}
+    generate_artifacts: {{.GENERATE_ARTIFACTS}}
+    required_approvals: {}
+
+  # AI agent configuration
+  agents:
+    enabled: {{.AGENTS_ENABLED}}
+    agents: []
+    context_sharing: {{.CONTEXT_SHARING}}
+    auto_enhance: {{.AUTO_ENHANCE}}
+
+# Quality standards
+quality:
+  # Code quality
+  code:
+    coverage_threshold: {{.CODE_COVERAGE_THRESHOLD}}
+    linting_enabled: {{.LINTING_ENABLED}}
+    complexity_threshold: {{.COMPLEXITY_THRESHOLD}}
+
+  # Security requirements
+  security:
+    scan_required: {{.SECURITY_SCAN_REQUIRED}}
+    vulnerability_threshold: "{{.VULNERABILITY_THRESHOLD}}"
+    compliance_standards: []
+
+  # Performance requirements
+  performance:
+    response_time_p95: {{.RESPONSE_TIME_P95}}
+    throughput_minimum: {{.THROUGHPUT_MINIMUM}}
+    error_rate_maximum: {{.ERROR_RATE_MAXIMUM}}
+
+  # Accessibility requirements
+  accessibility:
+    wcag_level: "{{.WCAG_LEVEL}}"
+    automated_testing: {{.ACCESSIBILITY_TESTING}}
+    manual_review_required: {{.MANUAL_ACCESSIBILITY_REVIEW}}
+
+# Notification settings
+notifications:
+  # Notification channels
+  channels: []
+
+  # Notification recipients by event
+  recipients:
+    stage_completion:
+      - "{{.OWNER_NAME}}"
+    quality_gate_failure:
+      - "{{.OWNER_NAME}}"
+    blocker_added:
+      - "{{.OWNER_NAME}}"
+    task_completed:
+      - "{{.OWNER_NAME}}"
+
+# Template preferences
+templates:
+  # Preferred templates by artifact type
+  preferences: {}
+
+  # Template variables
+  variables: {}
+
+  # Auto-generation settings
+  auto_generate: []
+
+# Environment configuration
+environments: {}
+
+# Feature flags
+feature_flags: []
+
+# Custom scripts and hooks
+hooks:
+  # Pre-stage hooks
+  pre_stage: {}
+
+  # Post-stage hooks
+  post_stage: {}
+
+  # Custom commands
+  commands: []
+
+# Reporting configuration
+reporting:
+  # Status report generation
+  status_reports:
+    enabled: {{.STATUS_REPORTS_ENABLED}}
+    frequency: "{{.STATUS_REPORT_FREQUENCY}}"
+    recipients:
+      - "{{.OWNER_NAME}}"
+
+  # Metrics tracking
+  metrics:
+    track_velocity: {{.TRACK_VELOCITY}}
+    track_cycle_time: {{.TRACK_CYCLE_TIME}}
+    track_defects: {{.TRACK_DEFECTS}}
+    custom_metrics: []
+
+# Resource allocation
+resources:
+  # Team allocation
+  team_allocation: []
+
+  # Budget tracking
+  budget:
+    allocated: {{.BUDGET_ALLOCATED}}
+    spent: {{.BUDGET_SPENT}}
+    currency: "{{.BUDGET_CURRENCY}}"
+
+# Custom configuration
+custom: {}

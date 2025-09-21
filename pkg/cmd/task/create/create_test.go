@@ -12,6 +12,7 @@ import (
 	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/daddia/zen/pkg/iostreams"
 	zentemplate "github.com/daddia/zen/pkg/template"
+	"github.com/daddia/zen/pkg/templates"
 	"github.com/daddia/zen/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -214,8 +215,9 @@ func TestBuildTemplateVariablesWithDefaults(t *testing.T) {
 	assert.Equal(t, "P2", variables["PRIORITY"])
 }
 
-func TestGenerateFallbackIndexFile(t *testing.T) {
+func TestGenerateFileFromTemplate(t *testing.T) {
 	tempDir := t.TempDir()
+	templateLoader := templates.NewLocalTemplateLoader()
 
 	variables := map[string]interface{}{
 		"TASK_ID":          "PROJ-123",
@@ -228,7 +230,7 @@ func TestGenerateFallbackIndexFile(t *testing.T) {
 		"next_review_date": "January 8, 2025",
 	}
 
-	err := generateFallbackIndexFile(tempDir, variables)
+	err := generateFileFromTemplate(templateLoader, "index.md", tempDir, "index.md", variables)
 	require.NoError(t, err)
 
 	// Check file was created
@@ -244,9 +246,6 @@ func TestGenerateFallbackIndexFile(t *testing.T) {
 	assert.Contains(t, contentStr, "**Owner:** testuser")
 	assert.Contains(t, contentStr, "**Team:** testteam")
 	assert.Contains(t, contentStr, "**Type:** story")
-	assert.Contains(t, contentStr, "### Current Stage: Align")
-	assert.Contains(t, contentStr, "*Last updated: January 1, 2025")
-	assert.Contains(t, contentStr, "Next review: January 8, 2025*")
 }
 
 func TestGenerateFallbackManifestFile(t *testing.T) {
