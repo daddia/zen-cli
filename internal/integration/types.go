@@ -24,6 +24,17 @@ const (
 	ConflictStrategyTimestamp    ConflictStrategy = "timestamp"
 )
 
+// SyncStatus represents the current status of a sync record
+type SyncStatus string
+
+const (
+	SyncStatusActive    SyncStatus = "active"
+	SyncStatusPaused    SyncStatus = "paused"
+	SyncStatusError     SyncStatus = "error"
+	SyncStatusConflict  SyncStatus = "conflict"
+	SyncStatusDisabled  SyncStatus = "disabled"
+)
+
 // TaskSyncRecord represents a synchronization relationship between a Zen task and external system
 type TaskSyncRecord struct {
 	TaskID           string                 `json:"task_id" yaml:"task_id"`
@@ -34,6 +45,14 @@ type TaskSyncRecord struct {
 	FieldMappings    map[string]string      `json:"field_mappings" yaml:"field_mappings"`
 	ConflictStrategy ConflictStrategy       `json:"conflict_strategy" yaml:"conflict_strategy"`
 	Metadata         map[string]interface{} `json:"metadata" yaml:"metadata"`
+	CreatedAt        time.Time              `json:"created_at" yaml:"created_at"`
+	UpdatedAt        time.Time              `json:"updated_at" yaml:"updated_at"`
+	Version          int64                  `json:"version" yaml:"version"`
+	Status           SyncStatus             `json:"status" yaml:"status"`
+	ErrorCount       int                    `json:"error_count" yaml:"error_count"`
+	LastError        string                 `json:"last_error,omitempty" yaml:"last_error,omitempty"`
+	RetryAfter       *time.Time             `json:"retry_after,omitempty" yaml:"retry_after,omitempty"`
+	DataHash         string                 `json:"data_hash,omitempty" yaml:"data_hash,omitempty"`
 }
 
 // ExternalTaskData represents task data from an external system
@@ -70,8 +89,13 @@ type SyncResult struct {
 	ExternalID    string                 `json:"external_id"`
 	Direction     SyncDirection          `json:"direction"`
 	ChangedFields []string               `json:"changed_fields"`
-	Conflicts     []string               `json:"conflicts"`
+	Conflicts     []FieldConflict        `json:"conflicts"`
 	Error         string                 `json:"error,omitempty"`
+	ErrorCode     string                 `json:"error_code,omitempty"`
+	Retryable     bool                   `json:"retryable,omitempty"`
+	Duration      time.Duration          `json:"duration"`
+	Timestamp     time.Time              `json:"timestamp"`
+	CorrelationID string                 `json:"correlation_id,omitempty"`
 	Metadata      map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -81,6 +105,12 @@ type SyncOptions struct {
 	ConflictStrategy ConflictStrategy `json:"conflict_strategy"`
 	DryRun           bool             `json:"dry_run"`
 	ForceSync        bool             `json:"force_sync"`
+	Timeout          time.Duration    `json:"timeout,omitempty"`
+	RetryCount       int              `json:"retry_count,omitempty"`
+	BatchSize        int              `json:"batch_size,omitempty"`
+	Parallel         bool             `json:"parallel,omitempty"`
+	UserID           string           `json:"user_id,omitempty"`
+	CorrelationID    string           `json:"correlation_id,omitempty"`
 }
 
 // IntegrationProvider represents an external system integration provider
@@ -111,6 +141,18 @@ type IntegrationProvider interface {
 
 	// MapToExternal converts Zen task data to external format
 	MapToExternal(zen *ZenTaskData) (*ExternalTaskData, error)
+
+	// HealthCheck performs a health check on the provider
+	HealthCheck(ctx context.Context) (*ProviderHealth, error)
+
+	// GetRateLimitInfo returns current rate limit information
+	GetRateLimitInfo(ctx context.Context) (*RateLimitInfo, error)
+
+	// SupportsRealtime returns true if the provider supports real-time updates
+	SupportsRealtime() bool
+
+	// GetWebhookURL returns the webhook URL for real-time updates (if supported)
+	GetWebhookURL() string
 }
 
 // TaskSyncInterface defines the interface for task synchronization operations
@@ -149,6 +191,83 @@ type DataMapperInterface interface {
 	GetDefaultMapping(provider string) map[string]string
 }
 
+// IntegrationError represents an integration-specific error
+type IntegrationError struct {
+	Code      string                 `json:"code"`
+	Message   string                 `json:"message"`
+	Provider  string                 `json:"provider,omitempty"`
+	TaskID    string                 `json:"task_id,omitempty"`
+	Timestamp time.Time              `json:"timestamp"`
+	Retryable bool                   `json:"retryable"`
+	Details   map[string]interface{} `json:"details,omitempty"`
+}
+
+func (e IntegrationError) Error() string {
+	return e.Message
+}
+
+// Error codes for integration operations
+const (
+	ErrCodePluginNotFound     = "PLUGIN_NOT_FOUND"
+	ErrCodePluginLoadFailed   = "PLUGIN_LOAD_FAILED"
+	ErrCodeAuthFailed         = "AUTH_FAILED"
+	ErrCodeRateLimited        = "RATE_LIMITED"
+	ErrCodeNetworkError       = "NETWORK_ERROR"
+	ErrCodeSyncConflict       = "SYNC_CONFLICT"
+	ErrCodeInvalidData        = "INVALID_DATA"
+	ErrCodeConfigError        = "CONFIG_ERROR"
+	ErrCodeProviderError      = "PROVIDER_ERROR"
+	ErrCodeTimeoutError       = "TIMEOUT_ERROR"
+)
+
+// FieldConflict represents a conflict between local and external field values
+type FieldConflict struct {
+	Field           string    `json:"field"`
+	ZenValue        interface{} `json:"zen_value"`
+	ExternalValue   interface{} `json:"external_value"`
+	ZenTimestamp    time.Time `json:"zen_timestamp"`
+	ExternalTimestamp time.Time `json:"external_timestamp"`
+	Resolution      string    `json:"resolution,omitempty"`
+}
+
+// ConflictRecord represents a conflict that requires manual resolution
+type ConflictRecord struct {
+	ID        string          `json:"id"`
+	TaskID    string          `json:"task_id"`
+	Conflicts []FieldConflict `json:"conflicts"`
+	CreatedAt time.Time       `json:"created_at"`
+	Status    ConflictStatus  `json:"status"`
+	ResolvedBy string         `json:"resolved_by,omitempty"`
+	ResolvedAt *time.Time     `json:"resolved_at,omitempty"`
+}
+
+// ConflictStatus represents the status of a conflict resolution
+type ConflictStatus string
+
+const (
+	ConflictStatusPending  ConflictStatus = "pending"
+	ConflictStatusResolved ConflictStatus = "resolved"
+	ConflictStatusIgnored  ConflictStatus = "ignored"
+)
+
+// ProviderHealth represents the health status of a provider
+type ProviderHealth struct {
+	Provider      string    `json:"provider"`
+	Healthy       bool      `json:"healthy"`
+	LastChecked   time.Time `json:"last_checked"`
+	ResponseTime  time.Duration `json:"response_time"`
+	ErrorCount    int       `json:"error_count"`
+	LastError     string    `json:"last_error,omitempty"`
+	RateLimitInfo *RateLimitInfo `json:"rate_limit_info,omitempty"`
+}
+
+// RateLimitInfo contains rate limiting information
+type RateLimitInfo struct {
+	Limit     int       `json:"limit"`
+	Remaining int       `json:"remaining"`
+	ResetTime time.Time `json:"reset_time"`
+}
+
 // IntegrationManagerInterface defines the main integration management interface
 type IntegrationManagerInterface interface {
 	// GetProvider returns a provider by name
@@ -168,4 +287,10 @@ type IntegrationManagerInterface interface {
 
 	// IsSyncEnabled returns true if sync is enabled
 	IsSyncEnabled() bool
+
+	// GetProviderHealth returns health status for a provider
+	GetProviderHealth(ctx context.Context, provider string) (*ProviderHealth, error)
+
+	// GetAllProviderHealth returns health status for all providers
+	GetAllProviderHealth(ctx context.Context) (map[string]*ProviderHealth, error)
 }
