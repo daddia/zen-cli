@@ -17,18 +17,19 @@ const (
 
 // AssetMetadata contains metadata about an asset/activity
 type AssetMetadata struct {
-	Name        string     `yaml:"name" json:"name"`
-	Type        AssetType  `yaml:"type" json:"type"`
-	Description string     `yaml:"description" json:"description"`
-	Format      string     `yaml:"format" json:"format"`
-	Category    string     `yaml:"category" json:"category"`
-	Tags        []string   `yaml:"tags" json:"tags"`
-	Variables   []Variable `yaml:"variables" json:"variables"`
-	Checksum    string     `yaml:"checksum" json:"checksum"`
-	Path        string     `yaml:"path" json:"path"`
-	Command     string     `yaml:"command" json:"command"`         // New: CLI command for the activity
-	OutputFile  string     `yaml:"output_file" json:"output_file"` // New: Primary output file
-	UpdatedAt   time.Time  `yaml:"updated_at" json:"updated_at"`
+	Name           string     `yaml:"name" json:"name"`
+	Type           AssetType  `yaml:"type" json:"type"`
+	Description    string     `yaml:"description" json:"description"`
+	Format         string     `yaml:"format" json:"format"`
+	Category       string     `yaml:"category" json:"category"`
+	Tags           []string   `yaml:"tags" json:"tags"`
+	Variables      []Variable `yaml:"variables" json:"variables"`
+	Checksum       string     `yaml:"checksum" json:"checksum"`
+	Path           string     `yaml:"path" json:"path"`
+	Command        string     `yaml:"command" json:"command"`                 // CLI command for the activity
+	OutputFile     string     `yaml:"output_file" json:"output_file"`         // Primary output file
+	WorkflowStages []string   `yaml:"workflow_stages" json:"workflow_stages"` // Zenflow stages this activity belongs to
+	UpdatedAt      time.Time  `yaml:"updated_at" json:"updated_at"`
 }
 
 // Variable represents a template variable
