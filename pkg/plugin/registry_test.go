@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/daddia/zen/internal/logging"
-	"github.com/daddia/zen/pkg/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -115,11 +114,10 @@ configuration_schema:
 
 	// Create registry
 	logger := logging.NewBasic()
-	fsManager := fs.NewManager(logger)
 	runtime := &mockRuntime{}
 	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
 
-	registry := NewRegistry(logger, fsManager, []string{tempDir}, runtime)
+	registry := NewRegistry(logger, []string{tempDir}, runtime)
 
 	// Discover plugins
 	err = registry.DiscoverPlugins(context.Background())
@@ -172,14 +170,13 @@ security:
 
 	// Create mocks
 	logger := logging.NewBasic()
-	fsManager := fs.NewManager(logger)
 	runtime := &mockRuntime{}
 	instance := &mockPluginInstance{name: "test-plugin"}
 
 	runtime.On("LoadPlugin", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*plugin.Manifest")).Return(instance, nil)
 	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
 
-	registry := NewRegistry(logger, fsManager, []string{tempDir}, runtime)
+	registry := NewRegistry(logger, []string{tempDir}, runtime)
 
 	// Discover plugins first
 	err = registry.DiscoverPlugins(context.Background())
@@ -205,14 +202,13 @@ security:
 
 func TestRegistry_UnloadPlugin(t *testing.T) {
 	logger := logging.NewBasic()
-	fsManager := fs.NewManager(logger)
 	runtime := &mockRuntime{}
 	instance := &mockPluginInstance{name: "test-plugin"}
 
 	runtime.On("UnloadPlugin", instance).Return(nil)
 	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
 
-	registry := NewRegistry(logger, fsManager, []string{}, runtime)
+	registry := NewRegistry(logger, []string{}, runtime)
 
 	// Manually add a loaded plugin
 	pluginInfo := &PluginInfo{
@@ -252,9 +248,8 @@ func TestRegistry_UnloadPlugin(t *testing.T) {
 
 func TestRegistry_ValidateManifest(t *testing.T) {
 	logger := logging.NewBasic()
-	fsManager := fs.NewManager(logger)
 	runtime := &mockRuntime{}
-	registry := NewRegistry(logger, fsManager, []string{}, runtime)
+	registry := NewRegistry(logger, []string{}, runtime)
 
 	tests := []struct {
 		name     string
@@ -339,11 +334,10 @@ func TestRegistry_RefreshPlugins(t *testing.T) {
 	tempDir := t.TempDir()
 
 	logger := logging.NewBasic()
-	fsManager := fs.NewManager(logger)
 	runtime := &mockRuntime{}
 	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
 
-	registry := NewRegistry(logger, fsManager, []string{tempDir}, runtime)
+	registry := NewRegistry(logger, []string{tempDir}, runtime)
 
 	// Initial discovery should find no plugins
 	err := registry.DiscoverPlugins(context.Background())
@@ -512,11 +506,10 @@ plugin:
 
 	// Create registry
 	logger := logging.NewBasic()
-	fsManager := fs.NewManager(logger)
 	runtime := &mockRuntime{}
 	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
 
-	registry := NewRegistry(logger, fsManager, []string{tempDir}, runtime)
+	registry := NewRegistry(logger, []string{tempDir}, runtime)
 
 	// Discovery should handle invalid plugin gracefully
 	err = registry.DiscoverPlugins(context.Background())
@@ -534,11 +527,10 @@ plugin:
 
 func TestRegistry_ConcurrentAccess(t *testing.T) {
 	logger := logging.NewBasic()
-	fsManager := fs.NewManager(logger)
 	runtime := &mockRuntime{}
 	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
 
-	registry := NewRegistry(logger, fsManager, []string{}, runtime)
+	registry := NewRegistry(logger, []string{}, runtime)
 
 	// Test concurrent access to plugin registry
 	done := make(chan bool, 10)
@@ -569,7 +561,6 @@ func TestRegistry_ConcurrentAccess(t *testing.T) {
 
 func TestRegistry_Close(t *testing.T) {
 	logger := logging.NewBasic()
-	fsManager := fs.NewManager(logger)
 	runtime := &mockRuntime{}
 	instance := &mockPluginInstance{name: "test-plugin"}
 
@@ -577,7 +568,7 @@ func TestRegistry_Close(t *testing.T) {
 	runtime.On("Close").Return(nil)
 	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
 
-	registry := NewRegistry(logger, fsManager, []string{}, runtime)
+	registry := NewRegistry(logger, []string{}, runtime)
 
 	// Add a loaded plugin
 	registry.runtimeMu.Lock()

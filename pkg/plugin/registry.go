@@ -10,14 +10,12 @@ import (
 	"time"
 
 	"github.com/daddia/zen/internal/logging"
-	"github.com/daddia/zen/pkg/fs"
 	"gopkg.in/yaml.v3"
 )
 
 // Registry manages plugin discovery, loading, and lifecycle
 type Registry struct {
 	logger     logging.Logger
-	fsManager  fs.Manager
 	pluginDirs []string
 	plugins    map[string]*PluginInfo
 	mu         sync.RWMutex
@@ -84,10 +82,9 @@ type Runtime interface {
 }
 
 // NewRegistry creates a new plugin registry
-func NewRegistry(logger logging.Logger, fsManager fs.Manager, pluginDirs []string, runtime Runtime) *Registry {
+func NewRegistry(logger logging.Logger, pluginDirs []string, runtime Runtime) *Registry {
 	return &Registry{
 		logger:        logger,
-		fsManager:     fsManager,
 		pluginDirs:    pluginDirs,
 		plugins:       make(map[string]*PluginInfo),
 		runtime:       runtime,
@@ -433,12 +430,17 @@ func (r *Registry) Close() error {
 
 	// Unload all plugins
 	r.runtimeMu.Lock()
-	for name := range r.loadedPlugins {
+	instances := make(map[string]LoadedPlugin)
+	for name, loaded := range r.loadedPlugins {
+		instances[name] = loaded
+	}
+	r.runtimeMu.Unlock()
+
+	for name := range instances {
 		if err := r.UnloadPlugin(name); err != nil {
 			r.logger.Warn("failed to unload plugin during shutdown", "name", name, "error", err)
 		}
 	}
-	r.runtimeMu.Unlock()
 
 	// Close runtime
 	if r.runtime != nil {
