@@ -1,6 +1,8 @@
 package factory
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,14 +10,16 @@ import (
 
 	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/internal/integration"
-	"github.com/daddia/zen/internal/integration/providers"
 	"github.com/daddia/zen/internal/logging"
+	"github.com/daddia/zen/internal/providers/jira"
 	"github.com/daddia/zen/internal/workspace"
 	"github.com/daddia/zen/pkg/assets"
 	"github.com/daddia/zen/pkg/auth"
 	"github.com/daddia/zen/pkg/cache"
 	"github.com/daddia/zen/pkg/cmdutil"
+	"github.com/daddia/zen/pkg/fs"
 	"github.com/daddia/zen/pkg/iostreams"
+	"github.com/daddia/zen/pkg/plugin"
 	"github.com/daddia/zen/pkg/template"
 	"github.com/spf13/cobra"
 )
@@ -554,10 +558,26 @@ func integrationFunc(f *cmdutil.Factory) func() (cmdutil.IntegrationManagerInter
 		// Create integration service
 		integrationService := integration.NewService(&cfg.Integrations, logger, authManager, syncCache)
 
+		// Initialize plugin runtime
+		pluginRuntime, err := plugin.NewWASMRuntime(logger, authManager)
+		if err != nil {
+			integrationError = fmt.Errorf("failed to create plugin runtime: %w", err)
+			return nil, integrationError
+		}
+
+		// Create plugin registry
+		fsManager := fs.NewManager(logger)
+		pluginRegistry := plugin.NewRegistry(logger, fsManager, cfg.Integrations.PluginDirectories, pluginRuntime)
+
+		// Discover plugins
+		if err := pluginRegistry.DiscoverPlugins(context.Background()); err != nil {
+			logger.Warn("failed to discover plugins", "error", err)
+		}
+
 		// Register Jira provider if configured
 		if cfg.Integrations.TaskSystem == "jira" {
 			if providerConfig, ok := cfg.Integrations.Providers["jira"]; ok {
-				jiraProvider := providers.NewJiraProvider(&providerConfig, logger, authManager)
+				jiraProvider := jira.NewProvider(&providerConfig, logger, authManager)
 				if err := integrationService.RegisterProvider(jiraProvider); err != nil {
 					logger.Warn("failed to register Jira provider", "error", err)
 				}
