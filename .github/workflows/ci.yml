@@ -115,23 +115,3 @@ jobs:
         files: ./coverage/coverage.out
         flags: unittests
         name: ci-unit-tests
-
-  # Documentation Check (Optional)
-  docs:
-    name: Documentation (Optional)
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    continue-on-error: true
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
-
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: ${{ env.GO_VERSION }}
-
-    - name: Check documentation sync
-      run: make docs-check
-      continue-on-error: true

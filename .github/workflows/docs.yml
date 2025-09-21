@@ -1,0 +1,60 @@
+name: Documentation Generation
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  GO_VERSION: '1.25'
+
+jobs:
+  generate-docs:
+    name: Generate Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: make deps
+
+    - name: Generate documentation
+      run: make docs
+
+    - name: Configure Git
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+
+    - name: Commit and push documentation
+      run: |
+        git add docs/
+        if git diff --staged --quiet; then
+          echo "No documentation changes to commit"
+        else
+          git commit -m "docs: update documentation for ${{ github.ref_name }}"
+          git push origin HEAD:main
+        fi
