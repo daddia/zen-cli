@@ -2,7 +2,6 @@ package integration
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"sync"
 	"time"
@@ -906,23 +905,13 @@ func (s *Service) valuesEqual(a, b interface{}) bool {
 	return fmt.Sprintf("%v", a) == fmt.Sprintf("%v", b)
 }
 
-// computeDataHash computes a hash of the data for change detection
-func (s *Service) computeDataHash(data interface{}) string {
-	h := sha256.New()
-	h.Write([]byte(fmt.Sprintf("%+v", data)))
-	return fmt.Sprintf("%x", h.Sum(nil))
-}
-
 // startHealthMonitoring starts background health monitoring for providers
 func (s *Service) startHealthMonitoring() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			s.performHealthChecks()
-		}
+	for range ticker.C {
+		s.performHealthChecks()
 	}
 }
 
