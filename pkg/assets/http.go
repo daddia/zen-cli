@@ -38,7 +38,7 @@ func (h *HTTPManifestClient) DownloadManifest(ctx context.Context, repoURL, bran
 	h.logger.Debug("downloading manifest via HTTP API", "repo", h.sanitizeURL(repoURL), "branch", branch)
 
 	// Parse repository URL to determine provider and construct API URL
-	apiURL, err := h.buildAPIURL(repoURL, branch, "manifest.yaml")
+	apiURL, err := h.buildAPIURL(repoURL, branch, "assets/manifest.yaml")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to build API URL")
 	}

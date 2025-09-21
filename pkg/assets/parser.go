@@ -23,26 +23,28 @@ func NewYAMLManifestParser(logger logging.Logger) *YAMLManifestParser {
 
 // manifestFile represents the structure of the manifest.yaml file
 type manifestFile struct {
-	SchemaVersion string `yaml:"schema_version"`
-	Generated     string `yaml:"generated"`
-	Assets        struct {
-		Templates []manifestAsset `yaml:"templates"`
-		Prompts   []manifestAsset `yaml:"prompts"`
-		MCP       []manifestAsset `yaml:"mcp"`
-		Schemas   []manifestAsset `yaml:"schemas"`
-	} `yaml:"assets"`
+	SchemaVersion string                   `yaml:"schema_version"`
+	Generated     string                   `yaml:"generated"`
+	Version       string                   `yaml:"version"`
+	Activities    map[string]manifestAsset `yaml:"activities"`
 }
 
-// manifestAsset represents an asset entry in the manifest
+// manifestAsset represents an activity entry in the manifest
 type manifestAsset struct {
-	Name        string             `yaml:"name"`
-	Template    string             `yaml:"template,omitempty"`
-	Prompt      string             `yaml:"prompt,omitempty"`
-	Description string             `yaml:"description"`
-	Format      string             `yaml:"format"`
-	Category    string             `yaml:"category"`
-	Tags        []string           `yaml:"tags"`
-	Variables   []manifestVariable `yaml:"variables,omitempty"`
+	Name           string   `yaml:"name"`
+	Command        string   `yaml:"command"`
+	Description    string   `yaml:"description"`
+	Format         string   `yaml:"format"`
+	Category       string   `yaml:"category"`
+	WorkflowStages []string `yaml:"workflow_stages"`
+	Tags           []string `yaml:"tags"`
+	UseCases       []string `yaml:"use_cases"`
+	Assets         struct {
+		Prompt string   `yaml:"prompt,omitempty"`
+		Output []string `yaml:"output,omitempty"`
+	} `yaml:"assets"`
+	Variables []manifestVariable `yaml:"variables,omitempty"`
+	Version   string             `yaml:"version,omitempty"`
 }
 
 // manifestVariable represents a variable in the manifest
@@ -77,41 +79,11 @@ func (p *YAMLManifestParser) Parse(ctx context.Context, content []byte) ([]Asset
 
 	var assets []AssetMetadata
 
-	// Process templates
-	for _, template := range manifest.Assets.Templates {
-		asset, err := p.convertManifestAsset(template, AssetTypeTemplate)
+	// Process activities
+	for activityKey, activity := range manifest.Activities {
+		asset, err := p.convertManifestActivity(activity, activityKey)
 		if err != nil {
-			p.logger.Warn("failed to convert template asset", "name", template.Name, "error", err)
-			continue
-		}
-		assets = append(assets, asset)
-	}
-
-	// Process prompts
-	for _, prompt := range manifest.Assets.Prompts {
-		asset, err := p.convertManifestAsset(prompt, AssetTypePrompt)
-		if err != nil {
-			p.logger.Warn("failed to convert prompt asset", "name", prompt.Name, "error", err)
-			continue
-		}
-		assets = append(assets, asset)
-	}
-
-	// Process MCP files
-	for _, mcp := range manifest.Assets.MCP {
-		asset, err := p.convertManifestAsset(mcp, AssetTypeMCP)
-		if err != nil {
-			p.logger.Warn("failed to convert MCP asset", "name", mcp.Name, "error", err)
-			continue
-		}
-		assets = append(assets, asset)
-	}
-
-	// Process schemas
-	for _, schema := range manifest.Assets.Schemas {
-		asset, err := p.convertManifestAsset(schema, AssetTypeSchema)
-		if err != nil {
-			p.logger.Warn("failed to convert schema asset", "name", schema.Name, "error", err)
+			p.logger.Warn("failed to convert activity", "name", activity.Name, "key", activityKey, "error", err)
 			continue
 		}
 		assets = append(assets, asset)
@@ -142,45 +114,46 @@ func (p *YAMLManifestParser) Validate(ctx context.Context, content []byte) error
 		}
 	}
 
-	// Validate asset entries
-	allAssets := []manifestAsset{}
-	allAssets = append(allAssets, manifest.Assets.Templates...)
-	allAssets = append(allAssets, manifest.Assets.Prompts...)
-	allAssets = append(allAssets, manifest.Assets.MCP...)
-	allAssets = append(allAssets, manifest.Assets.Schemas...)
-
+	// Validate activity entries
 	names := make(map[string]bool)
-	for _, asset := range allAssets {
+	for _, activity := range manifest.Activities {
 		// Check required fields
-		if asset.Name == "" {
+		if activity.Name == "" {
 			return &AssetClientError{
 				Code:    ErrorCodeConfigurationError,
-				Message: "asset missing required field: name",
+				Message: "activity missing required field: name",
 			}
 		}
 
-		if asset.Description == "" {
+		if activity.Description == "" {
 			return &AssetClientError{
 				Code:    ErrorCodeConfigurationError,
-				Message: fmt.Sprintf("asset '%s' missing required field: description", asset.Name),
+				Message: fmt.Sprintf("activity '%s' missing required field: description", activity.Name),
+			}
+		}
+
+		if activity.Command == "" {
+			return &AssetClientError{
+				Code:    ErrorCodeConfigurationError,
+				Message: fmt.Sprintf("activity '%s' missing required field: command", activity.Name),
 			}
 		}
 
 		// Check for duplicate names
-		if names[asset.Name] {
+		if names[activity.Name] {
 			return &AssetClientError{
 				Code:    ErrorCodeConfigurationError,
-				Message: fmt.Sprintf("duplicate asset name: %s", asset.Name),
+				Message: fmt.Sprintf("duplicate activity name: %s", activity.Name),
 			}
 		}
-		names[asset.Name] = true
+		names[activity.Name] = true
 
 		// Validate variables
-		for _, variable := range asset.Variables {
+		for _, variable := range activity.Variables {
 			if variable.Name == "" {
 				return &AssetClientError{
 					Code:    ErrorCodeConfigurationError,
-					Message: fmt.Sprintf("asset '%s' has variable missing name", asset.Name),
+					Message: fmt.Sprintf("activity '%s' has variable missing name", activity.Name),
 				}
 			}
 		}
@@ -192,45 +165,45 @@ func (p *YAMLManifestParser) Validate(ctx context.Context, content []byte) error
 
 // Private helper methods
 
-func (p *YAMLManifestParser) convertManifestAsset(manifestAsset manifestAsset, assetType AssetType) (AssetMetadata, error) {
-	// Determine the file path based on asset type
-	var path string
-	switch assetType {
-	case AssetTypeTemplate:
-		if manifestAsset.Template == "" {
-			return AssetMetadata{}, fmt.Errorf("template asset '%s' missing template field", manifestAsset.Name)
-		}
-		path = "templates/" + manifestAsset.Template
-	case AssetTypePrompt:
-		if manifestAsset.Prompt == "" {
-			return AssetMetadata{}, fmt.Errorf("prompt asset '%s' missing prompt field", manifestAsset.Name)
-		}
-		path = "prompts/" + manifestAsset.Prompt
-	case AssetTypeMCP:
-		// For MCP files, use name as filename
-		path = "mcp/" + manifestAsset.Name
-	case AssetTypeSchema:
-		// For schema files, use name as filename
-		path = "schemas/" + manifestAsset.Name
-	default:
-		return AssetMetadata{}, fmt.Errorf("unsupported asset type: %s", assetType)
-	}
-
+func (p *YAMLManifestParser) convertManifestActivity(activity manifestAsset, activityKey string) (AssetMetadata, error) {
 	// Convert variables
 	var variables []Variable
-	for _, v := range manifestAsset.Variables {
+	for _, v := range activity.Variables {
 		variables = append(variables, Variable(v))
 	}
 
+	// Determine the primary output file (first one if multiple)
+	var outputFile string
+	if len(activity.Assets.Output) > 0 {
+		outputFile = activity.Assets.Output[0]
+	}
+
+	// Determine the asset type based on format
+	var assetType AssetType
+	switch activity.Format {
+	case "template":
+		assetType = AssetTypeTemplate
+	case "markdown":
+		assetType = AssetTypeTemplate // Treat markdown as template
+	case "yaml", "yml":
+		assetType = AssetTypeTemplate // Treat YAML as template
+	case "code":
+		assetType = AssetTypeTemplate // Treat code as template
+	default:
+		assetType = AssetTypeTemplate // Default to template
+	}
+
 	return AssetMetadata{
-		Name:        manifestAsset.Name,
+		Name:        activity.Name,
 		Type:        assetType,
-		Description: manifestAsset.Description,
-		Format:      manifestAsset.Format,
-		Category:    manifestAsset.Category,
-		Tags:        manifestAsset.Tags,
+		Description: activity.Description,
+		Format:      activity.Format,
+		Category:    activity.Category,
+		Tags:        activity.Tags,
 		Variables:   variables,
-		Path:        path,
+		Path:        outputFile, // Use the output file as the path
+		Command:     activity.Command,
+		OutputFile:  outputFile,
 		UpdatedAt:   time.Now(), // This would ideally come from Git
 	}, nil
 }

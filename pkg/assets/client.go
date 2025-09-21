@@ -285,7 +285,7 @@ func (c *Client) SyncRepository(ctx context.Context, req SyncRequest) (*SyncResu
 		manifestContent, err = c.http.DownloadManifest(syncCtx, c.config.RepositoryURL, c.config.Branch)
 	case c.git != nil:
 		// Fallback to Git CLI (requires repository clone)
-		manifestContent, err = c.git.GetFile(syncCtx, "manifest.yaml")
+		manifestContent, err = c.git.GetFile(syncCtx, "assets/manifest.yaml")
 	default:
 		err = fmt.Errorf("no repository access method configured")
 	}
@@ -317,7 +317,7 @@ func (c *Client) SyncRepository(ctx context.Context, req SyncRequest) (*SyncResu
 		return result, errors.Wrap(err, "failed to parse manifest")
 	}
 
-	// Save manifest to .zen/assets/manifest.yaml
+	// Save manifest to .zen/library/manifest.yaml
 	if err := c.saveManifestToDisk(manifestContent); err != nil {
 		c.logger.Warn("failed to save manifest to disk", "error", err)
 		// Don't fail the sync, just warn
@@ -427,7 +427,7 @@ func (c *Client) ensureManifestLoaded(ctx context.Context) error {
 	c.mu.RUnlock()
 
 	if !hasManifest {
-		// First try to load manifest from local disk (.zen/assets/manifest.yaml)
+		// First try to load manifest from local disk (.zen/library/manifest.yaml)
 		manifestPath := c.getManifestPath()
 		if manifestContent, err := os.ReadFile(manifestPath); err == nil {
 			c.logger.Debug("loading manifest from disk", "path", manifestPath)
@@ -456,7 +456,7 @@ func (c *Client) ensureManifestLoaded(ctx context.Context) error {
 			}
 		case c.git != nil:
 			// Fallback to Git CLI (requires repository clone)
-			manifestContent, err = c.git.GetFile(ctx, "manifest.yaml")
+			manifestContent, err = c.git.GetFile(ctx, "assets/manifest.yaml")
 			if err != nil {
 				return errors.Wrap(err, "failed to load manifest file from repository")
 			}
@@ -601,28 +601,28 @@ func (c *Client) verifyIntegrity(content *AssetContent) error {
 
 // getManifestPath returns the path to the local manifest file in workspace
 func (c *Client) getManifestPath() string {
-	// Always use workspace-local .zen/assets directory for manifest
+	// Always use workspace-local .zen/library directory for manifest
 	// The manifest is separate from the cache - it's the source of truth
-	
-	// Always use current working directory for workspace-local assets
+
+	// Always use current working directory for workspace-local library
 	// This ensures the manifest is saved to the project where zen init is run
 	cwd, err := os.Getwd()
 	if err != nil {
 		// Fallback to relative path if we can't get current directory
-		return filepath.Join(".zen", "assets", "manifest.yaml")
+		return filepath.Join(".zen", "library", "manifest.yaml")
 	}
 
-	return filepath.Join(cwd, ".zen", "assets", "manifest.yaml")
+	return filepath.Join(cwd, ".zen", "library", "manifest.yaml")
 }
 
-// saveManifestToDisk saves the manifest content to .zen/assets/manifest.yaml
+// saveManifestToDisk saves the manifest content to .zen/library/manifest.yaml
 func (c *Client) saveManifestToDisk(manifestContent []byte) error {
 	manifestPath := c.getManifestPath()
-	assetsDir := filepath.Dir(manifestPath)
+	libraryDir := filepath.Dir(manifestPath)
 
-	// Ensure the .zen/assets directory exists
-	if err := os.MkdirAll(assetsDir, 0755); err != nil {
-		return errors.Wrap(err, "failed to create assets directory")
+	// Ensure the .zen/library directory exists
+	if err := os.MkdirAll(libraryDir, 0755); err != nil {
+		return errors.Wrap(err, "failed to create library directory")
 	}
 
 	// Write manifest to file

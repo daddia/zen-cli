@@ -15,7 +15,7 @@ const (
 	AssetTypeSchema   AssetType = "schema"
 )
 
-// AssetMetadata contains metadata about an asset
+// AssetMetadata contains metadata about an asset/activity
 type AssetMetadata struct {
 	Name        string     `yaml:"name" json:"name"`
 	Type        AssetType  `yaml:"type" json:"type"`
@@ -26,6 +26,8 @@ type AssetMetadata struct {
 	Variables   []Variable `yaml:"variables" json:"variables"`
 	Checksum    string     `yaml:"checksum" json:"checksum"`
 	Path        string     `yaml:"path" json:"path"`
+	Command     string     `yaml:"command" json:"command"`         // New: CLI command for the activity
+	OutputFile  string     `yaml:"output_file" json:"output_file"` // New: Primary output file
 	UpdatedAt   time.Time  `yaml:"updated_at" json:"updated_at"`
 }
 
@@ -218,7 +220,7 @@ func DefaultAssetConfig() AssetConfig {
 	return AssetConfig{
 		RepositoryURL:          "", // Set by configuration system
 		Branch:                 "main",
-		CachePath:              "~/.zen/assets",
+		CachePath:              "~/.zen/library",
 		CacheSizeMB:            100,
 		DefaultTTL:             24 * time.Hour,
 		AuthProvider:           "github",

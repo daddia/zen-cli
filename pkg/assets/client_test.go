@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -23,9 +24,9 @@ func setupTestEnvironment(t *testing.T) (string, func()) {
 	tempDir, err := os.MkdirTemp("", "zen-assets-test-*")
 	require.NoError(t, err)
 
-	// Create .zen/assets directory structure
-	assetsDir := filepath.Join(tempDir, ".zen", "assets")
-	err = os.MkdirAll(assetsDir, 0755)
+	// Create .zen/library directory structure
+	libraryDir := filepath.Join(tempDir, ".zen", "library")
+	err = os.MkdirAll(libraryDir, 0755)
 	require.NoError(t, err)
 
 	// Create cache directory structure
@@ -46,8 +47,8 @@ func setupManifestFile(t *testing.T, tempDir string) func() {
 	// Load test manifest content
 	manifestContent := loadTestManifest(t)
 
-	// Write manifest to the expected location (.zen/assets/manifest.yaml)
-	manifestPath := filepath.Join(tempDir, ".zen", "assets", "manifest.yaml")
+	// Write manifest to the expected location (.zen/library/manifest.yaml)
+	manifestPath := filepath.Join(tempDir, ".zen", "library", "manifest.yaml")
 	err := os.WriteFile(manifestPath, manifestContent, 0644)
 	require.NoError(t, err)
 
@@ -77,12 +78,18 @@ func setupTestEnvironmentWithManifest(t *testing.T) (string, func()) {
 
 // loadTestManifest loads the test manifest fixture
 func loadTestManifest(t *testing.T) []byte {
-	// Get current working directory
-	wd, err := os.Getwd()
-	require.NoError(t, err)
+	// Start from the test package directory (where this test file is located)
+	// This works even when the working directory has been changed for tests
+	_, testFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatalf("Could not get test file location")
+	}
 
-	// Find the project root by looking for go.mod
-	projectRoot := wd
+	// Get the directory containing the test file
+	testDir := filepath.Dir(testFile)
+
+	// Find the project root by looking for go.mod starting from test directory
+	projectRoot := testDir
 	for {
 		if _, err := os.Stat(filepath.Join(projectRoot, "go.mod")); err == nil {
 			break
@@ -443,6 +450,18 @@ func createTestClientWithCleanup() (*Client, *mockAuthProvider, *mockCacheManage
 		panic(fmt.Sprintf("Failed to create temp dir: %v", err))
 	}
 
+	// Save current working directory
+	originalWd, err := os.Getwd()
+	if err != nil {
+		panic(fmt.Sprintf("Failed to get working directory: %v", err))
+	}
+
+	// Change to temp directory to isolate manifest loading
+	err = os.Chdir(tempDir)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to change to temp directory: %v", err))
+	}
+
 	config := DefaultAssetConfig()
 	// Use temp directory for cache to isolate tests
 	config.CachePath = filepath.Join(tempDir, ".zen", "cache", "assets")
@@ -456,6 +475,8 @@ func createTestClientWithCleanup() (*Client, *mockAuthProvider, *mockCacheManage
 	client := NewClient(config, logger, auth, cache, git, parser)
 
 	cleanup := func() {
+		// Restore original working directory
+		os.Chdir(originalWd)
 		os.RemoveAll(tempDir)
 	}
 
@@ -621,7 +642,7 @@ func TestClient_GetAsset_NotFound(t *testing.T) {
 
 	// Set up mocks
 	cache.On("Get", ctx, "nonexistent").Return(nil, &AssetClientError{Code: ErrorCodeCacheError})
-	git.On("GetFile", ctx, "manifest.yaml").Return([]byte("test manifest"), nil)
+	git.On("GetFile", ctx, "assets/manifest.yaml").Return([]byte("test manifest"), nil)
 	parser.On("Parse", ctx, []byte("test manifest")).Return([]AssetMetadata{}, nil)
 
 	// Execute
@@ -649,7 +670,7 @@ func TestClient_SyncRepository_Success(t *testing.T) {
 
 	// Set up mocks
 	auth.On("Authenticate", ctx, "github").Return(nil)
-	git.On("GetFile", mock.AnythingOfType("*context.timerCtx"), "manifest.yaml").Return([]byte("test manifest"), nil)
+	git.On("GetFile", mock.AnythingOfType("*context.timerCtx"), "assets/manifest.yaml").Return([]byte("test manifest"), nil)
 	parser.On("Parse", mock.Anything, []byte("test manifest")).Return(testManifest, nil)
 	cache.On("GetInfo", ctx).Return(&CacheInfo{TotalSize: 1024 * 1024}, nil)
 
@@ -679,7 +700,7 @@ func TestClient_SyncRepository_AuthenticationFailed(t *testing.T) {
 
 	// Since auth fails, it will try to get manifest file anonymously
 	manifestErr := &AssetClientError{Code: ErrorCodeAssetNotFound, Message: "manifest not found"}
-	git.On("GetFile", mock.AnythingOfType("*context.timerCtx"), "manifest.yaml").Return(nil, manifestErr)
+	git.On("GetFile", mock.AnythingOfType("*context.timerCtx"), "assets/manifest.yaml").Return(nil, manifestErr)
 	cache.On("GetInfo", ctx).Return(&CacheInfo{TotalSize: 0}, nil)
 
 	// Execute
@@ -891,19 +912,19 @@ func TestClient_ListAssets_WithRealManifest(t *testing.T) {
 	assert.True(t, len(result.Assets) > 0, "Should have assets from real manifest")
 	assert.Equal(t, len(manifest), result.Total)
 
-	// Check that we have expected asset types
-	hasTemplate := false
-	hasPrompt := false
+	// Check that we have expected activities with commands
+	hasAPIContract := false
+	hasStrategy := false
 	for _, asset := range result.Assets {
-		if asset.Type == AssetTypeTemplate {
-			hasTemplate = true
+		if asset.Command == "api-contract" {
+			hasAPIContract = true
 		}
-		if asset.Type == AssetTypePrompt {
-			hasPrompt = true
+		if asset.Command == "strategy" {
+			hasStrategy = true
 		}
 	}
-	assert.True(t, hasTemplate, "Should have template assets")
-	assert.True(t, hasPrompt, "Should have prompt assets")
+	assert.True(t, hasAPIContract, "Should have API Contract activity")
+	assert.True(t, hasStrategy, "Should have Strategy Definition activity")
 }
 
 func TestClient_ListAssets_WithRealManifest_FilterByType(t *testing.T) {
@@ -952,9 +973,9 @@ func TestClient_SyncRepository_WithRealManifest(t *testing.T) {
 	// Get current working directory for manifest path
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
-	
+
 	// Clean up any existing manifest file in project directory
-	projectManifestPath := filepath.Join(cwd, ".zen", "assets", "manifest.yaml")
+	projectManifestPath := filepath.Join(cwd, ".zen", "library", "manifest.yaml")
 	defer func() {
 		os.Remove(projectManifestPath) // Clean up test artifacts
 	}()
@@ -977,7 +998,7 @@ func TestClient_SyncRepository_WithRealManifest(t *testing.T) {
 
 	// Set up mocks
 	auth.On("Authenticate", ctx, "github").Return(nil)
-	git.On("GetFile", mock.AnythingOfType("*context.timerCtx"), "manifest.yaml").Return(manifestContent, nil)
+	git.On("GetFile", mock.AnythingOfType("*context.timerCtx"), "assets/manifest.yaml").Return(manifestContent, nil)
 	cache.On("GetInfo", ctx).Return(&CacheInfo{TotalSize: 0}, nil)
 
 	// Execute
@@ -1007,19 +1028,19 @@ func TestClient_ListAssets_LoadsFromDisk(t *testing.T) {
 	// Get current working directory
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
-	
+
 	// Copy manifest to project directory for this test
-	projectManifestPath := filepath.Join(cwd, ".zen", "assets", "manifest.yaml")
-	tempManifestPath := filepath.Join(tempDir, ".zen", "assets", "manifest.yaml")
-	
-	// Ensure project .zen/assets directory exists
+	projectManifestPath := filepath.Join(cwd, ".zen", "library", "manifest.yaml")
+	tempManifestPath := filepath.Join(tempDir, ".zen", "library", "manifest.yaml")
+
+	// Ensure project .zen/library directory exists
 	require.NoError(t, os.MkdirAll(filepath.Dir(projectManifestPath), 0755))
-	
+
 	// Copy manifest from temp to project directory
 	manifestContent, err := os.ReadFile(tempManifestPath)
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(projectManifestPath, manifestContent, 0644))
-	
+
 	defer func() {
 		os.Remove(projectManifestPath) // Clean up test artifacts
 	}()
@@ -1066,7 +1087,7 @@ func BenchmarkClient_ListAssets(b *testing.B) {
 		})
 	}
 
-	git.On("GetFile", ctx, "manifest.yaml").Return([]byte("test manifest"), nil).Maybe()
+	git.On("GetFile", ctx, "assets/manifest.yaml").Return([]byte("test manifest"), nil).Maybe()
 	parser.On("Parse", ctx, []byte("test manifest")).Return(testManifest, nil).Maybe()
 
 	b.ResetTimer()
