@@ -106,7 +106,6 @@ func TestListTextOutput(t *testing.T) {
 	assert.Contains(t, output, "COMMAND")
 	assert.Contains(t, output, "DESCRIPTION")
 	assert.Contains(t, output, "OUTPUT FORMAT")
-	assert.Contains(t, output, "OUTPUT FILE")
 
 	// Check activity data (now using activity names and commands)
 	assert.Contains(t, output, "Technical Spec")

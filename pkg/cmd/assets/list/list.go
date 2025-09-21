@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"text/tabwriter"
 
@@ -161,40 +162,37 @@ func displayListText(opts *ListOptions, assetList *assets.AssetList, filter asse
 		return nil
 	}
 
+	// Sort assets alphabetically by name
+	sort.Slice(assetList.Assets, func(i, j int) bool {
+		return assetList.Assets[i].Name < assetList.Assets[j].Name
+	})
+
 	// Create table writer
 	w := tabwriter.NewWriter(opts.IO.Out, 0, 0, 2, ' ', 0)
 	defer w.Flush()
 
-	// Header - new format: name | command | description | output format | output file
-	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
-		cs.Bold("NAME"),
-		cs.Bold("COMMAND"),
-		cs.Bold("DESCRIPTION"),
-		cs.Bold("OUTPUT FORMAT"),
-		cs.Bold("OUTPUT FILE"))
+	// Header - new format: name | command | description | output format
+	fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
+		cs.Bold("Name"),
+		cs.Bold("Command"),
+		cs.Bold("Description"),
+		cs.Bold("Output Format"))
 
 	// Activities
 	for _, asset := range assetList.Assets {
 		description := asset.Description
-		if len(description) > 50 {
-			description = description[:47] + "..."
+		if len(description) > 60 {
+			description = description[:57] + "..."
 		}
 
 		// Format command with backticks for CLI commands
 		command := fmt.Sprintf("`%s`", asset.Command)
 
-		// Clean up output file name (remove .tmpl extension if present)
-		outputFile := asset.OutputFile
-		if strings.HasSuffix(outputFile, ".tmpl") {
-			outputFile = strings.TrimSuffix(outputFile, ".tmpl")
-		}
-
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
 			asset.Name,
 			cs.Blue(command),
 			description,
-			asset.Format,
-			outputFile)
+			asset.Format)
 	}
 
 	w.Flush()
