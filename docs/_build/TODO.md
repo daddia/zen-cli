@@ -24,9 +24,9 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 ## Release Candidate
 
-### **Task Enhanced** → Target Release [v0.6.0]
+### **Task Enhanced** → Target Release [v0.7.0]
 
-- [ ] **[ZEN-011] Template Generation Command**
+- [x] **[ZEN-011] Template Generation Command**
   - **Deliverable**: `zen draft <activity>` renders template as plain format
   - **Acceptance**: Generate document template
 
