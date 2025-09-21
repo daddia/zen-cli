@@ -6,6 +6,7 @@ import (
 	"github.com/daddia/zen/pkg/cmd/assets"
 	"github.com/daddia/zen/pkg/cmd/auth"
 	"github.com/daddia/zen/pkg/cmd/config"
+	"github.com/daddia/zen/pkg/cmd/draft"
 	"github.com/daddia/zen/pkg/cmd/factory"
 	cmdinit "github.com/daddia/zen/pkg/cmd/init"
 	"github.com/daddia/zen/pkg/cmd/status"
@@ -112,6 +113,7 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 	cmd.AddCommand(status.NewCmdStatus(f))
 	cmd.AddCommand(assets.NewCmdAssets(f))
 	cmd.AddCommand(task.NewCmdTask(f))
+	cmd.AddCommand(draft.NewCmdDraft(f))
 
 	// Add shell completion command
 	cmd.AddCommand(newCompletionCommand(f))
