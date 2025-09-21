@@ -63,6 +63,33 @@ func (m *MockProvider) MapToExternal(zen *ZenTaskData) (*ExternalTaskData, error
 	return args.Get(0).(*ExternalTaskData), args.Error(1)
 }
 
+// New interface methods for enhanced provider
+func (m *MockProvider) HealthCheck(ctx context.Context) (*ProviderHealth, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*ProviderHealth), args.Error(1)
+}
+
+func (m *MockProvider) GetRateLimitInfo(ctx context.Context) (*RateLimitInfo, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*RateLimitInfo), args.Error(1)
+}
+
+func (m *MockProvider) SupportsRealtime() bool {
+	args := m.Called()
+	return args.Bool(0)
+}
+
+func (m *MockProvider) GetWebhookURL() string {
+	args := m.Called()
+	return args.String(0)
+}
+
 // MockAuthManager implements auth.Manager for testing
 type MockAuthManager struct {
 	mock.Mock

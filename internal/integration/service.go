@@ -22,16 +22,16 @@ type Service struct {
 	cache     cache.Manager[*TaskSyncRecord]
 	providers map[string]IntegrationProvider
 	mu        sync.RWMutex
-	
+
 	// Rate limiting and circuit breaker
-	rateLimiters map[string]*rate.Limiter
+	rateLimiters    map[string]*rate.Limiter
 	circuitBreakers map[string]*CircuitBreaker
-	healthStatus map[string]*ProviderHealth
-	healthMu     sync.RWMutex
-	
+	healthStatus    map[string]*ProviderHealth
+	healthMu        sync.RWMutex
+
 	// Metrics and monitoring
 	metrics *ServiceMetrics
-	
+
 	// Conflict resolution
 	conflictStore map[string]*ConflictRecord
 	conflictMu    sync.RWMutex
@@ -85,10 +85,10 @@ func NewService(
 		metrics:         &ServiceMetrics{},
 		conflictStore:   make(map[string]*ConflictRecord),
 	}
-	
+
 	// Start background health monitoring
 	go s.startHealthMonitoring()
-	
+
 	return s
 }
 
@@ -121,14 +121,14 @@ func (s *Service) RegisterProvider(provider IntegrationProvider) error {
 
 	// Initialize rate limiter for provider
 	s.rateLimiters[name] = rate.NewLimiter(rate.Limit(10), 20) // 10 requests/second with burst of 20
-	
+
 	// Initialize circuit breaker for provider
 	s.circuitBreakers[name] = &CircuitBreaker{
 		FailureThreshold: 5,
 		ResetTimeout:     30 * time.Second,
 		State:            CircuitBreakerClosed,
 	}
-	
+
 	// Initialize health status
 	s.healthStatus[name] = &ProviderHealth{
 		Provider:    name,
@@ -197,9 +197,9 @@ func (s *Service) SyncTask(ctx context.Context, taskID string, opts SyncOptions)
 	if correlationID == "" {
 		correlationID = s.generateCorrelationID()
 	}
-	
-	s.logger.Debug("starting task sync", 
-		"task_id", taskID, 
+
+	s.logger.Debug("starting task sync",
+		"task_id", taskID,
 		"direction", opts.Direction,
 		"correlation_id", correlationID)
 
@@ -253,7 +253,7 @@ func (s *Service) SyncTask(ctx context.Context, taskID string, opts SyncOptions)
 	if retryCount == 0 {
 		retryCount = 3
 	}
-	
+
 	err = s.retryWithBackoff(syncCtx, retryCount, func() error {
 		return s.performSync(syncCtx, provider, syncRecord, result, opts)
 	})
@@ -265,22 +265,22 @@ func (s *Service) SyncTask(ctx context.Context, taskID string, opts SyncOptions)
 		result.Success = false
 		result.Error = err.Error()
 		result.Retryable = s.isRetryableError(err)
-		
+
 		if integrationErr, ok := err.(IntegrationError); ok {
 			result.ErrorCode = integrationErr.Code
 		}
-		
+
 		// Record failure in circuit breaker
 		s.recordFailure(s.config.TaskSystem)
-		
+
 		// Update sync record with error
 		syncRecord.Status = SyncStatusError
 		syncRecord.ErrorCount++
 		syncRecord.LastError = err.Error()
 		syncRecord.RetryAfter = s.calculateRetryAfter(syncRecord.ErrorCount)
-		
-		s.logger.Error("task sync failed", 
-			"task_id", taskID, 
+
+		s.logger.Error("task sync failed",
+			"task_id", taskID,
 			"error", err,
 			"correlation_id", correlationID,
 			"retry_count", syncRecord.ErrorCount)
@@ -290,7 +290,7 @@ func (s *Service) SyncTask(ctx context.Context, taskID string, opts SyncOptions)
 	result.Success = true
 	result.ExternalID = syncRecord.ExternalID
 	result.Duration = time.Since(start)
-	
+
 	// Record success in circuit breaker
 	s.recordSuccess(s.config.TaskSystem)
 
@@ -301,14 +301,14 @@ func (s *Service) SyncTask(ctx context.Context, taskID string, opts SyncOptions)
 	syncRecord.LastError = ""
 	syncRecord.RetryAfter = nil
 	syncRecord.Version++
-	
+
 	if err := s.UpdateSyncRecord(ctx, syncRecord); err != nil {
 		s.logger.Warn("failed to update sync record", "task_id", taskID, "error", err)
 	}
 
-	s.logger.Info("task sync completed", 
-		"task_id", taskID, 
-		"external_id", syncRecord.ExternalID, 
+	s.logger.Info("task sync completed",
+		"task_id", taskID,
+		"external_id", syncRecord.ExternalID,
 		"changed_fields", len(result.ChangedFields),
 		"duration", result.Duration,
 		"correlation_id", correlationID)
@@ -391,8 +391,8 @@ func (s *Service) UpdateSyncRecord(ctx context.Context, record *TaskSyncRecord) 
 		return fmt.Errorf("failed to update sync record: %w", err)
 	}
 
-	s.logger.Debug("updated sync record", 
-		"task_id", record.TaskID, 
+	s.logger.Debug("updated sync record",
+		"task_id", record.TaskID,
 		"external_id", record.ExternalID,
 		"version", record.Version,
 		"status", record.Status)
@@ -525,7 +525,7 @@ func (s *Service) bidirectionalSync(ctx context.Context, provider IntegrationPro
 		s.metrics.mu.Lock()
 		s.metrics.ConflictCount++
 		s.metrics.mu.Unlock()
-		
+
 		// Handle conflicts based on strategy
 		if err := s.resolveConflicts(ctx, record, conflicts, opts.ConflictStrategy); err != nil {
 			return err
@@ -571,9 +571,9 @@ func (s *Service) createIntegrationError(code, message, provider, taskID string)
 // isRetryableErrorCode determines if an error code represents a retryable error
 func (s *Service) isRetryableErrorCode(code string) bool {
 	retryableCodes := map[string]bool{
-		ErrCodeRateLimited:  true,
-		ErrCodeNetworkError: true,
-		ErrCodeTimeoutError: true,
+		ErrCodeRateLimited:   true,
+		ErrCodeNetworkError:  true,
+		ErrCodeTimeoutError:  true,
 		ErrCodeProviderError: true,
 	}
 	return retryableCodes[code]
@@ -603,11 +603,11 @@ func (s *Service) checkRateLimit(provider string) bool {
 	s.mu.RLock()
 	limiter, exists := s.rateLimiters[provider]
 	s.mu.RUnlock()
-	
+
 	if !exists {
 		return true // No rate limiting configured
 	}
-	
+
 	return limiter.Allow()
 }
 
@@ -616,14 +616,14 @@ func (s *Service) isCircuitBreakerClosed(provider string) bool {
 	s.mu.RLock()
 	cb, exists := s.circuitBreakers[provider]
 	s.mu.RUnlock()
-	
+
 	if !exists {
 		return true // No circuit breaker configured
 	}
-	
+
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
-	
+
 	switch cb.State {
 	case CircuitBreakerClosed:
 		return true
@@ -646,17 +646,17 @@ func (s *Service) recordFailure(provider string) {
 	s.mu.RLock()
 	cb, exists := s.circuitBreakers[provider]
 	s.mu.RUnlock()
-	
+
 	if !exists {
 		return
 	}
-	
+
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
-	
+
 	cb.FailureCount++
 	cb.LastFailureTime = time.Now()
-	
+
 	if cb.FailureCount >= cb.FailureThreshold {
 		cb.State = CircuitBreakerOpen
 		s.logger.Warn("circuit breaker opened for provider", "provider", provider, "failures", cb.FailureCount)
@@ -668,14 +668,14 @@ func (s *Service) recordSuccess(provider string) {
 	s.mu.RLock()
 	cb, exists := s.circuitBreakers[provider]
 	s.mu.RUnlock()
-	
+
 	if !exists {
 		return
 	}
-	
+
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
-	
+
 	cb.FailureCount = 0
 	if cb.State == CircuitBreakerHalfOpen {
 		cb.State = CircuitBreakerClosed
@@ -687,14 +687,14 @@ func (s *Service) recordSuccess(provider string) {
 func (s *Service) updateMetrics(startTime time.Time, success bool) {
 	s.metrics.mu.Lock()
 	defer s.metrics.mu.Unlock()
-	
+
 	s.metrics.SyncOperations++
 	if success {
 		s.metrics.SuccessfulSyncs++
 	} else {
 		s.metrics.FailedSyncs++
 	}
-	
+
 	duration := time.Since(startTime)
 	// Simple moving average for latency
 	if s.metrics.SyncOperations == 1 {
@@ -702,49 +702,49 @@ func (s *Service) updateMetrics(startTime time.Time, success bool) {
 	} else {
 		s.metrics.AverageLatency = (s.metrics.AverageLatency + duration) / 2
 	}
-	
+
 	s.metrics.LastOperationTime = time.Now()
 }
 
 // retryWithBackoff performs an operation with exponential backoff retry logic
 func (s *Service) retryWithBackoff(ctx context.Context, maxRetries int, operation func() error) error {
 	var lastErr error
-	
+
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
 		}
-		
+
 		err := operation()
 		if err == nil {
 			return nil
 		}
-		
+
 		lastErr = err
-		
+
 		// Don't retry if it's not a retryable error
 		if !s.isRetryableError(err) {
 			return err
 		}
-		
+
 		// Don't wait after the last attempt
 		if attempt == maxRetries {
 			break
 		}
-		
+
 		// Exponential backoff with jitter
 		backoffTime := time.Duration(1<<attempt) * time.Second
 		if backoffTime > 30*time.Second {
 			backoffTime = 30 * time.Second
 		}
-		
-		s.logger.Debug("retrying operation after backoff", 
-			"attempt", attempt+1, 
-			"backoff", backoffTime, 
+
+		s.logger.Debug("retrying operation after backoff",
+			"attempt", attempt+1,
+			"backoff", backoffTime,
 			"error", err)
-		
+
 		timer := time.NewTimer(backoffTime)
 		select {
 		case <-ctx.Done():
@@ -754,7 +754,7 @@ func (s *Service) retryWithBackoff(ctx context.Context, maxRetries int, operatio
 			// Continue to next attempt
 		}
 	}
-	
+
 	return lastErr
 }
 
@@ -775,17 +775,17 @@ func (s *Service) performSync(ctx context.Context, provider IntegrationProvider,
 // detectConflicts compares local and external data to find conflicts
 func (s *Service) detectConflicts(zenData *ZenTaskData, externalData *ExternalTaskData, fieldMappings map[string]string) ([]FieldConflict, error) {
 	var conflicts []FieldConflict
-	
+
 	// Compare mapped fields
 	for zenField, externalField := range fieldMappings {
 		zenValue := s.getFieldValue(zenData, zenField)
 		externalValue := s.getFieldValue(externalData, externalField)
-		
+
 		// Skip if values are the same
 		if s.valuesEqual(zenValue, externalValue) {
 			continue
 		}
-		
+
 		// Create conflict record
 		conflict := FieldConflict{
 			Field:             zenField,
@@ -794,10 +794,10 @@ func (s *Service) detectConflicts(zenData *ZenTaskData, externalData *ExternalTa
 			ZenTimestamp:      zenData.Updated,
 			ExternalTimestamp: externalData.Updated,
 		}
-		
+
 		conflicts = append(conflicts, conflict)
 	}
-	
+
 	return conflicts, nil
 }
 
@@ -807,19 +807,19 @@ func (s *Service) resolveConflicts(ctx context.Context, record *TaskSyncRecord, 
 	case ConflictStrategyLocalWins:
 		// Keep Zen data, no action needed
 		return nil
-		
+
 	case ConflictStrategyRemoteWins:
 		// Accept external data, no action needed (will be handled in sync)
 		return nil
-		
+
 	case ConflictStrategyTimestamp:
 		// Resolve based on timestamps - handled in shouldPullFirst
 		return nil
-		
+
 	case ConflictStrategyManualReview:
 		// Store conflicts for manual resolution
 		return s.storeConflictRecord(record.TaskID, conflicts)
-		
+
 	default:
 		return s.createIntegrationError(ErrCodeInvalidData, fmt.Sprintf("unsupported conflict strategy: %s", strategy), "", record.TaskID)
 	}
@@ -829,7 +829,7 @@ func (s *Service) resolveConflicts(ctx context.Context, record *TaskSyncRecord, 
 func (s *Service) storeConflictRecord(taskID string, conflicts []FieldConflict) error {
 	s.conflictMu.Lock()
 	defer s.conflictMu.Unlock()
-	
+
 	conflictRecord := &ConflictRecord{
 		ID:        s.generateCorrelationID(),
 		TaskID:    taskID,
@@ -837,10 +837,10 @@ func (s *Service) storeConflictRecord(taskID string, conflicts []FieldConflict) 
 		CreatedAt: time.Now(),
 		Status:    ConflictStatusPending,
 	}
-	
+
 	s.conflictStore[taskID] = conflictRecord
 	s.logger.Info("stored conflict record for manual resolution", "task_id", taskID, "conflicts", len(conflicts))
-	
+
 	return nil
 }
 
@@ -917,7 +917,7 @@ func (s *Service) computeDataHash(data interface{}) string {
 func (s *Service) startHealthMonitoring() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ticker.C:
@@ -934,7 +934,7 @@ func (s *Service) performHealthChecks() {
 		providers[name] = provider
 	}
 	s.mu.RUnlock()
-	
+
 	for name, provider := range providers {
 		go s.checkProviderHealth(name, provider)
 	}
@@ -944,14 +944,14 @@ func (s *Service) performHealthChecks() {
 func (s *Service) checkProviderHealth(name string, provider IntegrationProvider) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	
+
 	start := time.Now()
 	health, err := provider.HealthCheck(ctx)
 	responseTime := time.Since(start)
-	
+
 	s.healthMu.Lock()
 	defer s.healthMu.Unlock()
-	
+
 	if err != nil {
 		s.healthStatus[name] = &ProviderHealth{
 			Provider:     name,
@@ -973,12 +973,12 @@ func (s *Service) checkProviderHealth(name string, provider IntegrationProvider)
 func (s *Service) GetProviderHealth(ctx context.Context, provider string) (*ProviderHealth, error) {
 	s.healthMu.RLock()
 	defer s.healthMu.RUnlock()
-	
+
 	health, exists := s.healthStatus[provider]
 	if !exists {
 		return nil, s.createIntegrationError(ErrCodeProviderError, fmt.Sprintf("provider '%s' not found", provider), provider, "")
 	}
-	
+
 	return health, nil
 }
 
@@ -986,12 +986,12 @@ func (s *Service) GetProviderHealth(ctx context.Context, provider string) (*Prov
 func (s *Service) GetAllProviderHealth(ctx context.Context) (map[string]*ProviderHealth, error) {
 	s.healthMu.RLock()
 	defer s.healthMu.RUnlock()
-	
+
 	// Create a copy to avoid concurrent access issues
 	result := make(map[string]*ProviderHealth)
 	for name, health := range s.healthStatus {
 		result[name] = health
 	}
-	
+
 	return result, nil
 }

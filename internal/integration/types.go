@@ -28,11 +28,11 @@ const (
 type SyncStatus string
 
 const (
-	SyncStatusActive    SyncStatus = "active"
-	SyncStatusPaused    SyncStatus = "paused"
-	SyncStatusError     SyncStatus = "error"
-	SyncStatusConflict  SyncStatus = "conflict"
-	SyncStatusDisabled  SyncStatus = "disabled"
+	SyncStatusActive   SyncStatus = "active"
+	SyncStatusPaused   SyncStatus = "paused"
+	SyncStatusError    SyncStatus = "error"
+	SyncStatusConflict SyncStatus = "conflict"
+	SyncStatusDisabled SyncStatus = "disabled"
 )
 
 // TaskSyncRecord represents a synchronization relationship between a Zen task and external system
@@ -208,37 +208,37 @@ func (e IntegrationError) Error() string {
 
 // Error codes for integration operations
 const (
-	ErrCodePluginNotFound     = "PLUGIN_NOT_FOUND"
-	ErrCodePluginLoadFailed   = "PLUGIN_LOAD_FAILED"
-	ErrCodeAuthFailed         = "AUTH_FAILED"
-	ErrCodeRateLimited        = "RATE_LIMITED"
-	ErrCodeNetworkError       = "NETWORK_ERROR"
-	ErrCodeSyncConflict       = "SYNC_CONFLICT"
-	ErrCodeInvalidData        = "INVALID_DATA"
-	ErrCodeConfigError        = "CONFIG_ERROR"
-	ErrCodeProviderError      = "PROVIDER_ERROR"
-	ErrCodeTimeoutError       = "TIMEOUT_ERROR"
+	ErrCodePluginNotFound   = "PLUGIN_NOT_FOUND"
+	ErrCodePluginLoadFailed = "PLUGIN_LOAD_FAILED"
+	ErrCodeAuthFailed       = "AUTH_FAILED"
+	ErrCodeRateLimited      = "RATE_LIMITED"
+	ErrCodeNetworkError     = "NETWORK_ERROR"
+	ErrCodeSyncConflict     = "SYNC_CONFLICT"
+	ErrCodeInvalidData      = "INVALID_DATA"
+	ErrCodeConfigError      = "CONFIG_ERROR"
+	ErrCodeProviderError    = "PROVIDER_ERROR"
+	ErrCodeTimeoutError     = "TIMEOUT_ERROR"
 )
 
 // FieldConflict represents a conflict between local and external field values
 type FieldConflict struct {
-	Field           string    `json:"field"`
-	ZenValue        interface{} `json:"zen_value"`
-	ExternalValue   interface{} `json:"external_value"`
-	ZenTimestamp    time.Time `json:"zen_timestamp"`
-	ExternalTimestamp time.Time `json:"external_timestamp"`
-	Resolution      string    `json:"resolution,omitempty"`
+	Field             string      `json:"field"`
+	ZenValue          interface{} `json:"zen_value"`
+	ExternalValue     interface{} `json:"external_value"`
+	ZenTimestamp      time.Time   `json:"zen_timestamp"`
+	ExternalTimestamp time.Time   `json:"external_timestamp"`
+	Resolution        string      `json:"resolution,omitempty"`
 }
 
 // ConflictRecord represents a conflict that requires manual resolution
 type ConflictRecord struct {
-	ID        string          `json:"id"`
-	TaskID    string          `json:"task_id"`
-	Conflicts []FieldConflict `json:"conflicts"`
-	CreatedAt time.Time       `json:"created_at"`
-	Status    ConflictStatus  `json:"status"`
-	ResolvedBy string         `json:"resolved_by,omitempty"`
-	ResolvedAt *time.Time     `json:"resolved_at,omitempty"`
+	ID         string          `json:"id"`
+	TaskID     string          `json:"task_id"`
+	Conflicts  []FieldConflict `json:"conflicts"`
+	CreatedAt  time.Time       `json:"created_at"`
+	Status     ConflictStatus  `json:"status"`
+	ResolvedBy string          `json:"resolved_by,omitempty"`
+	ResolvedAt *time.Time      `json:"resolved_at,omitempty"`
 }
 
 // ConflictStatus represents the status of a conflict resolution
@@ -252,12 +252,12 @@ const (
 
 // ProviderHealth represents the health status of a provider
 type ProviderHealth struct {
-	Provider      string    `json:"provider"`
-	Healthy       bool      `json:"healthy"`
-	LastChecked   time.Time `json:"last_checked"`
-	ResponseTime  time.Duration `json:"response_time"`
-	ErrorCount    int       `json:"error_count"`
-	LastError     string    `json:"last_error,omitempty"`
+	Provider      string         `json:"provider"`
+	Healthy       bool           `json:"healthy"`
+	LastChecked   time.Time      `json:"last_checked"`
+	ResponseTime  time.Duration  `json:"response_time"`
+	ErrorCount    int            `json:"error_count"`
+	LastError     string         `json:"last_error,omitempty"`
 	RateLimitInfo *RateLimitInfo `json:"rate_limit_info,omitempty"`
 }
 

@@ -140,13 +140,13 @@ func TestService_EnhancedSyncTask(t *testing.T) {
 					ConflictStrategy: ConflictStrategyTimestamp,
 					Status:           SyncStatusActive,
 				}
-				
+
 				cacheEntry := &cache.Entry[*TaskSyncRecord]{
 					Data: syncRecord,
 				}
 				cache.On("Get", mock.Anything, "task-123").Return(cacheEntry, nil)
 				cache.On("Put", mock.Anything, "task-123", mock.AnythingOfType("*integration.TaskSyncRecord"), mock.Anything).Return(nil)
-				
+
 				// Mock external task data
 				externalData := &ExternalTaskData{
 					ID:          "PROJ-456",
@@ -157,7 +157,7 @@ func TestService_EnhancedSyncTask(t *testing.T) {
 					Updated:     time.Now(),
 				}
 				provider.On("GetTaskData", mock.Anything, "PROJ-456").Return(externalData, nil)
-				
+
 				// Mock mapping
 				zenData := &ZenTaskData{
 					ID:          "task-123",
@@ -191,17 +191,17 @@ func TestService_EnhancedSyncTask(t *testing.T) {
 			setupMocks: func(provider *EnhancedMockProvider, auth *mockAuthManager, cache *mockCache) {
 				// Mock sync record
 				syncRecord := &TaskSyncRecord{
-					TaskID:        "task-456",
-					ExternalID:    "PROJ-789",
+					TaskID:         "task-456",
+					ExternalID:     "PROJ-789",
 					ExternalSystem: "jira",
-					Status:        SyncStatusActive,
+					Status:         SyncStatusActive,
 				}
-				
+
 				cacheEntry := &cache.Entry[*TaskSyncRecord]{
 					Data: syncRecord,
 				}
 				cache.On("Get", mock.Anything, "task-456").Return(cacheEntry, nil)
-				
+
 				provider.On("Name").Return("jira")
 				provider.On("MapToExternal", mock.AnythingOfType("*integration.ZenTaskData")).Return(&ExternalTaskData{ID: "PROJ-789"}, nil)
 				provider.On("UpdateTask", mock.Anything, "PROJ-789", mock.AnythingOfType("*integration.ZenTaskData")).Return(&ExternalTaskData{ID: "PROJ-789"}, nil)
@@ -225,12 +225,12 @@ func TestService_EnhancedSyncTask(t *testing.T) {
 					ExternalID: "PROJ-999",
 					Status:     SyncStatusActive,
 				}
-				
+
 				cacheEntry := &cache.Entry[*TaskSyncRecord]{
 					Data: syncRecord,
 				}
 				cache.On("Get", mock.Anything, "task-789").Return(cacheEntry, nil)
-				
+
 				provider.On("Name").Return("jira")
 			},
 			expectedError: true,
@@ -241,17 +241,17 @@ func TestService_EnhancedSyncTask(t *testing.T) {
 			},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mocks
 			provider := &EnhancedMockProvider{}
 			authManager := &mockAuthManager{}
 			cacheManager := &mockCache{}
-			
+
 			// Setup mocks
 			tt.setupMocks(provider, authManager, cacheManager)
-			
+
 			// Create service
 			cfg := &config.IntegrationsConfig{
 				TaskSystem:  "jira",
@@ -259,11 +259,11 @@ func TestService_EnhancedSyncTask(t *testing.T) {
 			}
 			logger := logging.NewBasic()
 			service := NewService(cfg, logger, authManager, cacheManager)
-			
+
 			// Register provider
 			err := service.RegisterProvider(provider)
 			require.NoError(t, err)
-			
+
 			// For circuit breaker test, manually open the circuit breaker
 			if tt.name == "sync with circuit breaker open" {
 				service.mu.Lock()
@@ -276,21 +276,21 @@ func TestService_EnhancedSyncTask(t *testing.T) {
 				}
 				service.mu.Unlock()
 			}
-			
+
 			// Execute sync
 			result, err := service.SyncTask(context.Background(), tt.taskID, tt.opts)
-			
+
 			// Verify results
 			if tt.expectedError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
-			
+
 			if result != nil && tt.expectedResult != nil {
 				tt.expectedResult(t, result)
 			}
-			
+
 			// Verify mock expectations
 			provider.AssertExpectations(t)
 			authManager.AssertExpectations(t)
@@ -301,8 +301,8 @@ func TestService_EnhancedSyncTask(t *testing.T) {
 
 func TestService_ConflictResolution(t *testing.T) {
 	tests := []struct {
-		name     string
-		strategy ConflictStrategy
+		name      string
+		strategy  ConflictStrategy
 		conflicts []FieldConflict
 		expected  func(*testing.T, error)
 	}{
@@ -351,7 +351,7 @@ func TestService_ConflictResolution(t *testing.T) {
 			},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create service
@@ -362,19 +362,19 @@ func TestService_ConflictResolution(t *testing.T) {
 			logger := logging.NewBasic()
 			authManager := &mockAuthManager{}
 			cacheManager := &mockCache{}
-			
+
 			service := NewService(cfg, logger, authManager, cacheManager)
-			
+
 			// Create test sync record
 			record := &TaskSyncRecord{
 				TaskID:     "test-task",
 				ExternalID: "EXT-123",
 			}
-			
+
 			// Test conflict resolution
 			err := service.resolveConflicts(context.Background(), record, tt.conflicts, tt.strategy)
 			tt.expected(t, err)
-			
+
 			// For manual review, check if conflict was stored
 			if tt.strategy == ConflictStrategyManualReview {
 				service.conflictMu.RLock()
@@ -394,28 +394,28 @@ func TestService_CircuitBreaker(t *testing.T) {
 	logger := logging.NewBasic()
 	authManager := &mockAuthManager{}
 	cacheManager := &mockCache{}
-	
+
 	service := NewService(cfg, logger, authManager, cacheManager)
-	
+
 	provider := &EnhancedMockProvider{}
 	provider.On("Name").Return("test")
-	
+
 	err := service.RegisterProvider(provider)
 	require.NoError(t, err)
-	
+
 	providerName := "test"
-	
+
 	// Initially, circuit breaker should be closed
 	assert.True(t, service.isCircuitBreakerClosed(providerName))
-	
+
 	// Record failures to open circuit breaker
 	for i := 0; i < 5; i++ {
 		service.recordFailure(providerName)
 	}
-	
+
 	// Circuit breaker should now be open
 	assert.False(t, service.isCircuitBreakerClosed(providerName))
-	
+
 	// Wait for reset timeout and check half-open state
 	service.mu.Lock()
 	if cb, exists := service.circuitBreakers[providerName]; exists {
@@ -424,13 +424,13 @@ func TestService_CircuitBreaker(t *testing.T) {
 		cb.mu.Unlock()
 	}
 	service.mu.Unlock()
-	
+
 	// Should transition to half-open
 	assert.True(t, service.isCircuitBreakerClosed(providerName))
-	
+
 	// Record success to close circuit breaker
 	service.recordSuccess(providerName)
-	
+
 	// Should be fully closed now
 	assert.True(t, service.isCircuitBreakerClosed(providerName))
 }
@@ -443,20 +443,20 @@ func TestService_RateLimiting(t *testing.T) {
 	logger := logging.NewBasic()
 	authManager := &mockAuthManager{}
 	cacheManager := &mockCache{}
-	
+
 	service := NewService(cfg, logger, authManager, cacheManager)
-	
+
 	provider := &EnhancedMockProvider{}
 	provider.On("Name").Return("test")
-	
+
 	err := service.RegisterProvider(provider)
 	require.NoError(t, err)
-	
+
 	providerName := "test"
-	
+
 	// Initially, should allow requests
 	assert.True(t, service.checkRateLimit(providerName))
-	
+
 	// Exhaust rate limit
 	service.mu.Lock()
 	if limiter, exists := service.rateLimiters[providerName]; exists {
@@ -466,7 +466,7 @@ func TestService_RateLimiting(t *testing.T) {
 		}
 	}
 	service.mu.Unlock()
-	
+
 	// Should now be rate limited
 	assert.False(t, service.checkRateLimit(providerName))
 }
@@ -479,12 +479,12 @@ func TestService_HealthMonitoring(t *testing.T) {
 	logger := logging.NewBasic()
 	authManager := &mockAuthManager{}
 	cacheManager := &mockCache{}
-	
+
 	service := NewService(cfg, logger, authManager, cacheManager)
-	
+
 	provider := &EnhancedMockProvider{}
 	provider.On("Name").Return("test")
-	
+
 	// Mock health check
 	healthStatus := &ProviderHealth{
 		Provider:    "test",
@@ -492,24 +492,24 @@ func TestService_HealthMonitoring(t *testing.T) {
 		LastChecked: time.Now(),
 	}
 	provider.On("HealthCheck", mock.Anything).Return(healthStatus, nil)
-	
+
 	err := service.RegisterProvider(provider)
 	require.NoError(t, err)
-	
+
 	// Perform health check
 	service.checkProviderHealth("test", provider)
-	
+
 	// Get health status
 	health, err := service.GetProviderHealth(context.Background(), "test")
 	require.NoError(t, err)
 	assert.True(t, health.Healthy)
 	assert.Equal(t, "test", health.Provider)
-	
+
 	// Get all provider health
 	allHealth, err := service.GetAllProviderHealth(context.Background())
 	require.NoError(t, err)
 	assert.Contains(t, allHealth, "test")
-	
+
 	provider.AssertExpectations(t)
 }
 
@@ -521,27 +521,27 @@ func TestService_MetricsTracking(t *testing.T) {
 	logger := logging.NewBasic()
 	authManager := &mockAuthManager{}
 	cacheManager := &mockCache{}
-	
+
 	service := NewService(cfg, logger, authManager, cacheManager)
-	
+
 	// Initial metrics should be zero
 	assert.Equal(t, int64(0), service.metrics.SyncOperations)
 	assert.Equal(t, int64(0), service.metrics.SuccessfulSyncs)
 	assert.Equal(t, int64(0), service.metrics.FailedSyncs)
-	
+
 	// Update metrics with successful operation
 	start := time.Now()
 	time.Sleep(10 * time.Millisecond) // Simulate operation time
 	service.updateMetrics(start, true)
-	
+
 	assert.Equal(t, int64(1), service.metrics.SyncOperations)
 	assert.Equal(t, int64(1), service.metrics.SuccessfulSyncs)
 	assert.Equal(t, int64(0), service.metrics.FailedSyncs)
 	assert.Greater(t, service.metrics.AverageLatency, time.Duration(0))
-	
+
 	// Update metrics with failed operation
 	service.updateMetrics(start, false)
-	
+
 	assert.Equal(t, int64(2), service.metrics.SyncOperations)
 	assert.Equal(t, int64(1), service.metrics.SuccessfulSyncs)
 	assert.Equal(t, int64(1), service.metrics.FailedSyncs)
@@ -555,21 +555,21 @@ func TestService_ErrorHandling(t *testing.T) {
 	logger := logging.NewBasic()
 	authManager := &mockAuthManager{}
 	cacheManager := &mockCache{}
-	
+
 	service := NewService(cfg, logger, authManager, cacheManager)
-	
+
 	// Test error creation
 	err := service.createIntegrationError(ErrCodeProviderError, "test error", "test-provider", "task-123")
-	
+
 	assert.Equal(t, ErrCodeProviderError, err.Code)
 	assert.Equal(t, "test error", err.Message)
 	assert.Equal(t, "test-provider", err.Provider)
 	assert.Equal(t, "task-123", err.TaskID)
 	assert.True(t, err.Retryable)
-	
+
 	// Test retryable error detection
 	assert.True(t, service.isRetryableError(err))
-	
+
 	// Test non-retryable error
 	nonRetryableErr := service.createIntegrationError(ErrCodeInvalidData, "invalid data", "test", "task")
 	assert.False(t, service.isRetryableError(nonRetryableErr))
@@ -583,19 +583,19 @@ func TestService_RetryLogic(t *testing.T) {
 	logger := logging.NewBasic()
 	authManager := &mockAuthManager{}
 	cacheManager := &mockCache{}
-	
+
 	service := NewService(cfg, logger, authManager, cacheManager)
-	
+
 	// Test successful operation (no retries needed)
 	callCount := 0
 	err := service.retryWithBackoff(context.Background(), 3, func() error {
 		callCount++
 		return nil
 	})
-	
+
 	assert.NoError(t, err)
 	assert.Equal(t, 1, callCount)
-	
+
 	// Test operation that succeeds after retries
 	callCount = 0
 	err = service.retryWithBackoff(context.Background(), 3, func() error {
@@ -605,17 +605,17 @@ func TestService_RetryLogic(t *testing.T) {
 		}
 		return nil
 	})
-	
+
 	assert.NoError(t, err)
 	assert.Equal(t, 3, callCount)
-	
+
 	// Test non-retryable error
 	callCount = 0
 	err = service.retryWithBackoff(context.Background(), 3, func() error {
 		callCount++
 		return service.createIntegrationError(ErrCodeInvalidData, "invalid data", "test", "task")
 	})
-	
+
 	assert.Error(t, err)
 	assert.Equal(t, 1, callCount) // Should not retry
 }
