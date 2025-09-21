@@ -43,6 +43,9 @@ zen assets list [flags]
   # List all activities
   zen assets list
 
+  # List activities by type
+  zen assets list --type template
+
   # List activities in a specific category
   zen assets list --category development
 
@@ -50,7 +53,7 @@ zen assets list [flags]
   zen assets list --tags api,design
 
   # Combine filters
-  zen assets list --category planning --tags strategy
+  zen assets list --type template --category planning --tags strategy
 
   # Limit results and use pagination
   zen assets list --limit 10 --offset 20
@@ -67,6 +70,7 @@ zen assets list [flags]
       --limit int         Maximum number of results (default 50)
       --offset int        Number of results to skip
       --tags strings      Filter by tags (comma-separated)
+      --type string       Filter by asset type (template|prompt|mcp|schema)
 ```
 
 ### Options inherited from parent commands
