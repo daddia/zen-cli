@@ -2,7 +2,6 @@ package factory
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,7 +16,6 @@ import (
 	"github.com/daddia/zen/pkg/auth"
 	"github.com/daddia/zen/pkg/cache"
 	"github.com/daddia/zen/pkg/cmdutil"
-	"github.com/daddia/zen/pkg/fs"
 	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/daddia/zen/pkg/plugin"
 	"github.com/daddia/zen/pkg/template"
@@ -558,16 +556,11 @@ func integrationFunc(f *cmdutil.Factory) func() (cmdutil.IntegrationManagerInter
 		// Create integration service
 		integrationService := integration.NewService(&cfg.Integrations, logger, authManager, syncCache)
 
-		// Initialize plugin runtime
-		pluginRuntime, err := plugin.NewWASMRuntime(logger, authManager)
-		if err != nil {
-			integrationError = fmt.Errorf("failed to create plugin runtime: %w", err)
-			return nil, integrationError
-		}
+		// Initialize plugin runtime (using simple runtime for now)
+		pluginRuntime := plugin.NewSimpleRuntime(logger, authManager)
 
 		// Create plugin registry
-		fsManager := fs.NewManager(logger)
-		pluginRegistry := plugin.NewRegistry(logger, fsManager, cfg.Integrations.PluginDirectories, pluginRuntime)
+		pluginRegistry := plugin.NewRegistry(logger, cfg.Integrations.PluginDirectories, pluginRuntime)
 
 		// Discover plugins
 		if err := pluginRegistry.DiscoverPlugins(context.Background()); err != nil {
