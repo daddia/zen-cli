@@ -39,37 +39,31 @@ func NewCmdAssetsList(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List available assets",
-		Long: `List available assets with optional filtering.
+		Long: `List available activities with optional filtering.
 
-This command reads from the local manifest file (.zen/assets/manifest.yaml) for fast,
-offline asset discovery. The manifest contains metadata about all available assets
+This command reads from the local manifest file (.zen/library/manifest.yaml) for fast,
+offline activity discovery. The manifest contains metadata about all available activities
 without storing the actual content locally.
 
-Assets can be filtered by type, category, and tags. Results are paginated
-to handle large asset repositories efficiently.
+Activities can be filtered by category and tags. Results are paginated
+to handle large activity repositories efficiently.
 
-Asset Types:
-- template: Reusable content templates with variables
-- prompt: AI prompts for various tasks
-- mcp: Model Context Protocol definitions
-- schema: JSON/YAML schemas for validation
+Each activity represents a workflow step with associated templates and prompts
+for generating documentation, code, or configurations.
 
 The list command works offline using the local manifest. Use 'zen assets sync'
-to update the manifest with the latest assets from the repository.`,
-		Example: `  # List all assets
+to update the manifest with the latest activities from the repository.`,
+		Example: `  # List all activities
   zen assets list
 
-  # List only templates
-  zen assets list --type template
+  # List activities in a specific category
+  zen assets list --category development
 
-  # List assets in a specific category
-  zen assets list --category documentation
-
-  # List assets with specific tags
-  zen assets list --tags ai,technical
+  # List activities with specific tags
+  zen assets list --tags api,design
 
   # Combine filters
-  zen assets list --type prompt --category planning --tags sprint
+  zen assets list --category planning --tags strategy
 
   # Limit results and use pagination
   zen assets list --limit 10 --offset 20
@@ -83,7 +77,6 @@ to update the manifest with the latest assets from the repository.`,
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.Type, "type", "", "Filter by asset type (template, prompt, mcp, schema)")
 	cmd.Flags().StringVar(&opts.Category, "category", "", "Filter by category")
 	cmd.Flags().StringSliceVar(&opts.Tags, "tags", nil, "Filter by tags (comma-separated)")
 	cmd.Flags().IntVar(&opts.Limit, "limit", 50, "Maximum number of results")
@@ -118,15 +111,6 @@ func listRun(opts *ListOptions) error {
 		Offset:   opts.Offset,
 	}
 
-	// Parse asset type if provided
-	if opts.Type != "" {
-		assetType, err := parseAssetType(opts.Type)
-		if err != nil {
-			return err
-		}
-		filter.Type = assetType
-	}
-
 	// List assets
 	assetList, err := client.ListAssets(ctx, filter)
 	if err != nil {
@@ -141,21 +125,6 @@ func listRun(opts *ListOptions) error {
 		return displayListYAML(opts, assetList)
 	default:
 		return displayListText(opts, assetList, filter)
-	}
-}
-
-func parseAssetType(typeStr string) (assets.AssetType, error) {
-	switch strings.ToLower(typeStr) {
-	case "template":
-		return assets.AssetTypeTemplate, nil
-	case "prompt":
-		return assets.AssetTypePrompt, nil
-	case "mcp":
-		return assets.AssetTypeMCP, nil
-	case "schema":
-		return assets.AssetTypeSchema, nil
-	default:
-		return "", fmt.Errorf("invalid asset type '%s'. Valid types: template, prompt, mcp, schema", typeStr)
 	}
 }
 
@@ -196,40 +165,36 @@ func displayListText(opts *ListOptions, assetList *assets.AssetList, filter asse
 	w := tabwriter.NewWriter(opts.IO.Out, 0, 0, 2, ' ', 0)
 	defer w.Flush()
 
-	// Header
-	fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
+	// Header - new format: name | command | description | output format | output file
+	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
 		cs.Bold("NAME"),
-		cs.Bold("TYPE"),
-		cs.Bold("CATEGORY"),
-		cs.Bold("DESCRIPTION"))
+		cs.Bold("COMMAND"),
+		cs.Bold("DESCRIPTION"),
+		cs.Bold("OUTPUT FORMAT"),
+		cs.Bold("OUTPUT FILE"))
 
-	// Assets
+	// Activities
 	for _, asset := range assetList.Assets {
 		description := asset.Description
-		if len(description) > 60 {
-			description = description[:57] + "..."
+		if len(description) > 50 {
+			description = description[:47] + "..."
 		}
 
-		// Color code asset types
-		var typeColor string
-		switch asset.Type {
-		case assets.AssetTypeTemplate:
-			typeColor = cs.Blue(string(asset.Type))
-		case assets.AssetTypePrompt:
-			typeColor = cs.Green(string(asset.Type))
-		case assets.AssetTypeMCP:
-			typeColor = cs.Yellow(string(asset.Type))
-		case assets.AssetTypeSchema:
-			typeColor = cs.Magenta(string(asset.Type))
-		default:
-			typeColor = string(asset.Type)
+		// Format command with backticks for CLI commands
+		command := fmt.Sprintf("`%s`", asset.Command)
+
+		// Clean up output file name (remove .tmpl extension if present)
+		outputFile := asset.OutputFile
+		if strings.HasSuffix(outputFile, ".tmpl") {
+			outputFile = strings.TrimSuffix(outputFile, ".tmpl")
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
 			asset.Name,
-			typeColor,
-			asset.Category,
-			description)
+			cs.Blue(command),
+			description,
+			asset.Format,
+			outputFile)
 	}
 
 	w.Flush()
@@ -258,9 +223,6 @@ func displayListText(opts *ListOptions, assetList *assets.AssetList, filter asse
 	// Show active filters
 	if hasFilters(filter) && opts.IO.IsStdoutTTY() {
 		fmt.Fprintf(opts.IO.Out, "\n%s Active filters:", cs.Gray("Filters:"))
-		if filter.Type != "" {
-			fmt.Fprintf(opts.IO.Out, " type=%s", filter.Type)
-		}
 		if filter.Category != "" {
 			fmt.Fprintf(opts.IO.Out, " category=%s", filter.Category)
 		}
@@ -274,5 +236,5 @@ func displayListText(opts *ListOptions, assetList *assets.AssetList, filter asse
 }
 
 func hasFilters(filter assets.AssetFilter) bool {
-	return filter.Type != "" || filter.Category != "" || len(filter.Tags) > 0
+	return filter.Category != "" || len(filter.Tags) > 0
 }

@@ -506,6 +506,10 @@ func (m *mockWorkspaceManager) ConfigFile() string {
 	return filepath.Join(m.root, ".zen", "config.yaml")
 }
 
+func (m *mockWorkspaceManager) ZenDirectory() string {
+	return filepath.Join(m.root, ".zen")
+}
+
 func (m *mockWorkspaceManager) Initialize() error {
 	m.initialized = true
 	return nil

@@ -470,7 +470,7 @@ func (m *MockAssetClient) Close() error {
 	return args.Error(0)
 }
 
-// Test setupAssetsInfrastructure function
+// Test setupLibraryInfrastructure function
 func TestSetupAssetsInfrastructure(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -499,7 +499,7 @@ func TestSetupAssetsInfrastructure(t *testing.T) {
 				mockAsset.On("SyncRepository", mock.AnythingOfType("*context.timerCtx"), mock.AnythingOfType("assets.SyncRequest")).Run(func(args mock.Arguments) {
 					// Create manifest file to simulate successful sync
 					cwd, _ := os.Getwd()
-					manifestPath := filepath.Join(cwd, ".zen", "assets", "manifest.yaml")
+					manifestPath := filepath.Join(cwd, ".zen", "library", "manifest.yaml")
 					os.MkdirAll(filepath.Dir(manifestPath), 0755)
 					os.WriteFile(manifestPath, []byte("test manifest content"), 0644)
 				}).Return(&assets.SyncResult{
@@ -593,7 +593,7 @@ func TestSetupAssetsInfrastructure(t *testing.T) {
 
 			factory := tt.setupFactory(streams)
 
-			err = setupAssetsInfrastructure(factory, tt.wasInitialized)
+			err = setupLibraryInfrastructure(factory, tt.wasInitialized)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -601,9 +601,9 @@ func TestSetupAssetsInfrastructure(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			// Check that .zen/assets directory was created
-			assetsDir := filepath.Join(tempDir, ".zen", "assets")
-			assert.DirExists(t, assetsDir)
+			// Check that .zen/library directory was created
+			libraryDir := filepath.Join(tempDir, ".zen", "library")
+			assert.DirExists(t, libraryDir)
 
 			if tt.expectAssetSync {
 				output := stdout.String()
@@ -633,7 +633,7 @@ func TestFetchManifestBestEffort(t *testing.T) {
 				mockAsset.On("SyncRepository", mock.AnythingOfType("*context.timerCtx"), mock.AnythingOfType("assets.SyncRequest")).Run(func(args mock.Arguments) {
 					// Create manifest file to simulate successful sync
 					cwd, _ := os.Getwd()
-					manifestPath := filepath.Join(cwd, ".zen", "assets", "manifest.yaml")
+					manifestPath := filepath.Join(cwd, ".zen", "library", "manifest.yaml")
 					os.MkdirAll(filepath.Dir(manifestPath), 0755)
 					os.WriteFile(manifestPath, []byte("test manifest content"), 0644)
 				}).Return(&assets.SyncResult{
@@ -659,7 +659,7 @@ func TestFetchManifestBestEffort(t *testing.T) {
 			},
 			setupManifest: func(tempDir string) error {
 				// Create recent manifest file
-				manifestPath := filepath.Join(tempDir, ".zen", "assets", "manifest.yaml")
+				manifestPath := filepath.Join(tempDir, ".zen", "library", "manifest.yaml")
 				return os.WriteFile(manifestPath, []byte("manifest: test"), 0644)
 			},
 			expectSync: false,
@@ -677,7 +677,7 @@ func TestFetchManifestBestEffort(t *testing.T) {
 				})).Run(func(args mock.Arguments) {
 					// Create manifest file to simulate successful sync
 					cwd, _ := os.Getwd()
-					manifestPath := filepath.Join(cwd, ".zen", "assets", "manifest.yaml")
+					manifestPath := filepath.Join(cwd, ".zen", "library", "manifest.yaml")
 					os.MkdirAll(filepath.Dir(manifestPath), 0755)
 					os.WriteFile(manifestPath, []byte("test manifest content updated"), 0644)
 				}).Return(&assets.SyncResult{
@@ -694,7 +694,7 @@ func TestFetchManifestBestEffort(t *testing.T) {
 			},
 			setupManifest: func(tempDir string) error {
 				// Create old manifest file
-				manifestPath := filepath.Join(tempDir, ".zen", "assets", "manifest.yaml")
+				manifestPath := filepath.Join(tempDir, ".zen", "library", "manifest.yaml")
 				return os.WriteFile(manifestPath, []byte("manifest: old"), 0644)
 			},
 			expectSync: true,
@@ -744,9 +744,9 @@ func TestFetchManifestBestEffort(t *testing.T) {
 			}()
 			require.NoError(t, os.Chdir(tempDir))
 
-			// Create .zen/assets directory
-			assetsDir := filepath.Join(tempDir, ".zen", "assets")
-			require.NoError(t, os.MkdirAll(assetsDir, 0755))
+			// Create .zen/library directory
+			libraryDir := filepath.Join(tempDir, ".zen", "library")
+			require.NoError(t, os.MkdirAll(libraryDir, 0755))
 
 			if tt.setupManifest != nil {
 				require.NoError(t, tt.setupManifest(tempDir))
@@ -892,6 +892,10 @@ func (m *mockWorkspaceManager) Root() string {
 
 func (m *mockWorkspaceManager) ConfigFile() string {
 	return ".zen/config.yaml"
+}
+
+func (m *mockWorkspaceManager) ZenDirectory() string {
+	return ".zen"
 }
 
 func (m *mockWorkspaceManager) Initialize() error {
@@ -1089,7 +1093,7 @@ func BenchmarkSetupAssetsInfrastructure(b *testing.B) {
 
 		b.StartTimer()
 
-		err = setupAssetsInfrastructure(factory, false)
+		err = setupLibraryInfrastructure(factory, false)
 		// Ignore error - acceptable in benchmark
 		_ = err
 

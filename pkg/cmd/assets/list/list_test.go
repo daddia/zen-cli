@@ -26,7 +26,7 @@ func TestNewCmdAssetsList(t *testing.T) {
 	// Test command metadata
 	assert.Equal(t, "list", cmd.Use)
 	assert.Equal(t, "List available assets", cmd.Short)
-	assert.Contains(t, cmd.Long, "List available assets with optional filtering")
+	assert.Contains(t, cmd.Long, "List available activities with optional filtering")
 	assert.Contains(t, cmd.Example, "zen assets list")
 }
 
@@ -37,10 +37,6 @@ func TestListCommandFlags(t *testing.T) {
 	cmd := NewCmdAssetsList(f)
 
 	// Test that expected flags exist
-	typeFlag := cmd.Flags().Lookup("type")
-	require.NotNil(t, typeFlag)
-	assert.Equal(t, "string", typeFlag.Value.Type())
-
 	categoryFlag := cmd.Flags().Lookup("category")
 	require.NotNil(t, categoryFlag)
 	assert.Equal(t, "string", categoryFlag.Value.Type())
@@ -65,27 +61,26 @@ func TestListTextOutput(t *testing.T) {
 	stdout := io.Out
 	f := cmdutil.NewTestFactory(io)
 
-	// Create test assets
+	// Create test activities
 	testAssets := []assets.AssetMetadata{
 		{
-			Name:        "technical-spec",
+			Name:        "Technical Spec",
+			Command:     "tech-spec",
 			Type:        assets.AssetTypeTemplate,
 			Category:    "documentation",
 			Description: "Technical specification template",
+			Format:      "markdown",
+			OutputFile:  "technical-spec.md.tmpl",
 			UpdatedAt:   time.Now(),
 		},
 		{
-			Name:        "user-story",
+			Name:        "Strategy Definition",
+			Command:     "strategy",
 			Type:        assets.AssetTypeTemplate,
 			Category:    "planning",
-			Description: "User story template with acceptance criteria",
-			UpdatedAt:   time.Now(),
-		},
-		{
-			Name:        "code-review",
-			Type:        assets.AssetTypePrompt,
-			Category:    "quality",
-			Description: "Code review prompt for AI analysis",
+			Description: "Strategic planning and goal setting template",
+			Format:      "markdown",
+			OutputFile:  "strategy.md.tmpl",
 			UpdatedAt:   time.Now(),
 		},
 	}
@@ -108,20 +103,19 @@ func TestListTextOutput(t *testing.T) {
 
 	// Check table headers
 	assert.Contains(t, output, "NAME")
-	assert.Contains(t, output, "TYPE")
-	assert.Contains(t, output, "CATEGORY")
+	assert.Contains(t, output, "COMMAND")
 	assert.Contains(t, output, "DESCRIPTION")
+	assert.Contains(t, output, "OUTPUT FORMAT")
+	assert.Contains(t, output, "OUTPUT FILE")
 
-	// Check asset data
-	assert.Contains(t, output, "technical-spec")
-	assert.Contains(t, output, "user-story")
-	assert.Contains(t, output, "code-review")
-	assert.Contains(t, output, "documentation")
-	assert.Contains(t, output, "planning")
-	assert.Contains(t, output, "quality")
+	// Check activity data (now using activity names and commands)
+	assert.Contains(t, output, "Technical Spec")
+	assert.Contains(t, output, "Strategy Definition")
+	assert.Contains(t, output, "tech-spec")
+	assert.Contains(t, output, "strategy")
 
 	// Check summary
-	assert.Contains(t, output, "Total: 3 assets")
+	assert.Contains(t, output, "Total: 2 assets")
 }
 
 func TestListJSONOutput(t *testing.T) {
@@ -228,7 +222,6 @@ func TestListWithFilters(t *testing.T) {
 
 	cmd := NewCmdAssetsList(f)
 	cmd.SetArgs([]string{
-		"--type", "template",
 		"--category", "documentation",
 		"--tags", "ai,technical",
 		"--limit", "25",
@@ -240,7 +233,6 @@ func TestListWithFilters(t *testing.T) {
 	require.NoError(t, err)
 
 	// The mock client should have captured the filter
-	assert.Equal(t, assets.AssetTypeTemplate, mockClient.lastFilter.Type)
 	assert.Equal(t, "documentation", mockClient.lastFilter.Category)
 	assert.Equal(t, []string{"ai", "technical"}, mockClient.lastFilter.Tags)
 	assert.Equal(t, 25, mockClient.lastFilter.Limit)
@@ -269,34 +261,6 @@ func TestListEmptyResults(t *testing.T) {
 	assert.Contains(t, output, "No assets found")
 }
 
-func TestParseAssetType(t *testing.T) {
-	tests := []struct {
-		input   string
-		want    assets.AssetType
-		wantErr bool
-	}{
-		{"template", assets.AssetTypeTemplate, false},
-		{"prompt", assets.AssetTypePrompt, false},
-		{"mcp", assets.AssetTypeMCP, false},
-		{"schema", assets.AssetTypeSchema, false},
-		{"invalid", "", true},
-		{"", "", true},
-		{"TEMPLATE", assets.AssetTypeTemplate, false}, // Should be case insensitive
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.input, func(t *testing.T) {
-			got, err := parseAssetType(tt.input)
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.want, got)
-			}
-		})
-	}
-}
-
 func TestHasFilters(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -307,13 +271,6 @@ func TestHasFilters(t *testing.T) {
 			name:   "no filters",
 			filter: assets.AssetFilter{},
 			want:   false,
-		},
-		{
-			name: "type filter",
-			filter: assets.AssetFilter{
-				Type: assets.AssetTypeTemplate,
-			},
-			want: true,
 		},
 		{
 			name: "category filter",

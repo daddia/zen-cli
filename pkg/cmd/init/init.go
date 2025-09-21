@@ -34,16 +34,16 @@ without errors, similar to 'git init' behavior.
 
 The .zen/ directory contains:
   - Configuration files
-  - Assets directory with manifest cache
+  - Library directory with manifest cache
   - Cache directory
   - Log directory
   - Templates directory (for future use)
   - Backups directory
 
 If GitHub authentication is configured, zen init will automatically:
-  - Set up the assets infrastructure
-  - Download the latest assets manifest (if needed)
-  - Make assets available for immediate use`,
+  - Set up the library infrastructure
+  - Download the latest library manifest (if needed)
+  - Make library available for immediate use`,
 		Example: `  # Initialize in current directory (safe to run multiple times)
   zen init
 
@@ -134,11 +134,11 @@ If GitHub authentication is configured, zen init will automatically:
 				fmt.Fprintf(f.IOStreams.Out, "Initialized empty Zen workspace in %s/.zen/\n", cwd)
 			}
 
-			// Enhanced: Set up assets infrastructure
-			if err := setupAssetsInfrastructure(f, wasInitialized); err != nil {
-				// Don't fail init if assets setup fails - just warn
-				fmt.Fprintf(f.IOStreams.ErrOut, "! Warning: Failed to set up assets infrastructure: %v\n", err)
-				fmt.Fprintf(f.IOStreams.ErrOut, "  You can set up assets later with 'zen assets sync'\n")
+			// Enhanced: Set up library infrastructure
+			if err := setupLibraryInfrastructure(f, wasInitialized); err != nil {
+				// Don't fail init if library setup fails - just warn
+				fmt.Fprintf(f.IOStreams.ErrOut, "! Warning: Failed to set up library infrastructure: %v\n", err)
+				fmt.Fprintf(f.IOStreams.ErrOut, "  You can set up library later with 'zen assets sync'\n")
 			}
 
 			return nil
@@ -151,12 +151,12 @@ If GitHub authentication is configured, zen init will automatically:
 	return cmd
 }
 
-// setupAssetsInfrastructure sets up the assets infrastructure during workspace initialization
-func setupAssetsInfrastructure(f *cmdutil.Factory, wasInitialized bool) error {
-	// 1. Create .zen/assets directory
-	assetsDir := filepath.Join(".zen", "assets")
-	if err := os.MkdirAll(assetsDir, 0755); err != nil {
-		return fmt.Errorf("failed to create assets directory: %w", err)
+// setupLibraryInfrastructure sets up the library infrastructure during workspace initialization
+func setupLibraryInfrastructure(f *cmdutil.Factory, wasInitialized bool) error {
+	// 1. Create .zen/library directory
+	libraryDir := filepath.Join(".zen", "library")
+	if err := os.MkdirAll(libraryDir, 0755); err != nil {
+		return fmt.Errorf("failed to create library directory: %w", err)
 	}
 
 	// 2. Check if GitHub authentication is available
@@ -194,7 +194,7 @@ func fetchManifestBestEffort(f *cmdutil.Factory, ctx context.Context, wasReinit 
 	fsManager := fs.New(f.Logger)
 
 	// Check if manifest already exists and is recent (< 24 hours)
-	manifestPath := filepath.Join(".zen", "assets", "manifest.yaml")
+	manifestPath := filepath.Join(".zen", "library", "manifest.yaml")
 	if !wasReinit {
 		if stat, err := os.Stat(manifestPath); err == nil {
 			age := time.Since(stat.ModTime())

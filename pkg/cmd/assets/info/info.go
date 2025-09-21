@@ -160,6 +160,7 @@ func displayInfoText(opts *InfoOptions, content *assets.AssetContent) error {
 	// Basic information section
 	fmt.Fprintf(opts.IO.Out, "%s\n", cs.Bold("Basic information"))
 	fmt.Fprintf(opts.IO.Out, "  Name: %s\n", meta.Name)
+	fmt.Fprintf(opts.IO.Out, "  Command: %s\n", cs.Blue(fmt.Sprintf("`%s`", meta.Command)))
 
 	// Color code asset type according to Zen standards
 	var typeDisplay string
