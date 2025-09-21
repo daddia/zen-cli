@@ -26,17 +26,17 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 ### **Task Enhanced** → Target Release [v0.6.0]
 
-- [ ] **[ZEN-011] AI Client Foundation**
+- [ ] **[ZEN-011] Template Generation Command**
+  - **Deliverable**: `zen draft <activity>` renders template as plain format
+  - **Acceptance**: Generate document template
+
+- [ ] **[ZEN-012] AI Client Foundation**
   - **Deliverable**: Multi-provider LLM client (OpenAI, Anthropic, Azure) with strategy pattern
   - **Acceptance**: Unified interface for content enhancement, cost tracking, and provider switching
 
-- [ ] **[ZEN-012] Content Generation Commands**
-  - **Deliverable**: `zen write <template>` and `zen draft <template>` for content creation
+- [ ] **[ZEN-013] Content Generation Commands**
+  - **Deliverable**: `zen write <activity>` for content creation
   - **Acceptance**: Generate content from templates with AI enhancement and variable prompting
-
-- [ ] **[ZEN-013] Template Viewing Command**
-  - **Deliverable**: `zen template view <template>` renders template as plain markdown
-  - **Acceptance**: Shows template structure and variables for user reference
 
 ### **Work Management & Workflow** → Target Release [TBD]
 
