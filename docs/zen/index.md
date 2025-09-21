@@ -44,6 +44,9 @@ Manage assets and templates
 ### [zen auth](zen_auth.md)
 Authenticate with Git providers
 
+### [zen draft](zen_draft.md)
+Generate document templates with task data
+
 ### [zen help](zen_help.md)
 Help about any command
 

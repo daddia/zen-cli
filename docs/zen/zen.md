@@ -37,6 +37,7 @@ Zen. The unified control plane for product & engineering.
 * [zen auth](zen-auth.md.md)	 - Authenticate with Git providers
 * [zen completion](zen-completion.md.md)	 - Generate shell completion scripts
 * [zen config](zen-config.md.md)	 - Manage configuration for Zen CLI
+* [zen draft](zen-draft.md.md)	 - Generate document templates with task data
 * [zen init](zen-init.md.md)	 - Initialize your new Zen workspace or reinitialize an existing one
 * [zen status](zen-status.md.md)	 - Display workspace and system status
 * [zen task](zen-task.md.md)	 - Manage tasks and workflow
