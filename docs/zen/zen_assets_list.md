@@ -5,7 +5,7 @@ description: "CLI reference for zen assets list"
 section: "CLI Reference"
 man_section: 1
 since: v0.0.0
-date: 2025-09-20
+date: 2025-09-21
 keywords:
   - zen
   - cli
@@ -18,23 +18,20 @@ List available assets
 
 ### Synopsis
 
-List available assets with optional filtering.
+List available activities with optional filtering.
 
-This command reads from the local manifest file (.zen/assets/manifest.yaml) for fast,
-offline asset discovery. The manifest contains metadata about all available assets
+This command reads from the local manifest file (.zen/library/manifest.yaml) for fast,
+offline activity discovery. The manifest contains metadata about all available activities
 without storing the actual content locally.
 
-Assets can be filtered by type, category, and tags. Results are paginated
-to handle large asset repositories efficiently.
+Activities can be filtered by category and tags. Results are paginated
+to handle large activity repositories efficiently.
 
-Asset Types:
-- template: Reusable content templates with variables
-- prompt: AI prompts for various tasks
-- mcp: Model Context Protocol definitions
-- schema: JSON/YAML schemas for validation
+Each activity represents a workflow step with associated templates and prompts
+for generating documentation, code, or configurations.
 
 The list command works offline using the local manifest. Use 'zen assets sync'
-to update the manifest with the latest assets from the repository.
+to update the manifest with the latest activities from the repository.
 
 ```
 zen assets list [flags]
@@ -43,20 +40,17 @@ zen assets list [flags]
 ### Examples
 
 ```
-  # List all assets
+  # List all activities
   zen assets list
 
-  # List only templates
-  zen assets list --type template
+  # List activities in a specific category
+  zen assets list --category development
 
-  # List assets in a specific category
-  zen assets list --category documentation
-
-  # List assets with specific tags
-  zen assets list --tags ai,technical
+  # List activities with specific tags
+  zen assets list --tags api,design
 
   # Combine filters
-  zen assets list --type prompt --category planning --tags sprint
+  zen assets list --category planning --tags strategy
 
   # Limit results and use pagination
   zen assets list --limit 10 --offset 20
@@ -73,7 +67,6 @@ zen assets list [flags]
       --limit int         Maximum number of results (default 50)
       --offset int        Number of results to skip
       --tags strings      Filter by tags (comma-separated)
-      --type string       Filter by asset type (template, prompt, mcp, schema)
 ```
 
 ### Options inherited from parent commands
