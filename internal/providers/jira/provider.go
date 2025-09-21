@@ -129,22 +129,22 @@ func (p *Provider) Name() string {
 // GetTaskData retrieves task data from Jira
 func (p *Provider) GetTaskData(ctx context.Context, externalID string) (*integration.ExternalTaskData, error) {
 	p.logger.Debug("getting Jira issue", "issue_key", externalID)
-	
+
 	// Build API URL
 	url := fmt.Sprintf("%s/rest/api/3/issue/%s", p.baseURL, externalID)
-	
+
 	// Make API request
 	resp, err := p.makeAPIRequest(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Jira issue: %w", err)
 	}
-	
+
 	// Parse response
 	var issue JiraIssue
 	if err := json.Unmarshal(resp, &issue); err != nil {
 		return nil, fmt.Errorf("failed to parse Jira issue response: %w", err)
 	}
-	
+
 	// Convert to external task data
 	taskData := &integration.ExternalTaskData{
 		ID:          issue.Key,
@@ -161,40 +161,40 @@ func (p *Provider) GetTaskData(ctx context.Context, externalID string) (*integra
 			"self":       issue.Self,
 		},
 	}
-	
+
 	p.logger.Debug("retrieved Jira issue", "key", issue.Key, "summary", issue.Fields.Summary)
-	
+
 	return taskData, nil
 }
 
 // CreateTask creates a new task in Jira
 func (p *Provider) CreateTask(ctx context.Context, taskData *integration.ZenTaskData) (*integration.ExternalTaskData, error) {
 	p.logger.Debug("creating Jira issue", "title", taskData.Title)
-	
+
 	// Build create request
 	createReq := JiraCreateIssueRequest{}
 	createReq.Fields.Project.Key = p.projectKey
 	createReq.Fields.Summary = taskData.Title
 	createReq.Fields.Description = taskData.Description
 	createReq.Fields.IssueType.Name = "Task" // Default issue type
-	
+
 	if taskData.Priority != "" {
 		createReq.Fields.Priority.Name = taskData.Priority
 	}
-	
+
 	// Convert to JSON
 	reqBody, err := json.Marshal(createReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal create request: %w", err)
 	}
-	
+
 	// Make API request
 	url := fmt.Sprintf("%s/rest/api/3/issue", p.baseURL)
 	resp, err := p.makeAPIRequest(ctx, "POST", url, reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Jira issue: %w", err)
 	}
-	
+
 	// Parse response
 	var createResp struct {
 		ID   string `json:"id"`
@@ -204,7 +204,7 @@ func (p *Provider) CreateTask(ctx context.Context, taskData *integration.ZenTask
 	if err := json.Unmarshal(resp, &createResp); err != nil {
 		return nil, fmt.Errorf("failed to parse create response: %w", err)
 	}
-	
+
 	// Return created task data
 	externalData := &integration.ExternalTaskData{
 		ID:          createResp.Key,
@@ -215,26 +215,26 @@ func (p *Provider) CreateTask(ctx context.Context, taskData *integration.ZenTask
 		Created:     time.Now(),
 		Updated:     time.Now(),
 		Fields: map[string]interface{}{
-			"jira_id":  createResp.ID,
-			"self":     createResp.Self,
-			"project":  p.projectKey,
+			"jira_id": createResp.ID,
+			"self":    createResp.Self,
+			"project": p.projectKey,
 		},
 	}
-	
+
 	p.logger.Info("created Jira issue", "key", createResp.Key, "title", taskData.Title)
-	
+
 	return externalData, nil
 }
 
 // UpdateTask updates an existing task in Jira
 func (p *Provider) UpdateTask(ctx context.Context, externalID string, taskData *integration.ZenTaskData) (*integration.ExternalTaskData, error) {
 	p.logger.Debug("updating Jira issue", "issue_key", externalID, "title", taskData.Title)
-	
+
 	// Build update request
 	updateReq := JiraUpdateIssueRequest{
 		Fields: make(map[string]interface{}),
 	}
-	
+
 	// Map Zen fields to Jira fields
 	if taskData.Title != "" {
 		updateReq.Fields["summary"] = taskData.Title
@@ -245,53 +245,53 @@ func (p *Provider) UpdateTask(ctx context.Context, externalID string, taskData *
 	if taskData.Priority != "" {
 		updateReq.Fields["priority"] = map[string]string{"name": taskData.Priority}
 	}
-	
+
 	// Convert to JSON
 	reqBody, err := json.Marshal(updateReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal update request: %w", err)
 	}
-	
+
 	// Make API request
 	url := fmt.Sprintf("%s/rest/api/3/issue/%s", p.baseURL, externalID)
 	_, err = p.makeAPIRequest(ctx, "PUT", url, reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update Jira issue: %w", err)
 	}
-	
+
 	// Get updated issue data
 	updatedData, err := p.GetTaskData(ctx, externalID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get updated issue data: %w", err)
 	}
-	
+
 	p.logger.Info("updated Jira issue", "key", externalID, "title", taskData.Title)
-	
+
 	return updatedData, nil
 }
 
 // SearchTasks searches for tasks in Jira
 func (p *Provider) SearchTasks(ctx context.Context, query map[string]interface{}) ([]*integration.ExternalTaskData, error) {
 	p.logger.Debug("searching Jira issues", "query", query)
-	
+
 	// Build JQL query
 	jql := p.buildJQLQuery(query)
-	
+
 	// Build search URL
 	url := fmt.Sprintf("%s/rest/api/3/search?jql=%s&maxResults=50", p.baseURL, jql)
-	
+
 	// Make API request
 	resp, err := p.makeAPIRequest(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search Jira issues: %w", err)
 	}
-	
+
 	// Parse response
 	var searchResp JiraSearchResponse
 	if err := json.Unmarshal(resp, &searchResp); err != nil {
 		return nil, fmt.Errorf("failed to parse search response: %w", err)
 	}
-	
+
 	// Convert to external task data
 	tasks := make([]*integration.ExternalTaskData, 0, len(searchResp.Issues))
 	for _, issue := range searchResp.Issues {
@@ -312,44 +312,44 @@ func (p *Provider) SearchTasks(ctx context.Context, query map[string]interface{}
 		}
 		tasks = append(tasks, taskData)
 	}
-	
+
 	p.logger.Debug("found Jira issues", "count", len(tasks), "total", searchResp.Total)
-	
+
 	return tasks, nil
 }
 
 // ValidateConnection tests the connection to Jira
 func (p *Provider) ValidateConnection(ctx context.Context) error {
 	p.logger.Debug("validating Jira connection")
-	
+
 	// Test connection by getting server info
 	url := fmt.Sprintf("%s/rest/api/3/serverInfo", p.baseURL)
-	
+
 	_, err := p.makeAPIRequest(ctx, "GET", url, nil)
 	if err != nil {
 		return fmt.Errorf("Jira connection validation failed: %w", err)
 	}
-	
+
 	p.logger.Debug("Jira connection validated successfully")
-	
+
 	return nil
 }
 
 // HealthCheck performs a health check on the Jira provider
 func (p *Provider) HealthCheck(ctx context.Context) (*integration.ProviderHealth, error) {
 	start := time.Now()
-	
+
 	health := &integration.ProviderHealth{
 		Provider:    p.Name(),
 		LastChecked: time.Now(),
 	}
-	
+
 	// Test basic connectivity
 	err := p.ValidateConnection(ctx)
 	responseTime := time.Since(start)
-	
+
 	health.ResponseTime = responseTime
-	
+
 	if err != nil {
 		health.Healthy = false
 		health.LastError = err.Error()
@@ -358,12 +358,12 @@ func (p *Provider) HealthCheck(ctx context.Context) (*integration.ProviderHealth
 		health.Healthy = true
 		health.ErrorCount = 0
 	}
-	
+
 	// Get rate limit info if available
 	if rateLimitInfo, err := p.GetRateLimitInfo(ctx); err == nil {
 		health.RateLimitInfo = rateLimitInfo
 	}
-	
+
 	return health, nil
 }
 
@@ -393,7 +393,7 @@ func (p *Provider) GetFieldMapping() map[string]string {
 	if p.fieldMappings != nil {
 		return p.fieldMappings
 	}
-	
+
 	// Return default field mappings
 	return map[string]string{
 		"task_id":     "key",
@@ -412,7 +412,7 @@ func (p *Provider) MapToZen(external *integration.ExternalTaskData) (*integratio
 	if external == nil {
 		return nil, fmt.Errorf("external task data cannot be nil")
 	}
-	
+
 	zenData := &integration.ZenTaskData{
 		ID:          external.ID,
 		Title:       external.Title,
@@ -428,9 +428,9 @@ func (p *Provider) MapToZen(external *integration.ExternalTaskData) (*integratio
 			"jira_fields":     external.Fields,
 		},
 	}
-	
+
 	p.logger.Debug("mapped Jira data to Zen format", "jira_key", external.ID, "zen_id", zenData.ID)
-	
+
 	return zenData, nil
 }
 
@@ -439,7 +439,7 @@ func (p *Provider) MapToExternal(zen *integration.ZenTaskData) (*integration.Ext
 	if zen == nil {
 		return nil, fmt.Errorf("zen task data cannot be nil")
 	}
-	
+
 	externalData := &integration.ExternalTaskData{
 		ID:          zen.ID,
 		Title:       zen.Title,
@@ -454,7 +454,7 @@ func (p *Provider) MapToExternal(zen *integration.ZenTaskData) (*integration.Ext
 			"issue_type":  "Task",
 		},
 	}
-	
+
 	// Copy metadata
 	if zen.Metadata != nil {
 		if jiraFields, ok := zen.Metadata["jira_fields"].(map[string]interface{}); ok {
@@ -463,9 +463,9 @@ func (p *Provider) MapToExternal(zen *integration.ZenTaskData) (*integration.Ext
 			}
 		}
 	}
-	
+
 	p.logger.Debug("mapped Zen data to Jira format", "zen_id", zen.ID, "jira_key", externalData.ID)
-	
+
 	return externalData, nil
 }
 
@@ -476,22 +476,22 @@ func (p *Provider) makeAPIRequest(ctx context.Context, method, url string, body 
 	if body != nil {
 		bodyReader = bytes.NewReader(body)
 	}
-	
+
 	req, err := http.NewRequestWithContext(ctx, method, url, bodyReader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
-	
+
 	// Set headers
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "Zen-CLI/1.0")
-	
+
 	// Add authentication
 	if err := p.addAuthentication(req); err != nil {
 		return nil, fmt.Errorf("failed to add authentication: %w", err)
 	}
-	
+
 	// Make request
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
@@ -502,18 +502,18 @@ func (p *Provider) makeAPIRequest(ctx context.Context, method, url string, body 
 		}
 	}
 	defer resp.Body.Close()
-	
+
 	// Read response
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
-	
+
 	// Check for errors
 	if resp.StatusCode >= 400 {
 		return nil, p.handleAPIError(resp.StatusCode, respBody)
 	}
-	
+
 	return respBody, nil
 }
 
@@ -522,12 +522,12 @@ func (p *Provider) addAuthentication(req *http.Request) error {
 	if p.config.CredentialsRef == "" {
 		return fmt.Errorf("no credentials configured")
 	}
-	
+
 	credentials, err := p.auth.GetCredentials(p.config.CredentialsRef)
 	if err != nil {
 		return fmt.Errorf("failed to get credentials: %w", err)
 	}
-	
+
 	switch p.config.AuthType {
 	case "basic":
 		// Assume credentials are in "username:password" format
@@ -541,7 +541,7 @@ func (p *Provider) addAuthentication(req *http.Request) error {
 	default:
 		return fmt.Errorf("unsupported auth type: %s", p.config.AuthType)
 	}
-	
+
 	return nil
 }
 
@@ -549,7 +549,7 @@ func (p *Provider) addAuthentication(req *http.Request) error {
 func (p *Provider) handleAPIError(statusCode int, body []byte) error {
 	var errorCode string
 	var retryable bool
-	
+
 	switch statusCode {
 	case 400:
 		errorCode = clients.ErrorCodeInvalidRequest
@@ -573,7 +573,7 @@ func (p *Provider) handleAPIError(statusCode int, body []byte) error {
 		errorCode = clients.ErrorCodeUnknown
 		retryable = false
 	}
-	
+
 	return &clients.ClientError{
 		Code:       errorCode,
 		Message:    fmt.Sprintf("Jira API error: %d", statusCode),
@@ -588,23 +588,23 @@ func (p *Provider) handleAPIError(statusCode int, body []byte) error {
 // buildJQLQuery builds a JQL query from search parameters
 func (p *Provider) buildJQLQuery(query map[string]interface{}) string {
 	var conditions []string
-	
+
 	// Add project filter
 	conditions = append(conditions, fmt.Sprintf("project = %s", p.projectKey))
-	
+
 	// Add other conditions based on query parameters
 	if status, ok := query["status"].(string); ok && status != "" {
 		conditions = append(conditions, fmt.Sprintf("status = \"%s\"", status))
 	}
-	
+
 	if assignee, ok := query["assignee"].(string); ok && assignee != "" {
 		conditions = append(conditions, fmt.Sprintf("assignee = \"%s\"", assignee))
 	}
-	
+
 	if priority, ok := query["priority"].(string); ok && priority != "" {
 		conditions = append(conditions, fmt.Sprintf("priority = \"%s\"", priority))
 	}
-	
+
 	return strings.Join(conditions, " AND ")
 }
 
@@ -618,11 +618,11 @@ func (p *Provider) mapJiraStatusToZen(jiraStatus string) string {
 		"Blocked":     "blocked",
 		"Cancelled":   "cancelled",
 	}
-	
+
 	if zenStatus, ok := statusMap[jiraStatus]; ok {
 		return zenStatus
 	}
-	
+
 	return strings.ToLower(strings.ReplaceAll(jiraStatus, " ", "_"))
 }
 
@@ -634,11 +634,11 @@ func (p *Provider) mapZenStatusToJira(zenStatus string) string {
 		"blocked":     "Blocked",
 		"cancelled":   "Cancelled",
 	}
-	
+
 	if jiraStatus, ok := statusMap[zenStatus]; ok {
 		return jiraStatus
 	}
-	
+
 	return zenStatus
 }
 
@@ -650,11 +650,11 @@ func (p *Provider) mapJiraPriorityToZen(jiraPriority string) string {
 		"Low":     "low",
 		"Lowest":  "low",
 	}
-	
+
 	if zenPriority, ok := priorityMap[jiraPriority]; ok {
 		return zenPriority
 	}
-	
+
 	return strings.ToLower(jiraPriority)
 }
 
@@ -665,10 +665,10 @@ func (p *Provider) mapZenPriorityToJira(zenPriority string) string {
 		"medium":   "Medium",
 		"low":      "Low",
 	}
-	
+
 	if jiraPriority, ok := priorityMap[zenPriority]; ok {
 		return jiraPriority
 	}
-	
+
 	return zenPriority
 }
