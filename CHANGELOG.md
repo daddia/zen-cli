@@ -10,6 +10,48 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/), and this 
 
 ---
 
+## [v0.6.0] - 2025-09-21
+
+### Added
+- **Assets Library Migration**: Migrated assets directory from `.zen/assets` to `.zen/library` for improved user experience
+  - Updated `zen init` command to create `.zen/library` directory structure
+  - Modified all asset management commands to use new library location
+  - Updated documentation and help text to reflect library terminology
+- **Remote Manifest Location Update**: Updated manifest fetching to use new remote repository structure
+  - Changed manifest path from root `manifest.yaml` to `assets/manifest.yaml` in remote repository
+  - Updated both HTTP API and Git CLI manifest fetching methods
+  - Enhanced error handling for new manifest location
+- **Activity-Based Manifest Structure**: Complete redesign of manifest structure from asset types to workflow activities
+  - Migrated from asset-type organization (templates, prompts, mcp, schemas) to activity-based organization
+  - Updated manifest parser to handle activities with commands, workflow stages, and use cases
+  - Enhanced AssetMetadata with command and output file fields for activity support
+- **Enhanced Assets List Display**: Improved table format for better usability
+  - New table format: `NAME | COMMAND | DESCRIPTION | OUTPUT FORMAT`
+  - Alphabetical sorting by activity name for consistent ordering
+  - Command display with backticks for CLI command clarity
+  - Removed output file column for cleaner interface
+  - Enhanced type filtering to work with activity-based structure
+
+### Changed
+- Workspace directory structure: `.zen/assets` → `.zen/library`
+- Remote manifest location: `manifest.yaml` → `assets/manifest.yaml`
+- Manifest organization: Asset types → Workflow activities
+- Assets list table: Added sorting, removed output file column, enhanced command display
+- Help text and documentation updated to use "library" and "activity" terminology
+
+### Removed
+- Backward compatibility for old `.zen/assets` directory structure
+- Support for old manifest structure with separate asset type arrays
+- Output file column from assets list table for cleaner display
+
+### Technical
+- **Parser Redesign**: Complete rewrite of YAML manifest parser for activity structure
+- **Type System**: Enhanced AssetMetadata with activity-specific fields (Command, OutputFile)
+- **Test Coverage**: Updated all tests for new structure, maintained >80% coverage
+- **API Compatibility**: Maintained existing CLI interface while updating internal structure
+
+---
+
 ## [v0.5.0] - 2025-09-20
 
 ### Added
