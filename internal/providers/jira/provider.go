@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -277,11 +278,11 @@ func (p *Provider) SearchTasks(ctx context.Context, query map[string]interface{}
 	// Build JQL query
 	jql := p.buildJQLQuery(query)
 
-	// Build search URL
-	url := fmt.Sprintf("%s/rest/api/3/search?jql=%s&maxResults=50", p.baseURL, jql)
+	// Build search URL with proper encoding
+	searchURL := fmt.Sprintf("%s/rest/api/3/search?jql=%s&maxResults=50", p.baseURL, url.QueryEscape(jql))
 
 	// Make API request
-	resp, err := p.makeAPIRequest(ctx, "GET", url, nil)
+	resp, err := p.makeAPIRequest(ctx, "GET", searchURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search Jira issues: %w", err)
 	}
@@ -327,7 +328,7 @@ func (p *Provider) ValidateConnection(ctx context.Context) error {
 
 	_, err := p.makeAPIRequest(ctx, "GET", url, nil)
 	if err != nil {
-		return fmt.Errorf("Jira connection validation failed: %w", err)
+		return fmt.Errorf("jira connection validation failed: %w", err)
 	}
 
 	p.logger.Debug("Jira connection validated successfully")
@@ -472,7 +473,7 @@ func (p *Provider) MapToExternal(zen *integration.ZenTaskData) (*integration.Ext
 // makeAPIRequest makes an authenticated API request to Jira
 func (p *Provider) makeAPIRequest(ctx context.Context, method, url string, body []byte) ([]byte, error) {
 	// Create request
-	var bodyReader *bytes.Reader
+	var bodyReader io.Reader
 	if body != nil {
 		bodyReader = bytes.NewReader(body)
 	}
@@ -616,7 +617,7 @@ func (p *Provider) mapJiraStatusToZen(jiraStatus string) string {
 		"In Progress": "in_progress",
 		"Done":        "completed",
 		"Blocked":     "blocked",
-		"Cancelled":   "cancelled",
+		"Canceled":    "canceled",
 	}
 
 	if zenStatus, ok := statusMap[jiraStatus]; ok {
@@ -632,7 +633,7 @@ func (p *Provider) mapZenStatusToJira(zenStatus string) string {
 		"in_progress": "In Progress",
 		"completed":   "Done",
 		"blocked":     "Blocked",
-		"cancelled":   "Cancelled",
+		"canceled":    "Canceled",
 	}
 
 	if jiraStatus, ok := statusMap[zenStatus]; ok {
