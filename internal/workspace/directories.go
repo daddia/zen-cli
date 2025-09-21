@@ -24,8 +24,8 @@ func DefaultWorkspaceDirectoryConfig() WorkspaceDirectoryConfig {
 	return WorkspaceDirectoryConfig{
 		EssentialDirectories: []DirectorySpec{
 			{
-				Name:        "assets",
-				Description: "Asset cache and manifest storage",
+				Name:        "library",
+				Description: "Library cache and manifest storage",
 				Permissions: 0755,
 			},
 			{

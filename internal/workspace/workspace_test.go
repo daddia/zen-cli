@@ -203,7 +203,7 @@ func TestInitialize_NewWorkspace(t *testing.T) {
 	assert.DirExists(t, zenDir)
 
 	// Check essential directories exist
-	assert.DirExists(t, filepath.Join(zenDir, "assets"))
+	assert.DirExists(t, filepath.Join(zenDir, "library"))
 	assert.DirExists(t, filepath.Join(zenDir, "cache"))
 	assert.DirExists(t, filepath.Join(zenDir, "logs"))
 	assert.DirExists(t, filepath.Join(zenDir, "work"))
