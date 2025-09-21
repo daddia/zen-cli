@@ -40,11 +40,11 @@ func NewOperations(factory *cmdutil.Factory) *Operations {
 // FetchFromJira fetches task details from Jira
 func (ops *Operations) FetchFromJira(ctx context.Context, taskID string) (*jira.TaskData, error) {
 	if ops.jiraClient == nil {
-		return nil, fmt.Errorf("Jira client not available")
+		return nil, fmt.Errorf("jira client not available")
 	}
 
 	if !ops.jiraClient.IsConfigured() {
-		return nil, fmt.Errorf("Jira integration not configured")
+		return nil, fmt.Errorf("jira integration not configured")
 	}
 
 	fmt.Fprintf(ops.io.Out, "%s Fetching task details from Jira...\n",
@@ -84,7 +84,7 @@ func (ops *Operations) FetchFromJira(ctx context.Context, taskID string) (*jira.
 // CreateJiraMetadata creates the jira.json metadata file
 func (ops *Operations) CreateJiraMetadata(taskDir string, taskData *jira.TaskData) error {
 	if ops.jiraClient == nil {
-		return fmt.Errorf("Jira client not available")
+		return fmt.Errorf("jira client not available")
 	}
 
 	if err := ops.jiraClient.CreateMetadataFile(taskDir, taskData); err != nil {
@@ -100,7 +100,7 @@ func (ops *Operations) CreateJiraMetadata(taskDir string, taskData *jira.TaskDat
 // ValidateJiraConnection tests the Jira connection
 func (ops *Operations) ValidateJiraConnection(ctx context.Context) error {
 	if ops.jiraClient == nil {
-		return fmt.Errorf("Jira client not available")
+		return fmt.Errorf("jira client not available")
 	}
 
 	return ops.jiraClient.ValidateConnection(ctx)
@@ -109,7 +109,7 @@ func (ops *Operations) ValidateJiraConnection(ctx context.Context) error {
 // GetJiraMetadata reads Jira metadata from a task directory
 func (ops *Operations) GetJiraMetadata(taskDir string) (*jira.MetadataInfo, error) {
 	if ops.jiraClient == nil {
-		return nil, fmt.Errorf("Jira client not available")
+		return nil, fmt.Errorf("jira client not available")
 	}
 
 	return ops.jiraClient.GetMetadataInfo(taskDir)
@@ -118,7 +118,7 @@ func (ops *Operations) GetJiraMetadata(taskDir string) (*jira.MetadataInfo, erro
 // CreateJiraMetadataFromTask creates Jira metadata for a task that was fetched from Jira
 func (ops *Operations) CreateJiraMetadataFromTask(taskDir, taskID string) error {
 	if ops.jiraClient == nil {
-		return fmt.Errorf("Jira client not available")
+		return fmt.Errorf("jira client not available")
 	}
 
 	// This would typically use cached data from the fetch operation

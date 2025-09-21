@@ -74,7 +74,7 @@ func (c *Client) IsConfigured() bool {
 // FetchTask fetches a task from Jira and returns the data
 func (c *Client) FetchTask(ctx context.Context, opts FetchTaskOptions) (*TaskData, error) {
 	if !c.IsConfigured() {
-		return nil, fmt.Errorf("Jira integration not configured")
+		return nil, fmt.Errorf("jira integration not configured")
 	}
 
 	// Get the integration service to access provider methods
@@ -248,7 +248,7 @@ func (c *Client) mapJiraIssueTypeToZen(externalData *integration.ExternalTaskDat
 // ValidateConnection tests the Jira connection
 func (c *Client) ValidateConnection(ctx context.Context) error {
 	if !c.IsConfigured() {
-		return fmt.Errorf("Jira integration not configured")
+		return fmt.Errorf("jira integration not configured")
 	}
 
 	if service, ok := c.integrationManager.(*integration.Service); ok {

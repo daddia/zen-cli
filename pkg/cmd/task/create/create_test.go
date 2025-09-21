@@ -248,73 +248,7 @@ func TestGenerateFileFromTemplate(t *testing.T) {
 	assert.Contains(t, contentStr, "**Type:** story")
 }
 
-func TestGenerateFallbackManifestFile(t *testing.T) {
-	tempDir := t.TempDir()
-
-	variables := map[string]interface{}{
-		"TASK_ID":         "PROJ-123",
-		"TASK_TITLE":      "Test Story",
-		"TASK_TYPE":       "story",
-		"TASK_STATUS":     "proposed",
-		"PRIORITY":        "P1",
-		"SIZE":            "M",
-		"STORY_POINTS":    3,
-		"OWNER_NAME":      "testuser",
-		"OWNER_EMAIL":     "testuser@company.com",
-		"GITHUB_USERNAME": "testuser",
-		"TEAM_NAME":       "testteam",
-		"STREAM_TYPE":     "i2d",
-		"CREATED_DATE":    "2025-01-01",
-		"TARGET_DATE":     "2025-01-15",
-		"LAST_UPDATED":    "2025-01-01 10:00:00",
-		"CURRENT_STAGE":   "01-align",
-	}
-
-	err := generateFallbackManifestFile(tempDir, variables)
-	require.NoError(t, err)
-
-	// Check file was created
-	manifestPath := filepath.Join(tempDir, "manifest.yaml")
-	assert.FileExists(t, manifestPath)
-
-	// Read and verify content
-	content, err := os.ReadFile(manifestPath)
-	require.NoError(t, err)
-
-	contentStr := string(content)
-	assert.Contains(t, contentStr, `id: "PROJ-123"`)
-	assert.Contains(t, contentStr, `title: "Test Story"`)
-	assert.Contains(t, contentStr, `type: "story"`)
-	assert.Contains(t, contentStr, `priority: "P1"`)
-	assert.Contains(t, contentStr, `name: "testuser"`)
-	assert.Contains(t, contentStr, `current_stage: "01-align"`)
-}
-
-func TestGenerateFallbackTaskrcFile(t *testing.T) {
-	tempDir := t.TempDir()
-
-	variables := map[string]interface{}{
-		"TASK_ID":    "PROJ-123",
-		"TASK_TYPE":  "story",
-		"OWNER_NAME": "testuser",
-	}
-
-	err := generateFallbackTaskrcFile(tempDir, variables)
-	require.NoError(t, err)
-
-	// Check file was created
-	taskrcPath := filepath.Join(tempDir, ".taskrc.yaml")
-	assert.FileExists(t, taskrcPath)
-
-	// Read and verify content
-	content, err := os.ReadFile(taskrcPath)
-	require.NoError(t, err)
-
-	contentStr := string(content)
-	assert.Contains(t, contentStr, `id: "PROJ-123"`)
-	assert.Contains(t, contentStr, `type: "story"`)
-	assert.Contains(t, contentStr, `- "testuser"`)
-}
+// Removed obsolete fallback test functions - using clean template system now
 
 func TestCreateRun_WorkspaceNotInitialized(t *testing.T) {
 	streams := iostreams.Test()
