@@ -9,22 +9,22 @@ import (
 type Client interface {
 	// Name returns the client name
 	Name() string
-	
+
 	// ValidateConnection tests the connection to the external service
 	ValidateConnection(ctx context.Context) error
-	
+
 	// Close cleans up client resources
 	Close() error
 }
 
 // HTTPConfig contains common HTTP client configuration
 type HTTPConfig struct {
-	BaseURL     string        `json:"base_url" yaml:"base_url"`
-	Timeout     time.Duration `json:"timeout" yaml:"timeout"`
-	Retries     int           `json:"retries" yaml:"retries"`
-	UserAgent   string        `json:"user_agent" yaml:"user_agent"`
-	Headers     map[string]string `json:"headers" yaml:"headers"`
-	RateLimits  RateLimitConfig `json:"rate_limits" yaml:"rate_limits"`
+	BaseURL    string            `json:"base_url" yaml:"base_url"`
+	Timeout    time.Duration     `json:"timeout" yaml:"timeout"`
+	Retries    int               `json:"retries" yaml:"retries"`
+	UserAgent  string            `json:"user_agent" yaml:"user_agent"`
+	Headers    map[string]string `json:"headers" yaml:"headers"`
+	RateLimits RateLimitConfig   `json:"rate_limits" yaml:"rate_limits"`
 }
 
 // RateLimitConfig contains rate limiting configuration
@@ -58,21 +58,21 @@ func (e ClientError) Error() string {
 
 // Common error codes
 const (
-	ErrorCodeConnectionFailed   = "CONNECTION_FAILED"
+	ErrorCodeConnectionFailed     = "CONNECTION_FAILED"
 	ErrorCodeAuthenticationFailed = "AUTHENTICATION_FAILED"
-	ErrorCodeRateLimited       = "RATE_LIMITED"
-	ErrorCodeNotFound          = "NOT_FOUND"
-	ErrorCodeInvalidRequest    = "INVALID_REQUEST"
-	ErrorCodeInternalError     = "INTERNAL_ERROR"
-	ErrorCodeTimeout           = "TIMEOUT"
-	ErrorCodeUnknown           = "UNKNOWN"
+	ErrorCodeRateLimited          = "RATE_LIMITED"
+	ErrorCodeNotFound             = "NOT_FOUND"
+	ErrorCodeInvalidRequest       = "INVALID_REQUEST"
+	ErrorCodeInternalError        = "INTERNAL_ERROR"
+	ErrorCodeTimeout              = "TIMEOUT"
+	ErrorCodeUnknown              = "UNKNOWN"
 )
 
 // HealthStatus represents the health status of a client
 type HealthStatus struct {
-	Healthy     bool      `json:"healthy"`
-	LastChecked time.Time `json:"last_checked"`
-	Message     string    `json:"message,omitempty"`
+	Healthy     bool                   `json:"healthy"`
+	LastChecked time.Time              `json:"last_checked"`
+	Message     string                 `json:"message,omitempty"`
 	Details     map[string]interface{} `json:"details,omitempty"`
 }
 

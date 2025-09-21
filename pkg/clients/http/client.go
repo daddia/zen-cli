@@ -299,17 +299,18 @@ func (c *Client) calculateBackoff(attempt int) time.Duration {
 
 	// Add jitter (±10%)
 	jitter := time.Duration(float64(delay) * 0.1)
-	delay += time.Duration(float64(jitter) * (2*time.Now().UnixNano()%2 - 1))
+	jitterMultiplier := 2*time.Now().UnixNano()%2 - 1
+	delay += time.Duration(float64(jitter) * float64(jitterMultiplier))
 
 	return delay
 }
 
 // sanitizeURL removes sensitive information from URLs for logging
-func (c *Client) sanitizeURL(url string) string {
+func (c *Client) sanitizeURL(rawURL string) string {
 	// Parse URL
-	u, err := url.Parse(url)
+	u, err := url.Parse(rawURL)
 	if err != nil {
-		return url
+		return rawURL
 	}
 
 	// Remove user info
