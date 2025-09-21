@@ -147,7 +147,7 @@ var Options = []ConfigOption{
 	{
 		Key:          "assets.cache_path",
 		Description:  "Local cache path for assets",
-		DefaultValue: "~/.zen/assets",
+		DefaultValue: "~/.zen/library",
 		Type:         "string",
 	},
 	{

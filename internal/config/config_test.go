@@ -307,7 +307,7 @@ func TestAssetsConfigRedacted(t *testing.T) {
 		RepositoryURL:          "https://token:secret@github.com/user/repo.git",
 		Branch:                 "main",
 		AuthProvider:           "github",
-		CachePath:              "~/.zen/assets",
+		CachePath:              "~/.zen/library",
 		IntegrityChecksEnabled: true,
 	}
 
@@ -319,7 +319,7 @@ func TestAssetsConfigRedacted(t *testing.T) {
 	// Test that other fields are preserved
 	assert.Equal(t, "main", redacted.Branch)
 	assert.Equal(t, "github", redacted.AuthProvider)
-	assert.Equal(t, "~/.zen/assets", redacted.CachePath)
+	assert.Equal(t, "~/.zen/library", redacted.CachePath)
 	assert.True(t, redacted.IntegrityChecksEnabled)
 }
 
