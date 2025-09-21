@@ -39,7 +39,7 @@ func NewHostAPI(logger logging.Logger, auth auth.Manager) HostAPI {
 // HTTPRequest performs an HTTP request on behalf of a plugin
 func (h *HostAPIImpl) HTTPRequest(method, url string, headers map[string]string, body []byte) ([]byte, error) {
 	h.logger.Debug("plugin HTTP request", "method", method, "url", h.sanitizeURL(url))
-	
+
 	// Validate URL and method
 	if err := h.validateHTTPRequest(method, url); err != nil {
 		return nil, &PluginError{
@@ -48,13 +48,13 @@ func (h *HostAPIImpl) HTTPRequest(method, url string, headers map[string]string,
 			Timestamp: time.Now(),
 		}
 	}
-	
+
 	// Create request
 	var bodyReader io.Reader
 	if body != nil {
 		bodyReader = bytes.NewReader(body)
 	}
-	
+
 	req, err := http.NewRequest(method, url, bodyReader)
 	if err != nil {
 		return nil, &PluginError{
@@ -63,15 +63,15 @@ func (h *HostAPIImpl) HTTPRequest(method, url string, headers map[string]string,
 			Timestamp: time.Now(),
 		}
 	}
-	
+
 	// Set headers
 	for key, value := range headers {
 		req.Header.Set(key, value)
 	}
-	
+
 	// Set default headers
 	req.Header.Set("User-Agent", "Zen-CLI-Plugin/1.0")
-	
+
 	// Execute request
 	resp, err := h.httpClient.Do(req)
 	if err != nil {
@@ -82,7 +82,7 @@ func (h *HostAPIImpl) HTTPRequest(method, url string, headers map[string]string,
 		}
 	}
 	defer resp.Body.Close()
-	
+
 	// Read response body
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -92,12 +92,12 @@ func (h *HostAPIImpl) HTTPRequest(method, url string, headers map[string]string,
 			Timestamp: time.Now(),
 		}
 	}
-	
+
 	// Check for HTTP errors
 	if resp.StatusCode >= 400 {
 		return nil, &PluginError{
-			Code:      ErrCodeRuntimeError,
-			Message:   fmt.Sprintf("HTTP request failed with status %d", resp.StatusCode),
+			Code:    ErrCodeRuntimeError,
+			Message: fmt.Sprintf("HTTP request failed with status %d", resp.StatusCode),
 			Details: map[string]interface{}{
 				"status_code": resp.StatusCode,
 				"response":    string(responseBody),
@@ -105,31 +105,31 @@ func (h *HostAPIImpl) HTTPRequest(method, url string, headers map[string]string,
 			Timestamp: time.Now(),
 		}
 	}
-	
-	h.logger.Debug("plugin HTTP request completed", 
-		"method", method, 
+
+	h.logger.Debug("plugin HTTP request completed",
+		"method", method,
 		"url", h.sanitizeURL(url),
 		"status", resp.StatusCode,
 		"response_size", len(responseBody))
-	
+
 	return responseBody, nil
 }
 
 // GetConfig retrieves a configuration value
 func (h *HostAPIImpl) GetConfig(key string) (string, error) {
 	h.logger.Debug("plugin config access", "key", key)
-	
+
 	// TODO: Implement configuration access
 	// This would integrate with the existing config system
 	// For now, return empty value
-	
+
 	return "", nil
 }
 
 // GetCredentials retrieves credentials for a provider
 func (h *HostAPIImpl) GetCredentials(credentialRef string) (string, error) {
 	h.logger.Debug("plugin credential access", "credential_ref", credentialRef)
-	
+
 	// Use the existing auth manager to get credentials
 	credentials, err := h.auth.GetCredentials(credentialRef)
 	if err != nil {
@@ -139,7 +139,7 @@ func (h *HostAPIImpl) GetCredentials(credentialRef string) (string, error) {
 			Timestamp: time.Now(),
 		}
 	}
-	
+
 	return credentials, nil
 }
 
@@ -157,38 +157,38 @@ func (h *HostAPIImpl) Log(level string, message string) error {
 	default:
 		h.logger.Info("plugin log", "level", level, "message", message)
 	}
-	
+
 	return nil
 }
 
 // GetTask retrieves task data (if permitted)
 func (h *HostAPIImpl) GetTask(taskID string) ([]byte, error) {
 	h.logger.Debug("plugin task access", "task_id", taskID)
-	
+
 	// TODO: Implement task data access
 	// This would integrate with the task management system
 	// For now, return placeholder data
-	
+
 	return []byte(`{"id":"` + taskID + `","title":"Sample Task"}`), nil
 }
 
 // UpdateTask updates task data (if permitted)
 func (h *HostAPIImpl) UpdateTask(taskID string, data []byte) error {
 	h.logger.Debug("plugin task update", "task_id", taskID, "data_size", len(data))
-	
+
 	// TODO: Implement task update
 	// This would integrate with the task management system
-	
+
 	return nil
 }
 
 // ValidateConfig validates plugin configuration
 func (h *HostAPIImpl) ValidateConfig(configJSON string, schemaName string) error {
 	h.logger.Debug("plugin config validation", "schema", schemaName)
-	
+
 	// TODO: Implement configuration validation
 	// This would use JSON schema validation
-	
+
 	return nil
 }
 
@@ -203,16 +203,16 @@ func (h *HostAPIImpl) validateHTTPRequest(method, url string) error {
 		"DELETE": true,
 		"HEAD":   true,
 	}
-	
+
 	if !validMethods[method] {
 		return fmt.Errorf("invalid HTTP method: %s", method)
 	}
-	
+
 	// Validate URL scheme
 	if !h.isAllowedURL(url) {
 		return fmt.Errorf("URL not allowed: %s", h.sanitizeURL(url))
 	}
-	
+
 	return nil
 }
 

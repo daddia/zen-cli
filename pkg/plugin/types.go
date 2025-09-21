@@ -7,24 +7,24 @@ import (
 
 // Manifest represents a plugin manifest file
 type Manifest struct {
-	SchemaVersion     string              `yaml:"schema_version" json:"schema_version"`
-	Plugin            PluginMetadata      `yaml:"plugin" json:"plugin"`
-	Capabilities      []string            `yaml:"capabilities" json:"capabilities"`
-	Runtime           RuntimeConfig       `yaml:"runtime" json:"runtime"`
-	APIRequirements   []string            `yaml:"api_requirements" json:"api_requirements"`
-	Security          SecurityConfig      `yaml:"security" json:"security"`
+	SchemaVersion       string                 `yaml:"schema_version" json:"schema_version"`
+	Plugin              PluginMetadata         `yaml:"plugin" json:"plugin"`
+	Capabilities        []string               `yaml:"capabilities" json:"capabilities"`
+	Runtime             RuntimeConfig          `yaml:"runtime" json:"runtime"`
+	APIRequirements     []string               `yaml:"api_requirements" json:"api_requirements"`
+	Security            SecurityConfig         `yaml:"security" json:"security"`
 	ConfigurationSchema map[string]ConfigField `yaml:"configuration_schema" json:"configuration_schema"`
 }
 
 // PluginMetadata contains basic plugin information
 type PluginMetadata struct {
-	Name        string `yaml:"name" json:"name"`
-	Version     string `yaml:"version" json:"version"`
-	Description string `yaml:"description" json:"description"`
-	Author      string `yaml:"author" json:"author"`
-	Homepage    string `yaml:"homepage,omitempty" json:"homepage,omitempty"`
-	Repository  string `yaml:"repository,omitempty" json:"repository,omitempty"`
-	License     string `yaml:"license,omitempty" json:"license,omitempty"`
+	Name        string   `yaml:"name" json:"name"`
+	Version     string   `yaml:"version" json:"version"`
+	Description string   `yaml:"description" json:"description"`
+	Author      string   `yaml:"author" json:"author"`
+	Homepage    string   `yaml:"homepage,omitempty" json:"homepage,omitempty"`
+	Repository  string   `yaml:"repository,omitempty" json:"repository,omitempty"`
+	License     string   `yaml:"license,omitempty" json:"license,omitempty"`
 	Keywords    []string `yaml:"keywords,omitempty" json:"keywords,omitempty"`
 }
 
@@ -39,19 +39,19 @@ type RuntimeConfig struct {
 
 // SecurityConfig contains plugin security configuration
 type SecurityConfig struct {
-	Permissions []string `yaml:"permissions" json:"permissions"`
-	Signature   string   `yaml:"signature,omitempty" json:"signature,omitempty"`
-	Checksum    string   `yaml:"checksum" json:"checksum"`
-	TrustedKeys []string `yaml:"trusted_keys,omitempty" json:"trusted_keys,omitempty"`
+	Permissions []string      `yaml:"permissions" json:"permissions"`
+	Signature   string        `yaml:"signature,omitempty" json:"signature,omitempty"`
+	Checksum    string        `yaml:"checksum" json:"checksum"`
+	TrustedKeys []string      `yaml:"trusted_keys,omitempty" json:"trusted_keys,omitempty"`
 	Sandbox     SandboxConfig `yaml:"sandbox,omitempty" json:"sandbox,omitempty"`
 }
 
 // SandboxConfig contains sandbox configuration
 type SandboxConfig struct {
-	NetworkAccess   bool     `yaml:"network_access" json:"network_access"`
-	FileSystemAccess bool    `yaml:"filesystem_access" json:"filesystem_access"`
-	AllowedHosts    []string `yaml:"allowed_hosts,omitempty" json:"allowed_hosts,omitempty"`
-	AllowedPaths    []string `yaml:"allowed_paths,omitempty" json:"allowed_paths,omitempty"`
+	NetworkAccess    bool     `yaml:"network_access" json:"network_access"`
+	FileSystemAccess bool     `yaml:"filesystem_access" json:"filesystem_access"`
+	AllowedHosts     []string `yaml:"allowed_hosts,omitempty" json:"allowed_hosts,omitempty"`
+	AllowedPaths     []string `yaml:"allowed_paths,omitempty" json:"allowed_paths,omitempty"`
 }
 
 // ConfigField represents a configuration field definition
@@ -81,33 +81,33 @@ func (e PluginError) Error() string {
 
 // Plugin error codes
 const (
-	ErrCodePluginNotFound      = "PLUGIN_NOT_FOUND"
-	ErrCodePluginLoadFailed    = "PLUGIN_LOAD_FAILED"
+	ErrCodePluginNotFound        = "PLUGIN_NOT_FOUND"
+	ErrCodePluginLoadFailed      = "PLUGIN_LOAD_FAILED"
 	ErrCodePluginExecutionFailed = "PLUGIN_EXECUTION_FAILED"
-	ErrCodeInvalidManifest     = "INVALID_MANIFEST"
-	ErrCodeSecurityViolation   = "SECURITY_VIOLATION"
-	ErrCodeResourceExhausted   = "RESOURCE_EXHAUSTED"
-	ErrCodeTimeoutError        = "TIMEOUT_ERROR"
-	ErrCodeInvalidArguments    = "INVALID_ARGUMENTS"
-	ErrCodeRuntimeError        = "RUNTIME_ERROR"
+	ErrCodeInvalidManifest       = "INVALID_MANIFEST"
+	ErrCodeSecurityViolation     = "SECURITY_VIOLATION"
+	ErrCodeResourceExhausted     = "RESOURCE_EXHAUSTED"
+	ErrCodeTimeoutError          = "TIMEOUT_ERROR"
+	ErrCodeInvalidArguments      = "INVALID_ARGUMENTS"
+	ErrCodeRuntimeError          = "RUNTIME_ERROR"
 )
 
 // HostAPI represents the host API interface available to plugins
 type HostAPI interface {
 	// HTTP operations
 	HTTPRequest(method, url string, headers map[string]string, body []byte) ([]byte, error)
-	
+
 	// Configuration access
 	GetConfig(key string) (string, error)
 	GetCredentials(credentialRef string) (string, error)
-	
+
 	// Logging operations
 	Log(level string, message string) error
-	
+
 	// Task operations (if permitted)
 	GetTask(taskID string) ([]byte, error)
 	UpdateTask(taskID string, data []byte) error
-	
+
 	// Validation operations
 	ValidateConfig(configJSON string, schemaName string) error
 }
@@ -116,13 +116,13 @@ type HostAPI interface {
 type PluginCapability string
 
 const (
-	CapabilityTaskSync       PluginCapability = "task_sync"
-	CapabilityFieldMapping   PluginCapability = "field_mapping"
-	CapabilityWebhookSupport PluginCapability = "webhook_support"
-	CapabilityRealTimeSync   PluginCapability = "real_time_sync"
+	CapabilityTaskSync        PluginCapability = "task_sync"
+	CapabilityFieldMapping    PluginCapability = "field_mapping"
+	CapabilityWebhookSupport  PluginCapability = "webhook_support"
+	CapabilityRealTimeSync    PluginCapability = "real_time_sync"
 	CapabilityBatchOperations PluginCapability = "batch_operations"
-	CapabilityDataValidation PluginCapability = "data_validation"
-	CapabilityCustomFields   PluginCapability = "custom_fields"
+	CapabilityDataValidation  PluginCapability = "data_validation"
+	CapabilityCustomFields    PluginCapability = "custom_fields"
 )
 
 // PluginPermission represents a plugin permission
@@ -178,14 +178,14 @@ type PluginMetrics struct {
 
 // PluginHealth represents the health status of a plugin
 type PluginHealth struct {
-	Plugin      string        `json:"plugin"`
-	Healthy     bool          `json:"healthy"`
-	Status      PluginStatus  `json:"status"`
-	LastChecked time.Time     `json:"last_checked"`
-	Uptime      time.Duration `json:"uptime"`
-	Version     string        `json:"version"`
+	Plugin      string         `json:"plugin"`
+	Healthy     bool           `json:"healthy"`
+	Status      PluginStatus   `json:"status"`
+	LastChecked time.Time      `json:"last_checked"`
+	Uptime      time.Duration  `json:"uptime"`
+	Version     string         `json:"version"`
 	Metrics     *PluginMetrics `json:"metrics,omitempty"`
-	Error       string        `json:"error,omitempty"`
+	Error       string         `json:"error,omitempty"`
 }
 
 // PluginEvent represents an event in the plugin lifecycle
@@ -201,21 +201,21 @@ type PluginEvent struct {
 type PluginEventType string
 
 const (
-	EventTypePluginDiscovered PluginEventType = "plugin_discovered"
-	EventTypePluginLoaded     PluginEventType = "plugin_loaded"
-	EventTypePluginUnloaded   PluginEventType = "plugin_unloaded"
-	EventTypePluginError      PluginEventType = "plugin_error"
-	EventTypePluginExecution  PluginEventType = "plugin_execution"
+	EventTypePluginDiscovered  PluginEventType = "plugin_discovered"
+	EventTypePluginLoaded      PluginEventType = "plugin_loaded"
+	EventTypePluginUnloaded    PluginEventType = "plugin_unloaded"
+	EventTypePluginError       PluginEventType = "plugin_error"
+	EventTypePluginExecution   PluginEventType = "plugin_execution"
 	EventTypePluginHealthCheck PluginEventType = "plugin_health_check"
 )
 
 // PluginConfig represents runtime configuration for a plugin
 type PluginConfig struct {
-	Name          string                 `json:"name"`
-	Enabled       bool                   `json:"enabled"`
-	Configuration map[string]interface{} `json:"configuration"`
-	Permissions   []PluginPermission     `json:"permissions"`
-	ResourceLimits ResourceLimits        `json:"resource_limits"`
+	Name           string                 `json:"name"`
+	Enabled        bool                   `json:"enabled"`
+	Configuration  map[string]interface{} `json:"configuration"`
+	Permissions    []PluginPermission     `json:"permissions"`
+	ResourceLimits ResourceLimits         `json:"resource_limits"`
 }
 
 // ResourceLimits represents resource limits for plugin execution
@@ -251,7 +251,7 @@ func ValidatePermissions(permissions []string) error {
 		string(PermissionFileSystemRead):      true,
 		string(PermissionFileSystemWrite):     true,
 	}
-	
+
 	for _, permission := range permissions {
 		if !validPermissions[permission] {
 			return &PluginError{
@@ -261,7 +261,7 @@ func ValidatePermissions(permissions []string) error {
 			}
 		}
 	}
-	
+
 	return nil
 }
 
@@ -276,7 +276,7 @@ func ValidateCapabilities(capabilities []string) error {
 		string(CapabilityDataValidation):  true,
 		string(CapabilityCustomFields):    true,
 	}
-	
+
 	for _, capability := range capabilities {
 		if !validCapabilities[capability] {
 			return &PluginError{
@@ -286,6 +286,6 @@ func ValidateCapabilities(capabilities []string) error {
 			}
 		}
 	}
-	
+
 	return nil
 }

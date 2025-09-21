@@ -7,32 +7,32 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bytecodealliance/wasmtime-go/v25"
 	"github.com/daddia/zen/internal/logging"
 	"github.com/daddia/zen/pkg/auth"
-	"github.com/bytecodealliance/wasmtime-go/v25"
 )
 
 // WASMRuntime implements the Runtime interface using Wasmtime
 type WASMRuntime struct {
-	logger     logging.Logger
-	auth       auth.Manager
-	engine     *wasmtime.Engine
-	store      *wasmtime.Store
-	hostAPI    HostAPI
-	instances  map[string]*WASMInstance
-	mu         sync.RWMutex
+	logger    logging.Logger
+	auth      auth.Manager
+	engine    *wasmtime.Engine
+	store     *wasmtime.Store
+	hostAPI   HostAPI
+	instances map[string]*WASMInstance
+	mu        sync.RWMutex
 }
 
 // WASMInstance represents a loaded WASM plugin instance
 type WASMInstance struct {
-	module     *wasmtime.Module
-	instance   *wasmtime.Instance
-	manifest   *Manifest
-	loadedAt   time.Time
-	execCount  int64
-	lastExec   time.Time
+	module      *wasmtime.Module
+	instance    *wasmtime.Instance
+	manifest    *Manifest
+	loadedAt    time.Time
+	execCount   int64
+	lastExec    time.Time
 	memoryUsage int64
-	mu         sync.RWMutex
+	mu          sync.RWMutex
 }
 
 // NewWASMRuntime creates a new WASM runtime
@@ -45,10 +45,10 @@ func NewWASMRuntime(logger logging.Logger, auth auth.Manager) (*WASMRuntime, err
 	config.SetWasmBulkMemory(true)
 	config.SetWasmReferenceTypes(true)
 	config.SetWasmMultiValue(true)
-	
+
 	engine := wasmtime.NewEngineWithConfig(config)
 	store := wasmtime.NewStore(engine)
-	
+
 	runtime := &WASMRuntime{
 		logger:    logger,
 		auth:      auth,
@@ -56,17 +56,17 @@ func NewWASMRuntime(logger logging.Logger, auth auth.Manager) (*WASMRuntime, err
 		store:     store,
 		instances: make(map[string]*WASMInstance),
 	}
-	
+
 	// Create host API
 	runtime.hostAPI = NewHostAPI(logger, auth)
-	
+
 	return runtime, nil
 }
 
 // LoadPlugin loads a plugin from a WASM file
 func (r *WASMRuntime) LoadPlugin(ctx context.Context, wasmPath string, manifest *Manifest) (PluginInstance, error) {
 	r.logger.Debug("loading WASM plugin", "path", wasmPath, "plugin", manifest.Plugin.Name)
-	
+
 	// Read WASM file
 	wasmBytes, err := os.ReadFile(wasmPath)
 	if err != nil {
@@ -77,7 +77,7 @@ func (r *WASMRuntime) LoadPlugin(ctx context.Context, wasmPath string, manifest 
 			Timestamp: time.Now(),
 		}
 	}
-	
+
 	// Compile WASM module
 	module, err := wasmtime.NewModule(r.engine, wasmBytes)
 	if err != nil {
@@ -88,10 +88,10 @@ func (r *WASMRuntime) LoadPlugin(ctx context.Context, wasmPath string, manifest 
 			Timestamp: time.Now(),
 		}
 	}
-	
+
 	// Create new store for this instance (isolation)
 	store := wasmtime.NewStore(r.engine)
-	
+
 	// Set up memory limits
 	if err := r.configureResourceLimits(store, manifest); err != nil {
 		return nil, &PluginError{
@@ -101,10 +101,10 @@ func (r *WASMRuntime) LoadPlugin(ctx context.Context, wasmPath string, manifest 
 			Timestamp: time.Now(),
 		}
 	}
-	
+
 	// Create linker for host functions
 	linker := wasmtime.NewLinker(r.engine)
-	
+
 	// Define host functions
 	if err := r.defineHostFunctions(linker, manifest); err != nil {
 		return nil, &PluginError{
@@ -114,7 +114,7 @@ func (r *WASMRuntime) LoadPlugin(ctx context.Context, wasmPath string, manifest 
 			Timestamp: time.Now(),
 		}
 	}
-	
+
 	// Instantiate the module
 	instance, err := linker.Instantiate(store, module)
 	if err != nil {
@@ -125,14 +125,14 @@ func (r *WASMRuntime) LoadPlugin(ctx context.Context, wasmPath string, manifest 
 			Timestamp: time.Now(),
 		}
 	}
-	
+
 	wasmInstance := &WASMInstance{
 		module:   module,
 		instance: instance,
 		manifest: manifest,
 		loadedAt: time.Now(),
 	}
-	
+
 	// Initialize plugin
 	if err := r.initializePlugin(ctx, wasmInstance); err != nil {
 		return nil, &PluginError{
@@ -142,14 +142,14 @@ func (r *WASMRuntime) LoadPlugin(ctx context.Context, wasmPath string, manifest 
 			Timestamp: time.Now(),
 		}
 	}
-	
+
 	// Store instance
 	r.mu.Lock()
 	r.instances[manifest.Plugin.Name] = wasmInstance
 	r.mu.Unlock()
-	
+
 	r.logger.Info("WASM plugin loaded successfully", "plugin", manifest.Plugin.Name)
-	
+
 	return wasmInstance, nil
 }
 
@@ -159,21 +159,21 @@ func (r *WASMRuntime) UnloadPlugin(instance PluginInstance) error {
 	if !ok {
 		return fmt.Errorf("invalid plugin instance type")
 	}
-	
+
 	pluginName := wasmInstance.manifest.Plugin.Name
-	
+
 	// Call plugin cleanup if available
 	if err := r.cleanupPlugin(wasmInstance); err != nil {
 		r.logger.Warn("plugin cleanup failed", "plugin", pluginName, "error", err)
 	}
-	
+
 	// Remove from instances
 	r.mu.Lock()
 	delete(r.instances, pluginName)
 	r.mu.Unlock()
-	
+
 	r.logger.Debug("WASM plugin unloaded", "plugin", pluginName)
-	
+
 	return nil
 }
 
@@ -191,7 +191,7 @@ func (r *WASMRuntime) GetCapabilities() []string {
 // Close shuts down the runtime
 func (r *WASMRuntime) Close() error {
 	r.logger.Debug("shutting down WASM runtime")
-	
+
 	// Unload all instances
 	r.mu.Lock()
 	instances := make(map[string]*WASMInstance)
@@ -199,15 +199,15 @@ func (r *WASMRuntime) Close() error {
 		instances[name] = instance
 	}
 	r.mu.Unlock()
-	
+
 	for name, instance := range instances {
 		if err := r.UnloadPlugin(instance); err != nil {
 			r.logger.Warn("failed to unload plugin during shutdown", "plugin", name, "error", err)
 		}
 	}
-	
+
 	r.logger.Info("WASM runtime shutdown completed")
-	
+
 	return nil
 }
 
@@ -219,20 +219,20 @@ func (r *WASMRuntime) configureResourceLimits(store *wasmtime.Store, manifest *M
 		// TODO: Parse memory limit string (e.g., "10MB", "512KB")
 		// For now, use default
 	}
-	
+
 	// Set memory limits (Wasmtime doesn't have direct memory limits in Go API)
 	// This would be implemented using store limits in production
-	
+
 	// Set execution timeout
 	if manifest.Runtime.ExecutionTimeout > 0 {
 		// TODO: Implement execution timeout using context
 	}
-	
-	r.logger.Debug("configured resource limits", 
+
+	r.logger.Debug("configured resource limits",
 		"plugin", manifest.Plugin.Name,
 		"memory_limit", memoryLimit,
 		"execution_timeout", manifest.Runtime.ExecutionTimeout)
-	
+
 	return nil
 }
 
@@ -240,7 +240,7 @@ func (r *WASMRuntime) configureResourceLimits(store *wasmtime.Store, manifest *M
 func (r *WASMRuntime) defineHostFunctions(linker *wasmtime.Linker, manifest *Manifest) error {
 	// HTTP client functions
 	if r.hasPermission(manifest, PermissionNetworkHTTPOutbound) {
-		err := linker.DefineFunc(r.store, "env", "http_request", 
+		err := linker.DefineFunc(r.store, "env", "http_request",
 			wasmtime.NewFuncType(
 				[]*wasmtime.ValType{
 					wasmtime.NewValType(wasmtime.KindI32), // method ptr
@@ -258,7 +258,7 @@ func (r *WASMRuntime) defineHostFunctions(linker *wasmtime.Linker, manifest *Man
 			return fmt.Errorf("failed to define http_request function: %w", err)
 		}
 	}
-	
+
 	// Configuration access functions
 	if r.hasPermission(manifest, PermissionConfigRead) {
 		err := linker.DefineFunc(r.store, "env", "get_config_value",
@@ -276,7 +276,7 @@ func (r *WASMRuntime) defineHostFunctions(linker *wasmtime.Linker, manifest *Man
 			return fmt.Errorf("failed to define get_config_value function: %w", err)
 		}
 	}
-	
+
 	// Credential access functions
 	if r.hasPermission(manifest, PermissionCredentialRead) {
 		err := linker.DefineFunc(r.store, "env", "get_credentials",
@@ -294,7 +294,7 @@ func (r *WASMRuntime) defineHostFunctions(linker *wasmtime.Linker, manifest *Man
 			return fmt.Errorf("failed to define get_credentials function: %w", err)
 		}
 	}
-	
+
 	// Logging functions
 	if r.hasPermission(manifest, PermissionLogging) {
 		logFunctions := []string{"log_info", "log_warn", "log_error", "log_debug"}
@@ -311,7 +311,7 @@ func (r *WASMRuntime) defineHostFunctions(linker *wasmtime.Linker, manifest *Man
 			}
 		}
 	}
-	
+
 	return nil
 }
 
@@ -332,17 +332,17 @@ func (r *WASMRuntime) initializePlugin(ctx context.Context, instance *WASMInstan
 	if initFunc == nil {
 		return fmt.Errorf("plugin_init function not found")
 	}
-	
+
 	// Call initialization with timeout
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	
+
 	done := make(chan error, 1)
 	go func() {
 		_, err := initFunc.Call(r.store)
 		done <- err
 	}()
-	
+
 	select {
 	case err := <-done:
 		if err != nil {
@@ -361,7 +361,7 @@ func (r *WASMRuntime) cleanupPlugin(instance *WASMInstance) error {
 		// Cleanup function is optional
 		return nil
 	}
-	
+
 	_, err := cleanupFunc.Call(r.store)
 	return err
 }
@@ -372,15 +372,15 @@ func (r *WASMRuntime) cleanupPlugin(instance *WASMInstance) error {
 func (r *WASMRuntime) hostHTTPRequest(caller *wasmtime.Caller, methodPtr, urlPtr, headersPtr, bodyPtr, responseBuffer, bufferSize int32) int32 {
 	// This is a simplified implementation
 	// In production, you'd want full HTTP client functionality with security checks
-	
+
 	memory := caller.GetExport("memory").Memory()
-	
+
 	// Extract strings from WASM memory
 	method := r.extractString(memory, caller, methodPtr)
 	url := r.extractString(memory, caller, urlPtr)
-	
+
 	r.logger.Debug("plugin HTTP request", "method", method, "url", url)
-	
+
 	// TODO: Implement actual HTTP request using the host API
 	// For now, return success
 	return 0
@@ -390,9 +390,9 @@ func (r *WASMRuntime) hostHTTPRequest(caller *wasmtime.Caller, methodPtr, urlPtr
 func (r *WASMRuntime) hostGetConfig(caller *wasmtime.Caller, keyPtr, valueBuffer, bufferSize int32) int32 {
 	memory := caller.GetExport("memory").Memory()
 	key := r.extractString(memory, caller, keyPtr)
-	
+
 	r.logger.Debug("plugin config access", "key", key)
-	
+
 	// TODO: Implement configuration access
 	// For now, return empty value
 	return 0
@@ -402,9 +402,9 @@ func (r *WASMRuntime) hostGetConfig(caller *wasmtime.Caller, keyPtr, valueBuffer
 func (r *WASMRuntime) hostGetCredentials(caller *wasmtime.Caller, credRefPtr, credBuffer, bufferSize int32) int32 {
 	memory := caller.GetExport("memory").Memory()
 	credRef := r.extractString(memory, caller, credRefPtr)
-	
+
 	r.logger.Debug("plugin credential access", "credential_ref", credRef)
-	
+
 	// TODO: Implement credential access using auth manager
 	// For now, return empty credentials
 	return 0
@@ -415,7 +415,7 @@ func (r *WASMRuntime) createLogFunction(level string) func(*wasmtime.Caller, int
 	return func(caller *wasmtime.Caller, messagePtr int32) int32 {
 		memory := caller.GetExport("memory").Memory()
 		message := r.extractString(memory, caller, messagePtr)
-		
+
 		switch level {
 		case "log_info":
 			r.logger.Info("plugin log", "message", message)
@@ -426,7 +426,7 @@ func (r *WASMRuntime) createLogFunction(level string) func(*wasmtime.Caller, int
 		case "log_debug":
 			r.logger.Debug("plugin log", "message", message)
 		}
-		
+
 		return 0
 	}
 }
@@ -437,13 +437,13 @@ func (r *WASMRuntime) extractString(memory *wasmtime.Memory, caller *wasmtime.Ca
 	if ptr < 0 || int(ptr) >= len(data) {
 		return ""
 	}
-	
+
 	// Find null terminator
 	end := int(ptr)
 	for end < len(data) && data[end] != 0 {
 		end++
 	}
-	
+
 	return string(data[ptr:end])
 }
 
@@ -451,11 +451,11 @@ func (r *WASMRuntime) extractString(memory *wasmtime.Memory, caller *wasmtime.Ca
 func (instance *WASMInstance) Execute(ctx context.Context, function string, args []byte) ([]byte, error) {
 	instance.mu.Lock()
 	defer instance.mu.Unlock()
-	
+
 	// Update execution metrics
 	instance.execCount++
 	instance.lastExec = time.Now()
-	
+
 	// Get the function
 	fn := instance.instance.GetFunc(nil, function)
 	if fn == nil {
@@ -467,22 +467,22 @@ func (instance *WASMInstance) Execute(ctx context.Context, function string, args
 			Timestamp: time.Now(),
 		}
 	}
-	
+
 	// TODO: Implement function call with arguments and return value extraction
 	// This is a simplified implementation
-	
+
 	// Call function with timeout
 	timeout := instance.manifest.Runtime.ExecutionTimeout
 	if timeout == 0 {
 		timeout = 30 * time.Second
 	}
-	
+
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	
+
 	done := make(chan error, 1)
 	var result []byte
-	
+
 	go func() {
 		// TODO: Pass arguments and extract result
 		_, err := fn.Call(nil)
@@ -490,12 +490,12 @@ func (instance *WASMInstance) Execute(ctx context.Context, function string, args
 			done <- err
 			return
 		}
-		
+
 		// TODO: Extract result from WASM memory
 		result = []byte("success") // Placeholder
 		done <- nil
 	}()
-	
+
 	select {
 	case err := <-done:
 		if err != nil {

@@ -69,12 +69,12 @@ func (m *mockPluginInstance) GetExports() []string {
 func TestRegistry_DiscoverPlugins(t *testing.T) {
 	// Create temporary directory structure
 	tempDir := t.TempDir()
-	
+
 	// Create test plugin directory
 	pluginDir := filepath.Join(tempDir, "test-plugin")
 	err := os.MkdirAll(pluginDir, 0755)
 	require.NoError(t, err)
-	
+
 	// Create test manifest
 	manifest := `schema_version: "1.0"
 plugin:
@@ -103,33 +103,33 @@ configuration_schema:
     required: true
     description: "Server URL"
 `
-	
+
 	manifestPath := filepath.Join(pluginDir, "manifest.yaml")
 	err = os.WriteFile(manifestPath, []byte(manifest), 0644)
 	require.NoError(t, err)
-	
+
 	// Create dummy WASM file
 	wasmPath := filepath.Join(pluginDir, "plugin.wasm")
 	err = os.WriteFile(wasmPath, []byte("dummy wasm content"), 0644)
 	require.NoError(t, err)
-	
+
 	// Create registry
 	logger := logging.NewBasic()
 	fsManager := fs.NewManager(logger)
 	runtime := &mockRuntime{}
 	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
-	
+
 	registry := NewRegistry(logger, fsManager, []string{tempDir}, runtime)
-	
+
 	// Discover plugins
 	err = registry.DiscoverPlugins(context.Background())
 	require.NoError(t, err)
-	
+
 	// Verify plugin was discovered
 	plugins := registry.ListPlugins()
 	assert.Len(t, plugins, 1)
 	assert.Contains(t, plugins, "test-plugin")
-	
+
 	plugin := plugins["test-plugin"]
 	assert.Equal(t, "test-plugin", plugin.Manifest.Plugin.Name)
 	assert.Equal(t, "1.0.0", plugin.Manifest.Plugin.Version)
@@ -143,7 +143,7 @@ func TestRegistry_LoadPlugin(t *testing.T) {
 	pluginDir := filepath.Join(tempDir, "test-plugin")
 	err := os.MkdirAll(pluginDir, 0755)
 	require.NoError(t, err)
-	
+
 	// Create test files
 	manifest := `schema_version: "1.0"
 plugin:
@@ -163,43 +163,43 @@ security:
     - "network.http.outbound"
   checksum: "abc123"
 `
-	
+
 	err = os.WriteFile(filepath.Join(pluginDir, "manifest.yaml"), []byte(manifest), 0644)
 	require.NoError(t, err)
-	
+
 	err = os.WriteFile(filepath.Join(pluginDir, "plugin.wasm"), []byte("dummy wasm"), 0644)
 	require.NoError(t, err)
-	
+
 	// Create mocks
 	logger := logging.NewBasic()
 	fsManager := fs.NewManager(logger)
 	runtime := &mockRuntime{}
 	instance := &mockPluginInstance{name: "test-plugin"}
-	
+
 	runtime.On("LoadPlugin", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*plugin.Manifest")).Return(instance, nil)
 	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
-	
+
 	registry := NewRegistry(logger, fsManager, []string{tempDir}, runtime)
-	
+
 	// Discover plugins first
 	err = registry.DiscoverPlugins(context.Background())
 	require.NoError(t, err)
-	
+
 	// Load plugin
 	err = registry.LoadPlugin(context.Background(), "test-plugin")
 	require.NoError(t, err)
-	
+
 	// Verify plugin is loaded
 	loaded, err := registry.GetLoadedPlugin("test-plugin")
 	require.NoError(t, err)
 	assert.Equal(t, "test-plugin", loaded.Info.Manifest.Plugin.Name)
 	assert.Equal(t, instance, loaded.Instance)
-	
+
 	// Verify plugin status updated
 	pluginInfo, err := registry.GetPlugin("test-plugin")
 	require.NoError(t, err)
 	assert.Equal(t, PluginStatusLoaded, pluginInfo.Status)
-	
+
 	runtime.AssertExpectations(t)
 }
 
@@ -208,12 +208,12 @@ func TestRegistry_UnloadPlugin(t *testing.T) {
 	fsManager := fs.NewManager(logger)
 	runtime := &mockRuntime{}
 	instance := &mockPluginInstance{name: "test-plugin"}
-	
+
 	runtime.On("UnloadPlugin", instance).Return(nil)
 	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
-	
+
 	registry := NewRegistry(logger, fsManager, []string{}, runtime)
-	
+
 	// Manually add a loaded plugin
 	pluginInfo := &PluginInfo{
 		Manifest: &Manifest{
@@ -221,11 +221,11 @@ func TestRegistry_UnloadPlugin(t *testing.T) {
 		},
 		Status: PluginStatusLoaded,
 	}
-	
+
 	registry.mu.Lock()
 	registry.plugins["test-plugin"] = pluginInfo
 	registry.mu.Unlock()
-	
+
 	registry.runtimeMu.Lock()
 	registry.loadedPlugins["test-plugin"] = LoadedPlugin{
 		Info:     pluginInfo,
@@ -233,20 +233,20 @@ func TestRegistry_UnloadPlugin(t *testing.T) {
 		LoadedAt: time.Now(),
 	}
 	registry.runtimeMu.Unlock()
-	
+
 	// Unload plugin
 	err := registry.UnloadPlugin("test-plugin")
 	require.NoError(t, err)
-	
+
 	// Verify plugin is unloaded
 	_, err = registry.GetLoadedPlugin("test-plugin")
 	assert.Error(t, err)
-	
+
 	// Verify plugin status updated
 	pluginInfo, err = registry.GetPlugin("test-plugin")
 	require.NoError(t, err)
 	assert.Equal(t, PluginStatusDiscovered, pluginInfo.Status)
-	
+
 	runtime.AssertExpectations(t)
 }
 
@@ -255,7 +255,7 @@ func TestRegistry_ValidateManifest(t *testing.T) {
 	fsManager := fs.NewManager(logger)
 	runtime := &mockRuntime{}
 	registry := NewRegistry(logger, fsManager, []string{}, runtime)
-	
+
 	tests := []struct {
 		name     string
 		manifest Manifest
@@ -272,7 +272,7 @@ func TestRegistry_ValidateManifest(t *testing.T) {
 				Runtime: RuntimeConfig{
 					WASMFile: "plugin.wasm",
 				},
-				Capabilities: []string{"task_sync"},
+				Capabilities:    []string{"task_sync"},
 				APIRequirements: []string{"http_client"},
 			},
 			wantErr: false,
@@ -321,7 +321,7 @@ func TestRegistry_ValidateManifest(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := registry.validateManifest(&tt.manifest)
@@ -337,24 +337,24 @@ func TestRegistry_ValidateManifest(t *testing.T) {
 func TestRegistry_RefreshPlugins(t *testing.T) {
 	// Create temporary directory
 	tempDir := t.TempDir()
-	
+
 	logger := logging.NewBasic()
 	fsManager := fs.NewManager(logger)
 	runtime := &mockRuntime{}
 	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
-	
+
 	registry := NewRegistry(logger, fsManager, []string{tempDir}, runtime)
-	
+
 	// Initial discovery should find no plugins
 	err := registry.DiscoverPlugins(context.Background())
 	require.NoError(t, err)
 	assert.Len(t, registry.ListPlugins(), 0)
-	
+
 	// Create a plugin
 	pluginDir := filepath.Join(tempDir, "new-plugin")
 	err = os.MkdirAll(pluginDir, 0755)
 	require.NoError(t, err)
-	
+
 	manifest := `schema_version: "1.0"
 plugin:
   name: "new-plugin"
@@ -369,17 +369,17 @@ security:
     - "network.http.outbound"
   checksum: "def456"
 `
-	
+
 	err = os.WriteFile(filepath.Join(pluginDir, "manifest.yaml"), []byte(manifest), 0644)
 	require.NoError(t, err)
-	
+
 	err = os.WriteFile(filepath.Join(pluginDir, "plugin.wasm"), []byte("dummy"), 0644)
 	require.NoError(t, err)
-	
+
 	// Refresh should discover the new plugin
 	err = registry.RefreshPlugins(context.Background())
 	require.NoError(t, err)
-	
+
 	plugins := registry.ListPlugins()
 	assert.Len(t, plugins, 1)
 	assert.Contains(t, plugins, "new-plugin")
@@ -414,7 +414,7 @@ func TestValidatePermissions(t *testing.T) {
 			wantErr:     false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := ValidatePermissions(tt.permissions)
@@ -457,7 +457,7 @@ func TestValidateCapabilities(t *testing.T) {
 			wantErr:      false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := ValidateCapabilities(tt.capabilities)
@@ -473,7 +473,7 @@ func TestValidateCapabilities(t *testing.T) {
 
 func TestDefaultResourceLimits(t *testing.T) {
 	limits := DefaultResourceLimits()
-	
+
 	assert.Equal(t, 10, limits.MaxMemoryMB)
 	assert.Equal(t, 30*time.Second, limits.MaxExecutionTime)
 	assert.Equal(t, 50.0, limits.MaxCPUPercent)
@@ -487,7 +487,7 @@ func TestPluginError(t *testing.T) {
 		Plugin:    "test-plugin",
 		Timestamp: time.Now(),
 	}
-	
+
 	assert.Equal(t, "Plugin load failed", err.Error())
 	assert.Equal(t, ErrCodePluginLoadFailed, err.Code)
 	assert.Equal(t, "test-plugin", err.Plugin)
@@ -499,33 +499,33 @@ func TestRegistry_ErrorHandling(t *testing.T) {
 	pluginDir := filepath.Join(tempDir, "invalid-plugin")
 	err := os.MkdirAll(pluginDir, 0755)
 	require.NoError(t, err)
-	
+
 	// Create invalid manifest (missing required fields)
 	invalidManifest := `schema_version: "1.0"
 plugin:
   description: "Invalid plugin - missing name"
 `
-	
+
 	manifestPath := filepath.Join(pluginDir, "manifest.yaml")
 	err = os.WriteFile(manifestPath, []byte(invalidManifest), 0644)
 	require.NoError(t, err)
-	
+
 	// Create registry
 	logger := logging.NewBasic()
 	fsManager := fs.NewManager(logger)
 	runtime := &mockRuntime{}
 	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
-	
+
 	registry := NewRegistry(logger, fsManager, []string{tempDir}, runtime)
-	
+
 	// Discovery should handle invalid plugin gracefully
 	err = registry.DiscoverPlugins(context.Background())
 	require.NoError(t, err)
-	
+
 	// Should have discovered the plugin but marked it as error
 	plugins := registry.ListPlugins()
 	assert.Len(t, plugins, 1)
-	
+
 	// Plugin should be in error state
 	plugin := plugins["invalid-plugin"]
 	assert.Equal(t, PluginStatusError, plugin.Status)
@@ -537,30 +537,30 @@ func TestRegistry_ConcurrentAccess(t *testing.T) {
 	fsManager := fs.NewManager(logger)
 	runtime := &mockRuntime{}
 	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
-	
+
 	registry := NewRegistry(logger, fsManager, []string{}, runtime)
-	
+
 	// Test concurrent access to plugin registry
 	done := make(chan bool, 10)
-	
+
 	// Start multiple goroutines accessing the registry
 	for i := 0; i < 10; i++ {
 		go func(id int) {
 			defer func() { done <- true }()
-			
+
 			// Simulate plugin operations
 			plugins := registry.ListPlugins()
 			_ = plugins
-			
+
 			loadedPlugins := registry.ListLoadedPlugins()
 			_ = loadedPlugins
-			
+
 			// Try to get non-existent plugin
 			_, err := registry.GetPlugin("non-existent")
 			assert.Error(t, err)
 		}(i)
 	}
-	
+
 	// Wait for all goroutines to complete
 	for i := 0; i < 10; i++ {
 		<-done
@@ -572,13 +572,13 @@ func TestRegistry_Close(t *testing.T) {
 	fsManager := fs.NewManager(logger)
 	runtime := &mockRuntime{}
 	instance := &mockPluginInstance{name: "test-plugin"}
-	
+
 	runtime.On("UnloadPlugin", instance).Return(nil)
 	runtime.On("Close").Return(nil)
 	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
-	
+
 	registry := NewRegistry(logger, fsManager, []string{}, runtime)
-	
+
 	// Add a loaded plugin
 	registry.runtimeMu.Lock()
 	registry.loadedPlugins["test-plugin"] = LoadedPlugin{
@@ -586,11 +586,11 @@ func TestRegistry_Close(t *testing.T) {
 		LoadedAt: time.Now(),
 	}
 	registry.runtimeMu.Unlock()
-	
+
 	// Close registry
 	err := registry.Close()
 	require.NoError(t, err)
-	
+
 	// Verify all plugins were unloaded and runtime was closed
 	runtime.AssertExpectations(t)
 }
