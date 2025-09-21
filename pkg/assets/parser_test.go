@@ -104,7 +104,6 @@ activities:
 	assert.Equal(t, AssetTypeTemplate, codeReview.Type)
 	assert.Equal(t, "code-review", codeReview.Command)
 	assert.Equal(t, "code-review.md.tmpl", codeReview.OutputFile)
-
 }
 
 func TestYAMLManifestParser_Parse_InvalidYAML(t *testing.T) {
