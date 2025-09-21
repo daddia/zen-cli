@@ -1,15 +1,15 @@
-# zen Design
+# Zen CLI Design System
 
-These guidelines are a collection of principles, foundations and usage guidelines for designing zen command line products.
+A collection of principles, foundations and usage guidelines for designing Zen CLI products.
 
-## [Components](components)
+## [Components](./components.md)
 
-Design guidance on how we format content in in the Terminal through text formatting, color and font weights.
+Design guidance on how we format content in the Terminal through text formatting, color and font weights.
 
-## [Foundations](foundations)
+## [Foundations](./foundations.md)
 
-Design concepts and constraints that can help create a better Terminal like experience for zen.
+Design concepts and constraints that can help create a better experience for Zen users.
 
-## [Getting started](getting-started)
+## [Getting started](./getting-started.md)
 
-zen Design is also a design system for Terminal. If you’re just starting out with creating those kind of experiences, here’s a list of principles and design foundations to get you started.
+If you’re creating awesome CLI experiences, use's these principles and design foundations to get you started.
