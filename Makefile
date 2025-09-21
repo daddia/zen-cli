@@ -30,6 +30,19 @@ COVERAGE_DIR=coverage
 COVERAGE_THRESHOLD=70
 BUSINESS_COVERAGE_THRESHOLD=90
 
+# Colors for output (using ANSI codes)
+GREEN := \033[32m
+RED := \033[31m
+YELLOW := \033[33m
+BLUE := \033[34m
+RESET := \033[0m
+
+# Unicode symbols
+SUCCESS := ✓
+FAILURE := ✗
+WARNING := !
+NEUTRAL := -
+
 # Version information (can be overridden)
 VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT?=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
@@ -52,7 +65,15 @@ help: ## Display this help screen
 	@echo "Zen CLI Build System"
 	@echo "===================="
 	@echo ""
-	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo "Available targets:"
+	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(BLUE)%-20s$(RESET) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "Quality Gates:"
+	@echo "  $(GREEN)$(SUCCESS)$(RESET) Format check (gofmt)"
+	@echo "  $(GREEN)$(SUCCESS)$(RESET) Lint check (golangci-lint/go vet)"
+	@echo "  $(GREEN)$(SUCCESS)$(RESET) Security scan (gosec)"
+	@echo "  $(GREEN)$(SUCCESS)$(RESET) Test coverage (>$(COVERAGE_THRESHOLD)%)"
+	@echo "  $(GREEN)$(SUCCESS)$(RESET) Cross-platform builds"
 	@echo ""
 	@echo "Version: $(VERSION)"
 	@echo "Commit:  $(COMMIT)"
@@ -61,101 +82,122 @@ help: ## Display this help screen
 ## Build targets
 
 build: deps ## Build the zen binary for current platform
-	@echo "Building zen binary..."
+	@echo "$(NEUTRAL) Building zen binary..."
 	@mkdir -p $(BINARY_DIR)
 	@GOOS=$${GOOS:-$$(go env GOOS)}; \
 	GOARCH=$${GOARCH:-$$(go env GOARCH)}; \
 	OUTPUT=$(BINARY_DIR)/$(BINARY_NAME); \
 	if [ "$$GOOS" = "windows" ]; then OUTPUT=$$OUTPUT.exe; fi; \
-	$(GOBUILD) $(LDFLAGS) -tags "$(BUILD_TAGS)" -o $$OUTPUT ./cmd/zen; \
-	echo "✓ Binary built: $$OUTPUT"
+	if $(GOBUILD) $(LDFLAGS) -tags "$(BUILD_TAGS)" -o $$OUTPUT ./cmd/zen; then \
+		echo "$(GREEN)$(SUCCESS)$(RESET) Binary built: $$OUTPUT"; \
+	else \
+		echo "$(RED)$(FAILURE)$(RESET) Binary build failed"; \
+		exit 1; \
+	fi
 
 build-all: deps ## Build binaries for all supported platforms
-	@echo "Building zen binaries for all platforms..."
+	@echo "$(NEUTRAL) Building zen binaries for all platforms..."
 	@mkdir -p $(BINARY_DIR)
 	@for platform in $(PLATFORMS); do \
 		os=$$(echo $$platform | cut -d'/' -f1); \
 		arch=$$(echo $$platform | cut -d'/' -f2); \
 		output=$(BINARY_DIR)/$(BINARY_NAME)-$$os-$$arch; \
 		if [ "$$os" = "windows" ]; then output=$$output.exe; fi; \
-		echo "  Building for $$os/$$arch..."; \
+		echo "$(NEUTRAL) Building for $$os/$$arch..."; \
 		GOOS=$$os GOARCH=$$arch $(GOBUILD) $(LDFLAGS) -tags "$(BUILD_TAGS)" -o $$output ./cmd/zen; \
 		if [ $$? -eq 0 ]; then \
-			echo "  ✓ Built: $$output"; \
+			echo "$(GREEN)$(SUCCESS)$(RESET) Built: $$output"; \
 		else \
-			echo "  ✗ Failed to build for $$os/$$arch"; \
+			echo "$(RED)$(FAILURE)$(RESET) Failed to build for $$os/$$arch"; \
 			exit 1; \
 		fi; \
 	done
-	@echo "✓ All binaries built successfully"
+	@echo "$(GREEN)$(SUCCESS)$(RESET) All binaries built successfully"
 
 ## Test targets
 
 test: test-all ## Run complete test (unit + integration + e2e)
 
 test-all: ## Run all tests with proper distribution
-	@echo "Running all tests..."
+	@echo "$(NEUTRAL) Running all tests..."
 	@echo ""
 	@$(MAKE) test-unit
 	@$(MAKE) test-integration
 	@$(MAKE) test-e2e
 	@echo ""
-	@echo "✓ All tests completed"
+	@echo "$(GREEN)$(SUCCESS)$(RESET) All tests completed"
 	@$(MAKE) test-coverage-report
 
 test-unit: ## Run unit tests with coverage (70% of test suite)
-	@echo "Running unit tests..."
+	@echo "$(NEUTRAL) Running unit tests..."
 	@mkdir -p $(COVERAGE_DIR)
-	$(GOTEST) -v -race -coverprofile=$(COVERAGE_DIR)/coverage.out -covermode=atomic \
+	@if $(GOTEST) -v -race -coverprofile=$(COVERAGE_DIR)/coverage.out -covermode=atomic \
 		-timeout=30s \
-		./internal/... ./pkg/...
-	@echo "✓ Unit tests completed (target: <30s execution)"
-	@echo "- Coverage report: $(COVERAGE_DIR)/coverage.out"
+		./internal/... ./pkg/...; then \
+		echo "$(GREEN)$(SUCCESS)$(RESET) Unit tests completed (target: <30s execution)"; \
+		echo "$(NEUTRAL) Coverage report: $(COVERAGE_DIR)/coverage.out"; \
+	else \
+		echo "$(RED)$(FAILURE)$(RESET) Unit tests failed"; \
+		exit 1; \
+	fi
 
 test-integration: ## Run integration tests (20% of test suite)
-	@echo "🔗 Running integration tests..."
+	@echo "$(NEUTRAL) Running integration tests..."
 	@mkdir -p $(COVERAGE_DIR)
-	CGO_ENABLED=0 $(GOTEST) -v -tags=integration -timeout=60s \
+	@if CGO_ENABLED=0 $(GOTEST) -v -tags=integration -timeout=60s \
 		-coverprofile=$(COVERAGE_DIR)/integration-coverage.out \
 		-covermode=atomic \
-		./test/integration/...
-	@echo "✓ Integration tests completed (target: <1min execution)"
+		./test/integration/...; then \
+		echo "$(GREEN)$(SUCCESS)$(RESET) Integration tests completed (target: <1min execution)"; \
+	else \
+		echo "$(RED)$(FAILURE)$(RESET) Integration tests failed"; \
+		exit 1; \
+	fi
 
 test-e2e: build ## Run end-to-end tests (10% of test suite)
-	@echo "Running end-to-end tests..."
+	@echo "$(NEUTRAL) Running end-to-end tests..."
 	@mkdir -p $(COVERAGE_DIR)
-	$(GOTEST) -v -tags=e2e -timeout=120s \
-		./test/e2e/...
-	@echo "✓ End-to-end tests completed (target: <2min execution)"
+	@if $(GOTEST) -v -tags=e2e -timeout=120s \
+		./test/e2e/...; then \
+		echo "$(GREEN)$(SUCCESS)$(RESET) End-to-end tests completed (target: <2min execution)"; \
+	else \
+		echo "$(RED)$(FAILURE)$(RESET) End-to-end tests failed"; \
+		exit 1; \
+	fi
 
 test-unit-fast: ## Run unit tests without race detection (for development)
-	@echo "Running fast unit tests..."
+	@echo "$(NEUTRAL) Running fast unit tests..."
 	@mkdir -p $(COVERAGE_DIR)
-	$(GOTEST) -v -coverprofile=$(COVERAGE_DIR)/coverage-fast.out -covermode=atomic ./internal/... ./pkg/...
+	@if $(GOTEST) -v -coverprofile=$(COVERAGE_DIR)/coverage-fast.out -covermode=atomic ./internal/... ./pkg/...; then \
+		echo "$(GREEN)$(SUCCESS)$(RESET) Fast unit tests completed"; \
+	else \
+		echo "$(RED)$(FAILURE)$(RESET) Fast unit tests failed"; \
+		exit 1; \
+	fi
 
 test-coverage: test-unit ## Generate HTML coverage report
-	@echo "📈 Generating coverage report..."
-	$(GOCMD) tool cover -html=$(COVERAGE_DIR)/coverage.out -o $(COVERAGE_DIR)/coverage.html
-	@echo "✓ Coverage report generated: $(COVERAGE_DIR)/coverage.html"
+	@echo "$(NEUTRAL) Generating coverage report..."
+	@$(GOCMD) tool cover -html=$(COVERAGE_DIR)/coverage.out -o $(COVERAGE_DIR)/coverage.html
+	@echo "$(GREEN)$(SUCCESS)$(RESET) Coverage report generated: $(COVERAGE_DIR)/coverage.html"
 
 test-coverage-report: ## Generate comprehensive coverage report with targets
-	@echo "Coverage analysis:"
+	@echo "$(NEUTRAL) Coverage analysis:"
 	@if [ -f $(COVERAGE_DIR)/coverage.out ]; then \
 		COVERAGE=$$($(GOCMD) tool cover -func=$(COVERAGE_DIR)/coverage.out | tail -1 | awk '{print $$3}' | sed 's/%//'); \
-		echo "  Overall coverage: $$COVERAGE%"; \
+		echo "$(NEUTRAL) Overall coverage: $$COVERAGE%"; \
 		if [ $$(echo "$$COVERAGE >= $(COVERAGE_THRESHOLD)" | bc -l) -eq 1 ]; then \
-			echo "  ✓ Meets $(COVERAGE_THRESHOLD)% overall target"; \
+			echo "$(GREEN)$(SUCCESS)$(RESET) Meets $(COVERAGE_THRESHOLD)% overall target"; \
 		else \
-			echo "  ✗ Below $(COVERAGE_THRESHOLD)% overall target"; \
+			echo "$(RED)$(FAILURE)$(RESET) Below $(COVERAGE_THRESHOLD)% overall target"; \
 		fi; \
 		BUSINESS_COVERAGE=$$($(GOCMD) tool cover -func=$(COVERAGE_DIR)/coverage.out | grep -E "(internal/|pkg/)" | awk '{sum += $$3; count++} END {if (count > 0) print sum/count; else print 0}' | sed 's/%//'); \
 		if [ $$(echo "$$BUSINESS_COVERAGE >= 90" | bc -l) -eq 1 ]; then \
-			echo "  ✓ Business logic meets 90% target"; \
+			echo "$(GREEN)$(SUCCESS)$(RESET) Business logic meets 90% target"; \
 		else \
-			echo "  ✗ Business logic below 90% target"; \
+			echo "$(RED)$(FAILURE)$(RESET) Business logic below 90% target"; \
 		fi; \
 	else \
-		echo "  ✗ No coverage data found - run 'make test-unit' first"; \
+		echo "$(RED)$(FAILURE)$(RESET) No coverage data found - run 'make test-unit' first"; \
 	fi
 
 test-coverage-ci: ## Generate coverage report for CI with strict validation
@@ -204,178 +246,204 @@ test-short: ## Run short tests only (skip long-running tests)
 ## Quality targets
 
 lint: ## Run linting checks
-	@echo "Running linter..."
+	@echo "$(NEUTRAL) Running linter..."
 	@if command -v golangci-lint >/dev/null 2>&1; then \
-		golangci-lint run --timeout=5m; \
-		echo "✓ Linter completed"; \
+		if golangci-lint run --timeout=5m; then \
+			echo "$(GREEN)$(SUCCESS)$(RESET) Linter completed"; \
+		else \
+			echo "$(RED)$(FAILURE)$(RESET) Linting failed"; \
+			exit 1; \
+		fi; \
 	else \
-		echo "! golangci-lint not installed, running basic checks..."; \
-		$(GOFMT) -d -s .; \
-		$(GOVET) ./...; \
-		echo "✓ Basic checks completed"; \
+		echo "$(YELLOW)$(WARNING)$(RESET) golangci-lint not installed, running basic checks..."; \
+		if $(GOFMT) -d -s . && $(GOVET) ./...; then \
+			echo "$(GREEN)$(SUCCESS)$(RESET) Basic checks completed"; \
+		else \
+			echo "$(RED)$(FAILURE)$(RESET) Basic checks failed"; \
+			exit 1; \
+		fi; \
 	fi
 
 security: ## Run security analysis
-	@echo "Running security analysis..."
+	@echo "$(NEUTRAL) Running security analysis..."
 	@if command -v gosec >/dev/null 2>&1; then \
-		gosec -quiet ./...; \
-		echo "✓ Security analysis completed"; \
+		if gosec -quiet ./...; then \
+			echo "$(GREEN)$(SUCCESS)$(RESET) Security analysis completed"; \
+		else \
+			echo "$(YELLOW)$(WARNING)$(RESET) Security issues found"; \
+		fi; \
 	else \
-		echo "! gosec not installed, skipping security analysis"; \
-		echo "  Install with: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest"; \
+		echo "$(YELLOW)$(WARNING)$(RESET) gosec not installed, skipping security analysis"; \
+		echo "$(NEUTRAL) Install with: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest"; \
 	fi
 
 fmt: ## Format Go code
-	@echo "Formatting code..."
-	$(GOFMT) -w -s .
-	@echo "✓ Code formatted"
+	@echo "$(NEUTRAL) Formatting code..."
+	@$(GOFMT) -w -s .
+	@echo "$(GREEN)$(SUCCESS)$(RESET) Code formatted"
 
 ## Dependency targets
 
 deps: ## Download and tidy dependencies
-	@echo "Downloading dependencies..."
-	$(GOMOD) download
-	$(GOMOD) tidy
-	@echo "✓ Dependencies updated"
+	@echo "$(NEUTRAL) Downloading dependencies..."
+	@$(GOMOD) download
+	@$(GOMOD) tidy
+	@echo "$(GREEN)$(SUCCESS)$(RESET) Dependencies updated"
 
 deps-verify: ## Verify dependencies
-	@echo "Verifying dependencies..."
-	$(GOMOD) verify
-	@echo "✓ Dependencies verified"
+	@echo "$(NEUTRAL) Verifying dependencies..."
+	@if $(GOMOD) verify; then \
+		echo "$(GREEN)$(SUCCESS)$(RESET) Dependencies verified"; \
+	else \
+		echo "$(RED)$(FAILURE)$(RESET) Dependency verification failed"; \
+		exit 1; \
+	fi
 
 deps-upgrade: ## Upgrade all dependencies
-	@echo "Upgrading dependencies..."
-	$(GOGET) -u ./...
-	$(GOMOD) tidy
-	@echo "✓ Dependencies upgraded"
+	@echo "$(NEUTRAL) Upgrading dependencies..."
+	@$(GOGET) -u ./...
+	@$(GOMOD) tidy
+	@echo "$(GREEN)$(SUCCESS)$(RESET) Dependencies upgraded"
 
 ## Utility targets
 
 clean: docs-clean ## Clean build artifacts and cache
-	@echo "Cleaning build artifacts..."
-	$(GOCLEAN)
-	rm -rf $(BINARY_DIR)/
-	rm -rf $(COVERAGE_DIR)/
-	rm -rf dist/
-	@echo "✓ Clean completed"
+	@echo "$(NEUTRAL) Cleaning build artifacts..."
+	@$(GOCLEAN)
+	@rm -rf $(BINARY_DIR)/
+	@rm -rf $(COVERAGE_DIR)/
+	@rm -rf dist/
+	@echo "$(GREEN)$(SUCCESS)$(RESET) Clean completed"
 
 install: build ## Install binary to system PATH
-	@echo "Installing zen binary..."
+	@echo "$(NEUTRAL) Installing zen binary..."
 	@if cp $(BINARY_DIR)/$(BINARY_NAME) /usr/local/bin/ 2>/dev/null; then \
-		echo "✓ Installed to /usr/local/bin/$(BINARY_NAME)"; \
+		echo "$(GREEN)$(SUCCESS)$(RESET) Installed to /usr/local/bin/$(BINARY_NAME)"; \
 	else \
-		echo "✗ Cannot write to /usr/local/bin (try: sudo make install)"; \
+		echo "$(RED)$(FAILURE)$(RESET) Cannot write to /usr/local/bin (try: sudo make install)"; \
 		exit 1; \
 	fi
 
 uninstall: ## Remove binary from system PATH
-	@echo "Uninstalling zen binary..."
+	@echo "$(NEUTRAL) Uninstalling zen binary..."
 	@if [ -f /usr/local/bin/$(BINARY_NAME) ]; then \
 		rm /usr/local/bin/$(BINARY_NAME); \
-		echo "✓ Uninstalled from /usr/local/bin/$(BINARY_NAME)"; \
+		echo "$(GREEN)$(SUCCESS)$(RESET) Uninstalled from /usr/local/bin/$(BINARY_NAME)"; \
 	else \
-		echo "- Binary not found in /usr/local/bin"; \
+		echo "$(NEUTRAL) Binary not found in /usr/local/bin"; \
 	fi
 
 ## Development targets
 
 dev-setup: ## Setup development environment
-	@echo "Setting up development environment..."
-	@echo "Installing development tools..."
+	@echo "$(NEUTRAL) Setting up development environment..."
+	@echo "$(NEUTRAL) Installing development tools..."
 	@if ! command -v golangci-lint >/dev/null 2>&1; then \
-		echo "Installing golangci-lint..."; \
+		echo "$(NEUTRAL) Installing golangci-lint..."; \
 		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
 	fi
 	@if ! command -v gosec >/dev/null 2>&1; then \
-		echo "Installing gosec..."; \
+		echo "$(NEUTRAL) Installing gosec..."; \
 		go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest; \
 	fi
-	@echo "✓ Development environment setup completed"
+	@echo "$(GREEN)$(SUCCESS)$(RESET) Development environment setup completed"
 
 run: build ## Build and run zen with arguments (use ARGS="...")
-	@echo "Running zen $(ARGS)..."
-	./$(BINARY_DIR)/$(BINARY_NAME) $(ARGS)
+	@echo "$(NEUTRAL) Running zen $(ARGS)..."
+	@./$(BINARY_DIR)/$(BINARY_NAME) $(ARGS)
 
 debug: ## Build and run zen with debug logging
-	@echo "Running zen in debug mode..."
-	ZEN_DEBUG=true ./$(BINARY_DIR)/$(BINARY_NAME) $(ARGS)
+	@echo "$(NEUTRAL) Running zen in debug mode..."
+	@ZEN_DEBUG=true ./$(BINARY_DIR)/$(BINARY_NAME) $(ARGS)
 
 ## Documentation targets
 
 docs: docs-markdown ## Generate all documentation formats
 
 docs-markdown: ## Generate Markdown documentation
-	@echo "Generating Markdown documentation..."
+	@echo "$(NEUTRAL) Generating Markdown documentation..."
 	@go run internal/tools/docgen/main.go \
 		-out ./docs/zen \
 		-format markdown \
 		-frontmatter
-	@echo "✓ Markdown documentation generated in docs/zen/"
+	@echo "$(GREEN)$(SUCCESS)$(RESET) Markdown documentation generated in docs/zen/"
 
 docs-man: ## Generate Man page documentation
-	@echo "Generating Man pages..."
+	@echo "$(NEUTRAL) Generating Man pages..."
 	@go run internal/tools/docgen/main.go \
 		-out ./man \
 		-format man
-	@echo "✓ Man pages generated in man/"
+	@echo "$(GREEN)$(SUCCESS)$(RESET) Man pages generated in man/"
 
 docs-rest: ## Generate ReStructuredText documentation
-	@echo "Generating ReStructuredText documentation..."
+	@echo "$(NEUTRAL) Generating ReStructuredText documentation..."
 	@go run internal/tools/docgen/main.go \
 		-out ./docs/rest \
 		-format rest
-	@echo "✓ ReStructuredText documentation generated in docs/rest/"
+	@echo "$(GREEN)$(SUCCESS)$(RESET) ReStructuredText documentation generated in docs/rest/"
 
 docs-all: docs-markdown docs-man docs-rest ## Generate all documentation formats
-	@echo "✓ All documentation formats generated"
+	@echo "$(GREEN)$(SUCCESS)$(RESET) All documentation formats generated"
 
 docs-check: docs-markdown ## Regenerate docs and check for changes
-	@echo "Checking if documentation is up-to-date..."
+	@echo "$(NEUTRAL) Checking if documentation is up-to-date..."
 	@if git diff --exit-code docs/zen/; then \
-		echo "✓ Documentation is up-to-date"; \
+		echo "$(GREEN)$(SUCCESS)$(RESET) Documentation is up-to-date"; \
 	else \
-		echo "✗ Documentation needs to be regenerated"; \
-		echo "Run 'make docs' to update documentation"; \
+		echo "$(RED)$(FAILURE)$(RESET) Documentation needs to be regenerated"; \
+		echo "$(NEUTRAL) Run 'make docs' to update documentation"; \
 		exit 1; \
 	fi
 
 docs-clean: ## Remove generated documentation
-	@echo "Cleaning generated documentation..."
+	@echo "$(NEUTRAL) Cleaning generated documentation..."
 	@rm -f docs/zen/zen_*.md docs/zen/zen.md docs/zen/index.md
 	@rm -rf man/ docs/rest/
-	@echo "✓ Generated documentation removed (README.md preserved)"
+	@echo "$(GREEN)$(SUCCESS)$(RESET) Generated documentation removed (README.md preserved)"
 
 ## Docker targets
 
 docker-build: ## Build Docker image
-	@echo "Building Docker image..."
-	docker build -t zen:$(VERSION) -t zen:latest .
-	@echo "✓ Docker image built: zen:$(VERSION)"
+	@echo "$(NEUTRAL) Building Docker image..."
+	@if docker build -t zen:$(VERSION) -t zen:latest .; then \
+		echo "$(GREEN)$(SUCCESS)$(RESET) Docker image built: zen:$(VERSION)"; \
+	else \
+		echo "$(RED)$(FAILURE)$(RESET) Docker build failed"; \
+		exit 1; \
+	fi
 
 docker-run: docker-build ## Build and run Docker container
-	@echo "Running Docker container..."
-	docker run --rm -it zen:$(VERSION) $(ARGS)
+	@echo "$(NEUTRAL) Running Docker container..."
+	@docker run --rm -it zen:$(VERSION) $(ARGS)
 
 ## Release targets
 
 release: ## Create release (requires goreleaser)
-	@echo "Creating release..."
+	@echo "$(NEUTRAL) Creating release..."
 	@if command -v goreleaser >/dev/null 2>&1; then \
-		goreleaser release --clean; \
-		echo "✓ Release created"; \
+		if goreleaser release --clean; then \
+			echo "$(GREEN)$(SUCCESS)$(RESET) Release created"; \
+		else \
+			echo "$(RED)$(FAILURE)$(RESET) Release failed"; \
+			exit 1; \
+		fi; \
 	else \
-		echo "✗ goreleaser not installed"; \
-		echo "  Install from: https://goreleaser.com/install/"; \
+		echo "$(RED)$(FAILURE)$(RESET) goreleaser not installed"; \
+		echo "$(NEUTRAL) Install from: https://goreleaser.com/install/"; \
 		exit 1; \
 	fi
 
 release-snapshot: ## Create snapshot release
-	@echo "Creating snapshot release..."
+	@echo "$(NEUTRAL) Creating snapshot release..."
 	@if command -v goreleaser >/dev/null 2>&1; then \
-		goreleaser release --snapshot --clean; \
-		echo "✓ Snapshot release created"; \
+		if goreleaser release --snapshot --clean; then \
+			echo "$(GREEN)$(SUCCESS)$(RESET) Snapshot release created"; \
+		else \
+			echo "$(RED)$(FAILURE)$(RESET) Snapshot release failed"; \
+			exit 1; \
+		fi; \
 	else \
-		echo "✗ goreleaser not installed"; \
+		echo "$(RED)$(FAILURE)$(RESET) goreleaser not installed"; \
 		exit 1; \
 	fi
 
@@ -411,14 +479,14 @@ check: lint security test ## Run all quality checks
 ## Validation targets
 
 ci-validate: ## Run CI validation pipeline (strict mode)
-	@echo "Running CI validation pipeline..."
+	@echo "$(NEUTRAL) Running CI validation pipeline..."
 	@echo "===================================="
 	@echo ""
 	@$(MAKE) deps
 	@$(MAKE) fmt
 	@if ! git diff --exit-code; then \
-		echo "✗ Code formatting changes detected"; \
-		echo "  Run 'make fmt' and commit changes"; \
+		echo "$(RED)$(FAILURE)$(RESET) Code formatting changes detected"; \
+		echo "$(NEUTRAL) Run 'make fmt' and commit changes"; \
 		exit 1; \
 	fi
 	@$(MAKE) lint
@@ -431,17 +499,17 @@ ci-validate: ## Run CI validation pipeline (strict mode)
 	@$(MAKE) docs-check
 	@$(MAKE) build-all
 	@$(GOMOD) verify
-	@echo "✓ CI validation completed successfully"
+	@echo "$(GREEN)$(SUCCESS)$(RESET) CI validation completed successfully"
 
 ci-validate-no-docs: ## Run CI validation pipeline without documentation check
-	@echo "Running CI validation pipeline (no docs)..."
+	@echo "$(NEUTRAL) Running CI validation pipeline (no docs)..."
 	@echo "============================================="
 	@echo ""
 	@$(MAKE) deps
 	@$(MAKE) fmt
 	@if ! git diff --exit-code; then \
-		echo "✗ Code formatting changes detected"; \
-		echo "  Run 'make fmt' and commit changes"; \
+		echo "$(RED)$(FAILURE)$(RESET) Code formatting changes detected"; \
+		echo "$(NEUTRAL) Run 'make fmt' and commit changes"; \
 		exit 1; \
 	fi
 	@$(MAKE) lint
@@ -453,17 +521,17 @@ ci-validate-no-docs: ## Run CI validation pipeline without documentation check
 	@$(MAKE) test-benchmarks
 	@$(MAKE) build-all
 	@$(GOMOD) verify
-	@echo "✓ CI validation completed successfully (docs check skipped)"
+	@echo "$(GREEN)$(SUCCESS)$(RESET) CI validation completed successfully (docs check skipped)"
 
 validate-fast: ## Run fast validation (unit tests + linting only)
-	@echo "Running fast validation..."
+	@echo "$(NEUTRAL) Running fast validation..."
 	@echo "============================"
 	@$(MAKE) deps
 	@$(MAKE) fmt
 	@$(MAKE) lint
 	@$(MAKE) test-unit
 	@$(MAKE) build
-	@echo "Fast validation completed"
+	@echo "$(GREEN)$(SUCCESS)$(RESET) Fast validation completed"
 
 all: clean deps check build ## Run full build pipeline
 
