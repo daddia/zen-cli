@@ -174,7 +174,7 @@ func (dp *DockerProcessor) Process(ctx ProcessingContext) (string, error) {
 	// Validate Dockerfile syntax if strict mode is enabled
 	if ctx.Options.StrictMode {
 		if err := dp.Validate(formatted); err != nil {
-			return "", fmt.Errorf("Dockerfile validation failed: %w", err)
+			return "", fmt.Errorf("dockerfile validation failed: %w", err)
 		}
 	}
 
@@ -184,7 +184,7 @@ func (dp *DockerProcessor) Process(ctx ProcessingContext) (string, error) {
 // Validate performs Dockerfile-specific validation
 func (dp *DockerProcessor) Validate(output string) error {
 	if strings.TrimSpace(output) == "" {
-		return fmt.Errorf("Dockerfile output is empty")
+		return fmt.Errorf("dockerfile output is empty")
 	}
 
 	// Check for required FROM instruction
@@ -198,13 +198,13 @@ func (dp *DockerProcessor) Validate(output string) error {
 				hasFrom = true
 				break
 			} else {
-				return fmt.Errorf("Dockerfile must start with FROM instruction")
+				return fmt.Errorf("dockerfile must start with FROM instruction")
 			}
 		}
 	}
 
 	if !hasFrom {
-		return fmt.Errorf("Dockerfile is missing FROM instruction")
+		return fmt.Errorf("dockerfile is missing FROM instruction")
 	}
 
 	return nil

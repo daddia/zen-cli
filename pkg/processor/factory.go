@@ -61,42 +61,26 @@ func (f *factory) RegisterProcessor(outputType OutputType, processor Processor) 
 // registerDefaultProcessors registers all default processors
 func (f *factory) registerDefaultProcessors() {
 	// Register Markdown processor
-	f.processors[MarkdownOutput] = func() Processor {
-		return NewMarkdownProcessor()
-	}
+	f.processors[MarkdownOutput] = NewMarkdownProcessor
 
 	// Register YAML processor
-	f.processors[YAMLOutput] = func() Processor {
-		return NewYAMLProcessor()
-	}
+	f.processors[YAMLOutput] = NewYAMLProcessor
 
 	// Register JSON processor
-	f.processors[JSONOutput] = func() Processor {
-		return NewJSONProcessor()
-	}
+	f.processors[JSONOutput] = NewJSONProcessor
 
 	// Register XML processor
-	f.processors[XMLOutput] = func() Processor {
-		return NewXMLProcessor()
-	}
+	f.processors[XMLOutput] = NewXMLProcessor
 
 	// Register Prompt processor
-	f.processors[PromptOutput] = func() Processor {
-		return NewPromptProcessor()
-	}
+	f.processors[PromptOutput] = NewPromptProcessor
 
 	// Register Docker processor
-	f.processors[DockerOutput] = func() Processor {
-		return NewDockerProcessor()
-	}
+	f.processors[DockerOutput] = NewDockerProcessor
 
 	// Register OpenAPI processor
-	f.processors[OpenAPIOutput] = func() Processor {
-		return NewOpenAPIProcessor()
-	}
+	f.processors[OpenAPIOutput] = NewOpenAPIProcessor
 
 	// Register Default processor
-	f.processors[DefaultOutput] = func() Processor {
-		return NewDefaultProcessor()
-	}
+	f.processors[DefaultOutput] = NewDefaultProcessor
 }
