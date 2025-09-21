@@ -37,6 +37,10 @@ func TestListCommandFlags(t *testing.T) {
 	cmd := NewCmdAssetsList(f)
 
 	// Test that expected flags exist
+	typeFlag := cmd.Flags().Lookup("type")
+	require.NotNil(t, typeFlag)
+	assert.Equal(t, "string", typeFlag.Value.Type())
+
 	categoryFlag := cmd.Flags().Lookup("category")
 	require.NotNil(t, categoryFlag)
 	assert.Equal(t, "string", categoryFlag.Value.Type())
@@ -221,6 +225,7 @@ func TestListWithFilters(t *testing.T) {
 
 	cmd := NewCmdAssetsList(f)
 	cmd.SetArgs([]string{
+		"--type", "template",
 		"--category", "documentation",
 		"--tags", "ai,technical",
 		"--limit", "25",
@@ -232,6 +237,7 @@ func TestListWithFilters(t *testing.T) {
 	require.NoError(t, err)
 
 	// The mock client should have captured the filter
+	assert.Equal(t, assets.AssetType("template"), mockClient.lastFilter.Type)
 	assert.Equal(t, "documentation", mockClient.lastFilter.Category)
 	assert.Equal(t, []string{"ai", "technical"}, mockClient.lastFilter.Tags)
 	assert.Equal(t, 25, mockClient.lastFilter.Limit)
@@ -260,6 +266,27 @@ func TestListEmptyResults(t *testing.T) {
 	assert.Contains(t, output, "No assets found")
 }
 
+func TestListInvalidAssetType(t *testing.T) {
+	io := iostreams.Test()
+	stdout := io.Out
+	f := cmdutil.NewTestFactory(io)
+
+	f.AssetClient = func() (assets.AssetClientInterface, error) {
+		return &mockListAssetClient{
+			assets: []assets.AssetMetadata{}, // Empty list
+		}, nil
+	}
+
+	cmd := NewCmdAssetsList(f)
+	cmd.SetArgs([]string{"--type", "invalid"})
+	cmd.SetOut(stdout)
+
+	err := cmd.Execute()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid asset type 'invalid'")
+	assert.Contains(t, err.Error(), "valid types are: template, prompt, mcp, schema")
+}
+
 func TestHasFilters(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -270,6 +297,13 @@ func TestHasFilters(t *testing.T) {
 			name:   "no filters",
 			filter: assets.AssetFilter{},
 			want:   false,
+		},
+		{
+			name: "type filter",
+			filter: assets.AssetFilter{
+				Type: "template",
+			},
+			want: true,
 		},
 		{
 			name: "category filter",

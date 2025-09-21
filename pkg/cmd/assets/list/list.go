@@ -57,6 +57,9 @@ to update the manifest with the latest activities from the repository.`,
 		Example: `  # List all activities
   zen assets list
 
+  # List activities by type
+  zen assets list --type template
+
   # List activities in a specific category
   zen assets list --category development
 
@@ -64,7 +67,7 @@ to update the manifest with the latest activities from the repository.`,
   zen assets list --tags api,design
 
   # Combine filters
-  zen assets list --category planning --tags strategy
+  zen assets list --type template --category planning --tags strategy
 
   # Limit results and use pagination
   zen assets list --limit 10 --offset 20
@@ -78,6 +81,7 @@ to update the manifest with the latest activities from the repository.`,
 		},
 	}
 
+	cmd.Flags().StringVar(&opts.Type, "type", "", "Filter by asset type (template|prompt|mcp|schema)")
 	cmd.Flags().StringVar(&opts.Category, "category", "", "Filter by category")
 	cmd.Flags().StringSliceVar(&opts.Tags, "tags", nil, "Filter by tags (comma-separated)")
 	cmd.Flags().IntVar(&opts.Limit, "limit", 50, "Maximum number of results")
@@ -95,6 +99,21 @@ func listRun(opts *ListOptions) error {
 		return fmt.Errorf("invalid argument: offset cannot be negative")
 	}
 
+	// Validate asset type if provided
+	if opts.Type != "" {
+		validTypes := []string{"template", "prompt", "mcp", "schema"}
+		isValid := false
+		for _, validType := range validTypes {
+			if opts.Type == validType {
+				isValid = true
+				break
+			}
+		}
+		if !isValid {
+			return fmt.Errorf("invalid asset type '%s': valid types are: %s", opts.Type, strings.Join(validTypes, ", "))
+		}
+	}
+
 	ctx := context.Background()
 
 	// Get asset client
@@ -106,6 +125,7 @@ func listRun(opts *ListOptions) error {
 
 	// Build filter from options
 	filter := assets.AssetFilter{
+		Type:     assets.AssetType(opts.Type),
 		Category: opts.Category,
 		Tags:     opts.Tags,
 		Limit:    opts.Limit,
@@ -173,10 +193,10 @@ func displayListText(opts *ListOptions, assetList *assets.AssetList, filter asse
 
 	// Header - new format: name | command | description | output format
 	fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
-		cs.Bold("Name"),
-		cs.Bold("Command"),
-		cs.Bold("Description"),
-		cs.Bold("Output Format"))
+		cs.Bold("NAME"),
+		cs.Bold("COMMAND"),
+		cs.Bold("DESCRIPTION"),
+		cs.Bold("OUTPUT FORMAT"))
 
 	// Activities
 	for _, asset := range assetList.Assets {
@@ -221,6 +241,9 @@ func displayListText(opts *ListOptions, assetList *assets.AssetList, filter asse
 	// Show active filters
 	if hasFilters(filter) && opts.IO.IsStdoutTTY() {
 		fmt.Fprintf(opts.IO.Out, "\n%s Active filters:", cs.Gray("Filters:"))
+		if filter.Type != "" {
+			fmt.Fprintf(opts.IO.Out, " type=%s", filter.Type)
+		}
 		if filter.Category != "" {
 			fmt.Fprintf(opts.IO.Out, " category=%s", filter.Category)
 		}
@@ -234,5 +257,5 @@ func displayListText(opts *ListOptions, assetList *assets.AssetList, filter asse
 }
 
 func hasFilters(filter assets.AssetFilter) bool {
-	return filter.Category != "" || len(filter.Tags) > 0
+	return filter.Type != "" || filter.Category != "" || len(filter.Tags) > 0
 }
