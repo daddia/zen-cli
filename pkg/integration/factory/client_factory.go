@@ -9,6 +9,7 @@ import (
 	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/internal/logging"
 	"github.com/daddia/zen/pkg/auth"
+	"github.com/daddia/zen/pkg/clients/jira"
 	"github.com/daddia/zen/pkg/integration/plugin"
 	pluginpkg "github.com/daddia/zen/pkg/plugin"
 )
@@ -284,7 +285,11 @@ func (f *ClientFactory) loadPluginConfiguration(providerName string) (*plugin.Pl
 		MaxRetries: 3,                // Default retries
 		Auth: &plugin.AuthConfig{
 			Type:           plugin.AuthType(providerConfig.Type),
-			CredentialsRef: providerConfig.Credentials,
+			CredentialsRef: providerName, // Use provider name as credentials reference
+			CustomFields: map[string]string{
+				"email":   providerConfig.Email,
+				"api_key": providerConfig.APIKey,
+			},
 		},
 		Settings: make(map[string]interface{}),
 	}
@@ -322,13 +327,18 @@ func (f *ClientFactory) validatePluginConfiguration(config *plugin.PluginConfig)
 
 // createJiraPlugin creates a Jira plugin instance
 func (f *ClientFactory) createJiraPlugin(config *plugin.PluginConfig) plugin.IntegrationPluginInterface {
-	// This is a placeholder - in the future, this would load the actual Jira plugin
-	// from the plugin registry using WASM
-	return &JiraPluginAdapter{
+	adapter := &JiraPluginAdapter{
 		config:  config,
 		logger:  f.logger,
 		authMgr: f.authMgr,
 	}
+
+	// Initialize the adapter (this will create the real Jira plugin)
+	if err := adapter.Initialize(context.Background(), config); err != nil {
+		f.logger.Warn("failed to initialize Jira plugin adapter", "error", err)
+	}
+
+	return adapter
 }
 
 // createGitHubPlugin creates a GitHub plugin instance
@@ -355,9 +365,10 @@ func (f *ClientFactory) createLinearPlugin(config *plugin.PluginConfig) plugin.I
 
 // JiraPluginAdapter adapts the existing Jira client to the plugin interface
 type JiraPluginAdapter struct {
-	config  *plugin.PluginConfig
-	logger  logging.Logger
-	authMgr auth.Manager
+	config     *plugin.PluginConfig
+	logger     logging.Logger
+	authMgr    auth.Manager
+	jiraPlugin *jira.Plugin // Real Jira plugin implementation
 }
 
 // Implement plugin interface methods for Jira adapter
@@ -367,7 +378,28 @@ func (j *JiraPluginAdapter) Description() string { return "Jira integration plug
 
 func (j *JiraPluginAdapter) Initialize(ctx context.Context, config *plugin.PluginConfig) error {
 	j.config = config
-	return nil
+
+	// Create the real Jira plugin
+	jiraConfig := &jira.PluginConfig{
+		Name:       config.Name,
+		Version:    config.Version,
+		Enabled:    config.Enabled,
+		BaseURL:    config.BaseURL,
+		ProjectKey: getProjectKeyFromSettings(config.Settings), // Extract project key from settings
+		Timeout:    config.Timeout,
+		MaxRetries: config.MaxRetries,
+		Headers:    config.Headers,
+		Auth: &jira.AuthConfig{
+			Type:           jira.AuthType(config.Auth.Type),
+			CredentialsRef: config.Auth.CredentialsRef,
+		},
+		Settings: config.Settings,
+	}
+
+	j.jiraPlugin = jira.NewPlugin(jiraConfig, j.logger, j.authMgr)
+
+	// Initialize the real plugin
+	return j.jiraPlugin.Initialize(ctx, jiraConfig)
 }
 
 func (j *JiraPluginAdapter) Validate(ctx context.Context) error {
@@ -388,27 +420,50 @@ func (j *JiraPluginAdapter) Shutdown(ctx context.Context) error {
 }
 
 func (j *JiraPluginAdapter) FetchTask(ctx context.Context, externalID string, opts *plugin.FetchOptions) (*plugin.TaskData, error) {
-	// Basic implementation for demonstration
 	j.logger.Debug("fetching task from Jira adapter", "external_id", externalID)
 
+	// Use the real Jira plugin
+	if j.jiraPlugin == nil {
+		return nil, fmt.Errorf("Jira plugin not initialized")
+	}
+
+	jiraTaskData, err := j.jiraPlugin.FetchTask(ctx, externalID, &jira.FetchOptions{
+		IncludeRaw: opts.IncludeRaw,
+		Timeout:    opts.Timeout,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch from Jira: %w", err)
+	}
+
+	// Convert jira.PluginTaskData to plugin.TaskData
+	return j.convertJiraTaskDataToPluginTaskData(jiraTaskData), nil
+}
+
+// convertJiraTaskDataToPluginTaskData converts Jira plugin data to standard plugin data
+func (j *JiraPluginAdapter) convertJiraTaskDataToPluginTaskData(jiraData *jira.PluginTaskData) *plugin.TaskData {
 	return &plugin.TaskData{
-		ID:          externalID,
-		ExternalID:  externalID,
-		Title:       fmt.Sprintf("Jira Task: %s", externalID),
-		Description: "Task fetched from Jira via new plugin architecture",
-		Status:      "in_progress",
-		Priority:    "P2",
-		Type:        "story",
-		Assignee:    "john.doe@company.com",
-		Created:     time.Now().Add(-24 * time.Hour),
-		Updated:     time.Now().Add(-1 * time.Hour),
-		ExternalURL: fmt.Sprintf("%s/browse/%s", j.config.BaseURL, externalID),
-		Metadata: map[string]interface{}{
-			"external_system": "jira",
-			"plugin_version":  j.Version(),
-			"fetched_via":     "new_plugin_architecture",
-		},
-	}, nil
+		ID:          jiraData.ID,
+		ExternalID:  jiraData.ExternalID,
+		Title:       jiraData.Title,
+		Description: jiraData.Description,
+		Status:      jiraData.Status,
+		Priority:    jiraData.Priority,
+		Type:        jiraData.Type,
+		Owner:       jiraData.Owner,
+		Assignee:    jiraData.Assignee,
+		Team:        jiraData.Team,
+		Created:     jiraData.Created,
+		Updated:     jiraData.Updated,
+		DueDate:     jiraData.DueDate,
+		Labels:      jiraData.Labels,
+		Tags:        jiraData.Tags,
+		Components:  jiraData.Components,
+		ExternalURL: jiraData.ExternalURL,
+		RawData:     jiraData.RawData,
+		Metadata:    jiraData.Metadata,
+		Version:     jiraData.Version,
+		Checksum:    jiraData.Checksum,
+	}
 }
 
 func (j *JiraPluginAdapter) CreateTask(ctx context.Context, taskData *plugin.TaskData, opts *plugin.CreateOptions) (*plugin.TaskData, error) {
@@ -572,3 +627,13 @@ func (l *LinearPluginAdapter) GetRateLimitInfo(ctx context.Context) (*plugin.Rat
 	return &plugin.RateLimitInfo{}, nil
 }
 func (l *LinearPluginAdapter) SupportsOperation(operation plugin.OperationType) bool { return false }
+
+// Helper functions
+
+// getProjectKeyFromSettings extracts project key from plugin settings
+func getProjectKeyFromSettings(settings map[string]interface{}) string {
+	if projectKey, ok := settings["project_key"].(string); ok {
+		return projectKey
+	}
+	return ""
+}

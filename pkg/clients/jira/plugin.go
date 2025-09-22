@@ -2,6 +2,7 @@ package jira
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strings"
@@ -391,6 +392,12 @@ func (p *Plugin) addAuthentication(req *http.Request) error {
 		return fmt.Errorf("no authentication configuration")
 	}
 
+	// First try to use credentials from config CustomFields (direct config access)
+	if len(p.config.Auth.CustomFields) > 0 {
+		return p.addAuthenticationFromConfig(req)
+	}
+
+	// Fallback to auth manager
 	switch p.config.Auth.Type {
 	case AuthTypeBasic:
 		credentials, err := p.authMgr.GetCredentials(p.config.Auth.CredentialsRef)
@@ -398,25 +405,44 @@ func (p *Plugin) addAuthentication(req *http.Request) error {
 			return fmt.Errorf("failed to get credentials: %w", err)
 		}
 		req.Header.Set("Authorization", "Basic "+credentials)
-
+		
 	case AuthTypeToken:
 		token, err := p.authMgr.GetCredentials(p.config.Auth.CredentialsRef)
 		if err != nil {
 			return fmt.Errorf("failed to get token: %w", err)
 		}
 		req.Header.Set("Authorization", "Bearer "+token)
-
+		
 	case AuthTypeOAuth2:
 		token, err := p.authMgr.GetCredentials(p.config.Auth.CredentialsRef)
 		if err != nil {
 			return fmt.Errorf("failed to get OAuth token: %w", err)
 		}
 		req.Header.Set("Authorization", "Bearer "+token)
-
+		
 	default:
 		return fmt.Errorf("unsupported auth type: %s", p.config.Auth.Type)
 	}
 
+	return nil
+}
+
+// addAuthenticationFromConfig adds authentication using config file credentials
+func (p *Plugin) addAuthenticationFromConfig(req *http.Request) error {
+	email := p.config.Auth.CustomFields["email"]
+	apiKey := p.config.Auth.CustomFields["api_key"]
+	
+	if email == "" || apiKey == "" {
+		return fmt.Errorf("email and api_key required in config for Jira authentication")
+	}
+
+	// Jira uses Basic Auth with email:api_key
+	import "encoding/base64"
+	credentials := base64.StdEncoding.EncodeToString([]byte(email + ":" + apiKey))
+	req.Header.Set("Authorization", "Basic "+credentials)
+	
+	p.logger.Debug("added authentication from config", "email", email)
+	
 	return nil
 }
 

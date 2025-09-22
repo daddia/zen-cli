@@ -20,10 +20,11 @@ func (p *Plugin) FetchTask(ctx context.Context, externalID string, opts *FetchOp
 		opts = &FetchOptions{}
 	}
 
-	p.logger.Debug("fetching task from Jira", "external_id", externalID)
+	p.logger.Info("fetching task from Jira plugin", "external_id", externalID, "base_url", p.config.BaseURL)
 
 	// Build request URL
 	endpoint := p.buildJiraURL(fmt.Sprintf("rest/api/3/issue/%s", externalID))
+	p.logger.Info("making API request", "url", endpoint)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
 	if err != nil {

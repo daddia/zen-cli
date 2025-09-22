@@ -64,16 +64,18 @@ zen task create SPIKE-101 --type spike --title "Evaluate GraphQL vs REST"
 # Create with additional metadata
 zen task create PROJ-200 --title "Dashboard redesign" --owner "jane.doe" --team "frontend"
 
-# Create task from existing Jira issue (type and details fetched from Jira)
-zen task create ZEN-123 --jira
+# Create task from existing external source (type and details fetched from source)
+zen task create ZEN-123 --from jira
+zen task create GH-456 --from github
+zen task create LIN-789 --from linear
 
 ```
 
 ### Options
 
 ```
+      --from string       Fetch task details from source system (jira, github, linear, etc.)
   -h, --help              help for create
-      --jira              Fetch task details from Jira using the task ID
       --owner string      Task owner (optional, defaults to current user)
       --priority string   Task priority (P0|P1|P2|P3) (default "P2")
       --team string       Team name (optional)
