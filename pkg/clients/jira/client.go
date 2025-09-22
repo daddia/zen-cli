@@ -14,6 +14,8 @@ import (
 )
 
 // Client provides Jira integration functionality for CLI commands
+// DEPRECATED: This client will be replaced by the standardized Plugin implementation
+// Use the Plugin type from plugin.go for new development
 type Client struct {
 	integrationManager cmdutil.IntegrationManagerInterface
 	logger             logging.Logger
