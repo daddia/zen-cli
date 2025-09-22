@@ -1,8 +1,173 @@
 package jira
 
 import (
+	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 )
+
+// JiraTime is a custom time type that handles Jira's various time formats
+type JiraTime time.Time
+
+// UnmarshalJSON handles Jira's time format variations
+func (jt *JiraTime) UnmarshalJSON(data []byte) error {
+	// Remove quotes
+	s := strings.Trim(string(data), "\"")
+
+	// Try different formats
+	formats := []string{
+		"2006-01-02T15:04:05.999-0700",  // RFC3339 with milliseconds
+		"2006-01-02T15:04:05.999Z07:00", // RFC3339 with milliseconds and colon in timezone
+		"2006-01-02T15:04:05.999Z0700",  // RFC3339 with milliseconds without colon
+		"2006-01-02T15:04:05-0700",      // RFC3339 without milliseconds
+		"2006-01-02T15:04:05Z07:00",     // RFC3339 with colon in timezone
+		"2006-01-02T15:04:05Z0700",      // RFC3339 without colon
+		time.RFC3339,                    // Standard RFC3339
+		time.RFC3339Nano,                // RFC3339 with nanoseconds
+	}
+
+	var t time.Time
+	var err error
+
+	// Special handling for timezone formats like +1000
+	if strings.Contains(s, "+") || strings.Contains(s, "-") {
+		// Try to fix the timezone format
+		// Convert +1000 to +10:00
+		parts := strings.Split(s, "+")
+		if len(parts) == 2 && len(parts[1]) == 4 {
+			s = parts[0] + "+" + parts[1][:2] + ":" + parts[1][2:]
+		} else {
+			parts = strings.Split(s, "-")
+			if len(parts) == 3 && len(parts[2]) == 4 { // date-time-timezone
+				s = parts[0] + "-" + parts[1] + "-" + parts[2][:2] + ":" + parts[2][2:]
+			}
+		}
+	}
+
+	for _, format := range formats {
+		t, err = time.Parse(format, s)
+		if err == nil {
+			*jt = JiraTime(t)
+			return nil
+		}
+	}
+
+	return err
+}
+
+// Time returns the underlying time.Time
+func (jt JiraTime) Time() time.Time {
+	return time.Time(jt)
+}
+
+// MarshalJSON converts back to JSON
+func (jt JiraTime) MarshalJSON() ([]byte, error) {
+	t := time.Time(jt)
+	return t.MarshalJSON()
+}
+
+// FlexibleID handles IDs that can be either string or number in Jira responses
+type FlexibleID string
+
+// UnmarshalJSON handles both string and number IDs from Jira
+func (f *FlexibleID) UnmarshalJSON(data []byte) error {
+	// Try as string first
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		*f = FlexibleID(s)
+		return nil
+	}
+
+	// Try as number
+	var n float64
+	if err := json.Unmarshal(data, &n); err == nil {
+		*f = FlexibleID(fmt.Sprintf("%.0f", n))
+		return nil
+	}
+
+	return fmt.Errorf("cannot unmarshal %s as string or number", string(data))
+}
+
+// String returns the string representation
+func (f FlexibleID) String() string {
+	return string(f)
+}
+
+// JiraDescription handles both string and object description formats
+type JiraDescription struct {
+	Text   string
+	Object map[string]interface{}
+}
+
+// UnmarshalJSON handles both string and ADF (Atlassian Document Format) descriptions
+func (d *JiraDescription) UnmarshalJSON(data []byte) error {
+	// Try as string first
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		d.Text = s
+		return nil
+	}
+
+	// Try as object (ADF format)
+	var obj map[string]interface{}
+	if err := json.Unmarshal(data, &obj); err == nil {
+		d.Object = obj
+		// Try to extract plain text from ADF
+		d.Text = d.extractTextFromADF(obj)
+		return nil
+	}
+
+	// If it's null, that's okay
+	if string(data) == "null" {
+		d.Text = ""
+		return nil
+	}
+
+	return fmt.Errorf("cannot unmarshal description: %s", string(data))
+}
+
+// extractTextFromADF extracts plain text from Atlassian Document Format
+func (d *JiraDescription) extractTextFromADF(adf map[string]interface{}) string {
+	var text strings.Builder
+
+	// Navigate the ADF structure to extract text
+	if content, ok := adf["content"].([]interface{}); ok {
+		for _, node := range content {
+			d.extractNodeText(node, &text)
+		}
+	}
+
+	return strings.TrimSpace(text.String())
+}
+
+// extractNodeText recursively extracts text from ADF nodes
+func (d *JiraDescription) extractNodeText(node interface{}, text *strings.Builder) {
+	if nodeMap, ok := node.(map[string]interface{}); ok {
+		// Check for text node
+		if nodeType, ok := nodeMap["type"].(string); ok && nodeType == "text" {
+			if nodeText, ok := nodeMap["text"].(string); ok {
+				text.WriteString(nodeText)
+			}
+		}
+
+		// Check for paragraph or other container nodes
+		if content, ok := nodeMap["content"].([]interface{}); ok {
+			for _, child := range content {
+				d.extractNodeText(child, text)
+			}
+			// Add newline after paragraph
+			if nodeType, ok := nodeMap["type"].(string); ok && nodeType == "paragraph" {
+				text.WriteString("\n")
+			}
+		}
+	}
+}
+
+// String returns the text representation
+func (d JiraDescription) String() string {
+	return d.Text
+}
 
 // Jira API Types
 
@@ -17,9 +182,9 @@ type JiraIssue struct {
 // JiraFields represents Jira issue fields
 type JiraFields struct {
 	Summary     string          `json:"summary"`
-	Description string          `json:"description"`
-	Created     time.Time       `json:"created"`
-	Updated     time.Time       `json:"updated"`
+	Description JiraDescription `json:"description"`
+	Created     JiraTime        `json:"created"`
+	Updated     JiraTime        `json:"updated"`
 	Status      JiraStatus      `json:"status"`
 	Priority    JiraPriority    `json:"priority"`
 	Assignee    JiraUser        `json:"assignee"`
@@ -42,9 +207,9 @@ type JiraStatus struct {
 
 // JiraStatusCategory represents Jira status category
 type JiraStatusCategory struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Key  string `json:"key"`
+	ID   FlexibleID `json:"id"`
+	Name string     `json:"name"`
+	Key  string     `json:"key"`
 }
 
 // JiraPriority represents Jira priority

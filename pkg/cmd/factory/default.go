@@ -155,8 +155,8 @@ func authFunc(f *cmdutil.Factory) func() (auth.Manager, error) {
 			return nil, authError
 		}
 
-		// Create auth manager
-		cachedAuth = auth.NewManager(authConfig, logger, storage)
+		// Create unified auth manager that handles both token and basic auth
+		cachedAuth = auth.NewUnifiedAuthManager(authConfig, cfg, logger, storage)
 
 		return cachedAuth, nil
 	}

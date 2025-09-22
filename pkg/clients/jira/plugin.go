@@ -38,11 +38,12 @@ type PluginConfig struct {
 
 // AuthConfig contains authentication configuration
 type AuthConfig struct {
-	Type           AuthType      `json:"type" yaml:"type" validate:"required"`
-	CredentialsRef string        `json:"credentials_ref" yaml:"credentials_ref"`
-	TokenStorage   string        `json:"token_storage" yaml:"token_storage"`
-	RefreshToken   bool          `json:"refresh_token" yaml:"refresh_token"`
-	TokenExpiry    time.Duration `json:"token_expiry" yaml:"token_expiry"`
+	Type           AuthType          `json:"type" yaml:"type" validate:"required"`
+	CredentialsRef string            `json:"credentials_ref" yaml:"credentials_ref"`
+	TokenStorage   string            `json:"token_storage" yaml:"token_storage"`
+	RefreshToken   bool              `json:"refresh_token" yaml:"refresh_token"`
+	TokenExpiry    time.Duration     `json:"token_expiry" yaml:"token_expiry"`
+	CustomFields   map[string]string `json:"custom_fields" yaml:"custom_fields"` // For direct config credentials
 }
 
 type AuthType string
@@ -388,61 +389,41 @@ func (p *Plugin) validateConfig() error {
 }
 
 func (p *Plugin) addAuthentication(req *http.Request) error {
-	if p.config.Auth == nil {
-		return fmt.Errorf("no authentication configuration")
+	// Use auth manager if available (preferred path)
+	if p.authMgr != nil {
+		// The unified auth manager will automatically check config and storage
+		authHeader, err := p.authMgr.GetCredentials("jira")
+		if err == nil {
+			req.Header.Set("Authorization", authHeader)
+			p.logger.Debug("added authentication via auth manager")
+			return nil
+		}
+		p.logger.Debug("auth manager failed, trying fallback", "error", err)
 	}
 
-	// First try to use credentials from config CustomFields (direct config access)
-	if len(p.config.Auth.CustomFields) > 0 {
+	// Fallback for direct config access (when auth manager not available)
+	if p.config.Auth != nil && len(p.config.Auth.CustomFields) > 0 {
 		return p.addAuthenticationFromConfig(req)
 	}
 
-	// Fallback to auth manager
-	switch p.config.Auth.Type {
-	case AuthTypeBasic:
-		credentials, err := p.authMgr.GetCredentials(p.config.Auth.CredentialsRef)
-		if err != nil {
-			return fmt.Errorf("failed to get credentials: %w", err)
-		}
-		req.Header.Set("Authorization", "Basic "+credentials)
-		
-	case AuthTypeToken:
-		token, err := p.authMgr.GetCredentials(p.config.Auth.CredentialsRef)
-		if err != nil {
-			return fmt.Errorf("failed to get token: %w", err)
-		}
-		req.Header.Set("Authorization", "Bearer "+token)
-		
-	case AuthTypeOAuth2:
-		token, err := p.authMgr.GetCredentials(p.config.Auth.CredentialsRef)
-		if err != nil {
-			return fmt.Errorf("failed to get OAuth token: %w", err)
-		}
-		req.Header.Set("Authorization", "Bearer "+token)
-		
-	default:
-		return fmt.Errorf("unsupported auth type: %s", p.config.Auth.Type)
-	}
-
-	return nil
+	return fmt.Errorf("no authentication method available")
 }
 
 // addAuthenticationFromConfig adds authentication using config file credentials
 func (p *Plugin) addAuthenticationFromConfig(req *http.Request) error {
 	email := p.config.Auth.CustomFields["email"]
 	apiKey := p.config.Auth.CustomFields["api_key"]
-	
+
 	if email == "" || apiKey == "" {
 		return fmt.Errorf("email and api_key required in config for Jira authentication")
 	}
 
 	// Jira uses Basic Auth with email:api_key
-	import "encoding/base64"
 	credentials := base64.StdEncoding.EncodeToString([]byte(email + ":" + apiKey))
 	req.Header.Set("Authorization", "Basic "+credentials)
-	
+
 	p.logger.Debug("added authentication from config", "email", email)
-	
+
 	return nil
 }
 

@@ -392,6 +392,7 @@ func (j *JiraPluginAdapter) Initialize(ctx context.Context, config *plugin.Plugi
 		Auth: &jira.AuthConfig{
 			Type:           jira.AuthType(config.Auth.Type),
 			CredentialsRef: config.Auth.CredentialsRef,
+			CustomFields:   config.Auth.CustomFields, // Pass through the custom fields
 		},
 		Settings: config.Settings,
 	}

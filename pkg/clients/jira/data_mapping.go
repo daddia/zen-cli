@@ -122,13 +122,13 @@ func (p *Plugin) convertJiraIssueToTaskData(issue *JiraIssue) *PluginTaskData {
 		ID:          issue.Key,
 		ExternalID:  issue.Key,
 		Title:       issue.Fields.Summary,
-		Description: issue.Fields.Description,
+		Description: issue.Fields.Description.String(),
 		Status:      p.mapJiraStatusToZen(issue.Fields.Status.Name),
 		Priority:    p.mapJiraPriorityToZen(issue.Fields.Priority.Name),
 		Type:        p.mapJiraTypeToZen(issue.Fields.IssueType.Name),
 		Assignee:    issue.Fields.Assignee.DisplayName,
-		Created:     issue.Fields.Created,
-		Updated:     issue.Fields.Updated,
+		Created:     issue.Fields.Created.Time(),
+		Updated:     issue.Fields.Updated.Time(),
 		ExternalURL: p.buildJiraIssueURL(issue.Key),
 		Metadata: map[string]interface{}{
 			"external_system": "jira",
@@ -326,6 +326,6 @@ func (p *Plugin) generateChecksum(issue *JiraIssue) string {
 	// In production, this would be a proper hash
 	return fmt.Sprintf("%s-%s-%d",
 		issue.Key,
-		issue.Fields.Updated.Format(time.RFC3339),
+		issue.Fields.Updated.Time().Format(time.RFC3339),
 		len(issue.Fields.Summary))
 }
