@@ -349,24 +349,39 @@ func (m *Manager) CreateTask(ctx context.Context, request *CreateTaskRequest) (*
 		var err error
 		sourceData, err = m.fetchFromSource(ctx, request.ID, request.FromSource)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch from %s: %w", request.FromSource, err)
+			// Log warning but continue with local task creation
+			m.logger.Warn("failed to fetch from external source, creating local task",
+				"task_id", request.ID,
+				"source", request.FromSource,
+				"error", err)
+			
+			// Print warning to user
+			fmt.Fprintf(m.io.ErrOut, "%s Failed to fetch from %s: %v\n",
+				m.io.FormatWarning("⚠"), request.FromSource, err)
+			fmt.Fprintf(m.io.ErrOut, "%s Creating local task without external data\n",
+				m.io.ColorInfo("ℹ"))
+			
+			// Continue with local task creation
+			sourceData = nil
 		}
 
-		// Override request fields with source data (External SoR)
-		if sourceData.Title != "" {
-			request.Title = sourceData.Title
-		}
-		if sourceData.Type != "" {
-			request.Type = sourceData.Type
-		}
-		if sourceData.Owner != "" {
-			request.Owner = sourceData.Owner
-		}
-		if sourceData.Team != "" {
-			request.Team = sourceData.Team
-		}
-		if sourceData.Priority != "" {
-			request.Priority = sourceData.Priority
+		// Override request fields with source data (External SoR) if fetch was successful
+		if sourceData != nil {
+			if sourceData.Title != "" {
+				request.Title = sourceData.Title
+			}
+			if sourceData.Type != "" {
+				request.Type = sourceData.Type
+			}
+			if sourceData.Owner != "" {
+				request.Owner = sourceData.Owner
+			}
+			if sourceData.Team != "" {
+				request.Team = sourceData.Team
+			}
+			if sourceData.Priority != "" {
+				request.Priority = sourceData.Priority
+			}
 		}
 	}
 

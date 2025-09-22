@@ -267,8 +267,13 @@ func createRun(opts *CreateOptions) error {
 	fmt.Fprintf(opts.IO.Out, "  %s Location: %s\n",
 		opts.IO.ColorNeutral("→"), createdTask.WorkspacePath)
 	if opts.Source != "" {
-		fmt.Fprintf(opts.IO.Out, "  %s Source: %s (%s)\n",
-			opts.IO.ColorNeutral("→"), opts.Source, createdTask.Sources[opts.Source].ExternalID)
+		if source, exists := createdTask.Sources[opts.Source]; exists {
+			fmt.Fprintf(opts.IO.Out, "  %s Source: %s (%s)\n",
+				opts.IO.ColorNeutral("→"), opts.Source, source.ExternalID)
+		} else {
+			fmt.Fprintf(opts.IO.Out, "  %s Source: %s (local only)\n",
+				opts.IO.ColorNeutral("→"), opts.Source)
+		}
 	}
 
 	// Show next steps
