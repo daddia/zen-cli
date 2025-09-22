@@ -149,16 +149,22 @@ type IntegrationsConfig struct {
 // IntegrationProviderConfig contains provider-specific integration settings
 type IntegrationProviderConfig struct {
 	// Server URL for the integration
-	ServerURL string `mapstructure:"server_url"`
+	URL string `mapstructure:"url"`
 
 	// Project key or identifier
 	ProjectKey string `mapstructure:"project_key"`
 
 	// Authentication type (basic, oauth2, token)
-	AuthType string `mapstructure:"auth_type" validate:"oneof=basic oauth2 token ''"`
+	Type string `mapstructure:"type" validate:"oneof=basic oauth2 token ''"`
 
 	// Credentials reference for auth system
-	CredentialsRef string `mapstructure:"credentials_ref"`
+	Credentials string `mapstructure:"credentials"`
+
+	// Email for authentication (if required)
+	Email string `mapstructure:"email"`
+
+	// API key/token for authentication
+	APIKey string `mapstructure:"api_key"`
 
 	// Field mappings for data synchronization
 	FieldMapping map[string]string `mapstructure:"field_mapping"`
@@ -182,7 +188,8 @@ func DefaultIntegrationsConfig() IntegrationsConfig {
 		},
 		Providers: map[string]IntegrationProviderConfig{
 			"jira": {
-				AuthType:      "basic",
+				Type:          "token",
+				Credentials:   "jira",
 				SyncDirection: "bidirectional",
 				FieldMapping: map[string]string{
 					"task_id":     "key",

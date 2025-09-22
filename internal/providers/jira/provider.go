@@ -3,6 +3,7 @@ package jira
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,6 +18,39 @@ import (
 	"github.com/daddia/zen/pkg/auth"
 	"github.com/daddia/zen/pkg/clients"
 )
+
+// JiraTime handles Jira's timestamp format which uses +1000 instead of +10:00
+type JiraTime struct {
+	time.Time
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling for Jira timestamps
+func (jt *JiraTime) UnmarshalJSON(data []byte) error {
+	// Remove quotes from JSON string
+	str := strings.Trim(string(data), `"`)
+	jt.Time = parseJiraTime(str)
+	return nil
+}
+
+// parseJiraTime parses Jira timestamp formats
+func parseJiraTime(str string) time.Time {
+	// Try parsing with different Jira timestamp formats
+	formats := []string{
+		"2006-01-02T15:04:05.000-0700", // Jira format: 2025-09-21T22:24:41.965+1000
+		"2006-01-02T15:04:05-0700",     // Without milliseconds
+		time.RFC3339,                   // Standard format
+		time.RFC3339Nano,               // With nanoseconds
+	}
+
+	for _, format := range formats {
+		if t, err := time.Parse(format, str); err == nil {
+			return t
+		}
+	}
+
+	// Return zero time if parsing fails
+	return time.Time{}
+}
 
 // Provider implements the IntegrationProvider interface for Jira
 type Provider struct {
@@ -35,10 +69,10 @@ type JiraIssue struct {
 	Key    string `json:"key"`
 	Self   string `json:"self"`
 	Fields struct {
-		Summary     string    `json:"summary"`
-		Description string    `json:"description"`
-		Created     time.Time `json:"created"`
-		Updated     time.Time `json:"updated"`
+		Summary     string   `json:"summary"`
+		Description string   `json:"description"`
+		Created     JiraTime `json:"created"`
+		Updated     JiraTime `json:"updated"`
 		Status      struct {
 			Name string `json:"name"`
 			ID   string `json:"id"`
@@ -107,7 +141,7 @@ func NewProvider(
 		config:     config,
 		logger:     logger,
 		auth:       authManager,
-		baseURL:    config.ServerURL,
+		baseURL:    config.URL,
 		projectKey: config.ProjectKey,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
@@ -133,17 +167,83 @@ func (p *Provider) GetTaskData(ctx context.Context, externalID string) (*integra
 
 	// Build API URL
 	url := fmt.Sprintf("%s/rest/api/3/issue/%s", p.baseURL, externalID)
+	p.logger.Debug("making API request", "url", url)
 
 	// Make API request
 	resp, err := p.makeAPIRequest(ctx, "GET", url, nil)
 	if err != nil {
+		p.logger.Debug("API request failed", "error", err)
 		return nil, fmt.Errorf("failed to get Jira issue: %w", err)
 	}
+	p.logger.Debug("API request successful", "response_size", len(resp))
 
-	// Parse response
-	var issue JiraIssue
-	if err := json.Unmarshal(resp, &issue); err != nil {
+	// Parse response using flexible approach to handle Jira's time format
+	p.logger.Debug("attempting to parse Jira response", "response_length", len(resp))
+	var rawIssue map[string]interface{}
+	if err := json.Unmarshal(resp, &rawIssue); err != nil {
+		snippet := string(resp)
+		if len(snippet) > 500 {
+			snippet = snippet[:500]
+		}
+		p.logger.Debug("json unmarshal failed", "error", err, "response_snippet", snippet)
 		return nil, fmt.Errorf("failed to parse Jira issue response: %w", err)
+	}
+	p.logger.Debug("successfully parsed raw issue")
+
+	// Extract fields manually with flexible time parsing
+	var issue JiraIssue
+	if key, ok := rawIssue["key"].(string); ok {
+		issue.Key = key
+	}
+	if id, ok := rawIssue["id"].(string); ok {
+		issue.ID = id
+	}
+	if self, ok := rawIssue["self"].(string); ok {
+		issue.Self = self
+	}
+
+	if fields, ok := rawIssue["fields"].(map[string]interface{}); ok {
+		if summary, ok := fields["summary"].(string); ok {
+			issue.Fields.Summary = summary
+		}
+		if desc, ok := fields["description"].(string); ok {
+			issue.Fields.Description = desc
+		}
+
+		// Parse timestamps flexibly
+		if created, ok := fields["created"].(string); ok {
+			issue.Fields.Created = JiraTime{Time: parseJiraTime(created)}
+		}
+		if updated, ok := fields["updated"].(string); ok {
+			issue.Fields.Updated = JiraTime{Time: parseJiraTime(updated)}
+		}
+
+		// Parse nested objects safely
+		if status, ok := fields["status"].(map[string]interface{}); ok {
+			if name, ok := status["name"].(string); ok {
+				issue.Fields.Status.Name = name
+			}
+		}
+		if priority, ok := fields["priority"].(map[string]interface{}); ok {
+			if name, ok := priority["name"].(string); ok {
+				issue.Fields.Priority.Name = name
+			}
+		}
+		if assignee, ok := fields["assignee"].(map[string]interface{}); ok {
+			if displayName, ok := assignee["displayName"].(string); ok {
+				issue.Fields.Assignee.DisplayName = displayName
+			}
+		}
+		if issueType, ok := fields["issuetype"].(map[string]interface{}); ok {
+			if name, ok := issueType["name"].(string); ok {
+				issue.Fields.IssueType.Name = name
+			}
+		}
+		if project, ok := fields["project"].(map[string]interface{}); ok {
+			if key, ok := project["key"].(string); ok {
+				issue.Fields.Project.Key = key
+			}
+		}
 	}
 
 	// Convert to external task data
@@ -154,8 +254,8 @@ func (p *Provider) GetTaskData(ctx context.Context, externalID string) (*integra
 		Status:      issue.Fields.Status.Name,
 		Priority:    issue.Fields.Priority.Name,
 		Assignee:    issue.Fields.Assignee.DisplayName,
-		Created:     issue.Fields.Created,
-		Updated:     issue.Fields.Updated,
+		Created:     issue.Fields.Created.Time,
+		Updated:     issue.Fields.Updated.Time,
 		Fields: map[string]interface{}{
 			"issue_type": issue.Fields.IssueType.Name,
 			"project":    issue.Fields.Project.Key,
@@ -303,8 +403,8 @@ func (p *Provider) SearchTasks(ctx context.Context, query map[string]interface{}
 			Status:      issue.Fields.Status.Name,
 			Priority:    issue.Fields.Priority.Name,
 			Assignee:    issue.Fields.Assignee.DisplayName,
-			Created:     issue.Fields.Created,
-			Updated:     issue.Fields.Updated,
+			Created:     issue.Fields.Created.Time,
+			Updated:     issue.Fields.Updated.Time,
 			Fields: map[string]interface{}{
 				"issue_type": issue.Fields.IssueType.Name,
 				"project":    issue.Fields.Project.Key,
@@ -520,29 +620,64 @@ func (p *Provider) makeAPIRequest(ctx context.Context, method, url string, body 
 
 // addAuthentication adds authentication to the request
 func (p *Provider) addAuthentication(req *http.Request) error {
-	if p.config.CredentialsRef == "" {
-		return fmt.Errorf("no credentials configured")
+	// Debug logging
+	p.logger.Debug("authentication config",
+		"email", p.config.Email,
+		"has_api_key", p.config.APIKey != "",
+		"credentials_ref", p.config.Credentials,
+		"auth_type", p.config.Type)
+
+	// Use credentials directly from config if available
+	if p.config.Email != "" && p.config.APIKey != "" {
+		p.logger.Debug("using direct config credentials")
+		return p.setBasicAuth(req, p.config.Email, p.config.APIKey)
 	}
 
-	credentials, err := p.auth.GetCredentials(p.config.CredentialsRef)
+	// Fall back to auth manager if credentials reference is provided
+	if p.config.Credentials == "" {
+		return fmt.Errorf("no credentials configured - email: '%s', api_key: '%s', credentials: '%s'",
+			p.config.Email,
+			func() string {
+				if p.config.APIKey != "" {
+					return "[REDACTED]"
+				} else {
+					return ""
+				}
+			}(),
+			p.config.Credentials)
+	}
+
+	credentials, err := p.auth.GetCredentials(p.config.Credentials)
 	if err != nil {
 		return fmt.Errorf("failed to get credentials: %w", err)
 	}
 
-	switch p.config.AuthType {
+	switch p.config.Type {
 	case "basic":
 		// Assume credentials are in "username:password" format
 		req.Header.Set("Authorization", "Basic "+credentials)
 	case "token":
-		// Assume credentials are a bearer token
+		// For Jira, use basic auth with email:token
+		if p.config.Email != "" {
+			return p.setBasicAuth(req, p.config.Email, credentials)
+		}
+		// Fallback to bearer token
 		req.Header.Set("Authorization", "Bearer "+credentials)
 	case "oauth2":
 		// Assume credentials are an OAuth2 access token
 		req.Header.Set("Authorization", "Bearer "+credentials)
 	default:
-		return fmt.Errorf("unsupported auth type: %s", p.config.AuthType)
+		return fmt.Errorf("unsupported auth type: %s", p.config.Type)
 	}
 
+	return nil
+}
+
+// setBasicAuth sets basic authentication header for Jira
+func (p *Provider) setBasicAuth(req *http.Request, email, token string) error {
+	auth := email + ":" + token
+	encoded := base64.StdEncoding.EncodeToString([]byte(auth))
+	req.Header.Set("Authorization", "Basic "+encoded)
 	return nil
 }
 
