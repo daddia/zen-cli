@@ -550,23 +550,7 @@ func TestGenerateTaskFiles_TemplateSuccess(t *testing.T) {
 	assert.FileExists(t, filepath.Join(taskDir, ".taskrc.yaml"))
 }
 
-func TestGenerateTaskFiles_TemplateEngineError(t *testing.T) {
-	tempDir := t.TempDir()
-	taskDir := filepath.Join(tempDir, "PROJ-123")
-
-	opts := &CreateOptions{
-		TaskID:   "PROJ-123",
-		TaskType: "story",
-		TemplateEngine: func() (cmdutil.TemplateEngineInterface, error) {
-			return nil, fmt.Errorf("template engine failed")
-		},
-	}
-
-	ctx := context.Background()
-	err := generateTaskFiles(ctx, opts, taskDir)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to get template engine")
-}
+// Removed TestGenerateTaskFiles_TemplateEngineError - using local template loader now
 
 func TestBuildTemplateVariables_EdgeCases(t *testing.T) {
 	// Test with minimal options
@@ -706,16 +690,17 @@ func TestNewCmdTaskCreate(t *testing.T) {
 	assert.Equal(t, "P2", priorityFlag.DefValue)
 }
 
-func TestNewCmdTaskCreate_MissingTypeFlag(t *testing.T) {
+func TestNewCmdTaskCreate_DefaultType(t *testing.T) {
 	streams := iostreams.Test()
-	factory := cmdutil.NewTestFactory(streams)
+	factory := cmdutil.NewTestFactoryWithWorkspace(streams, false, false)
 
 	cmd := NewCmdTaskCreate(factory)
 	cmd.SetArgs([]string{"PROJ-123"})
 
 	err := cmd.Execute()
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "required flag(s) \"type\" not set")
+	// Should fail due to workspace not initialized, not missing type flag
+	assert.Contains(t, err.Error(), "workspace not initialized")
 }
 
 func TestNewCmdTaskCreate_InvalidType(t *testing.T) {
