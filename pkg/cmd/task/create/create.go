@@ -234,6 +234,13 @@ func createRun(opts *CreateOptions) error {
 		return nil
 	}
 
+	// Show initial progress message
+	if opts.Source != "" {
+		fmt.Fprintf(opts.IO.Out, "Creating %s from %s...\n", opts.TaskID, opts.Source)
+	} else {
+		fmt.Fprintf(opts.IO.Out, "Creating %s...\n", opts.TaskID)
+	}
+
 	// Create task manager
 	taskManager := task.NewManager(opts.Factory)
 	if taskManager == nil {
@@ -252,45 +259,22 @@ func createRun(opts *CreateOptions) error {
 		DryRun:     opts.DryRun,
 	}
 
-	// Create task using task manager
+	// Create task using task manager (this will handle folder creation, data fetch, and artifacts)
 	createdTask, err := taskManager.CreateTask(ctx, createRequest)
 	if err != nil {
 		return fmt.Errorf("failed to create task: %w", err)
 	}
 
-	// Success output
-	fmt.Fprintf(opts.IO.Out, "%s Created task %s\n",
-		opts.IO.FormatSuccess("✓"),
-		opts.IO.ColorBold(createdTask.ID))
-	fmt.Fprintf(opts.IO.Out, "  %s Type: %s\n",
-		opts.IO.ColorNeutral("→"), createdTask.Type)
-	fmt.Fprintf(opts.IO.Out, "  %s Location: %s\n",
-		opts.IO.ColorNeutral("→"), createdTask.WorkspacePath)
-	if opts.Source != "" {
-		if source, exists := createdTask.Sources[opts.Source]; exists {
-			fmt.Fprintf(opts.IO.Out, "  %s Source: %s (%s)\n",
-				opts.IO.ColorNeutral("→"), opts.Source, source.ExternalID)
-		} else {
-			fmt.Fprintf(opts.IO.Out, "  %s Source: %s (local only)\n",
-				opts.IO.ColorNeutral("→"), opts.Source)
-		}
-	}
-
-	// Show next steps
-	fmt.Fprintf(opts.IO.Out, "\n%s\n",
-		opts.IO.ColorBold("Next steps:"))
-	fmt.Fprintf(opts.IO.Out, "  1. Edit %s to define the task\n",
-		opts.IO.ColorNeutral("index.md"))
-	fmt.Fprintf(opts.IO.Out, "  2. Configure automation in %s\n",
-		opts.IO.ColorNeutral(".taskrc.yaml"))
-	fmt.Fprintf(opts.IO.Out, "  3. Start workflow: %s\n",
-		opts.IO.ColorNeutral(fmt.Sprintf("zen %s align", createdTask.ID)))
+	// Show final success message
+	fmt.Fprintf(opts.IO.Out, "%s\n",
+		opts.IO.FormatSuccess("Initial artefacts created"))
+	fmt.Fprintf(opts.IO.Out, "\nStart flowing: %s\n",
+		opts.IO.ColorNeutral(fmt.Sprintf("`zen %s start`", createdTask.ID)))
 
 	return nil
 }
 
-// Note: All data sync functionality has been moved to pkg/task/manager.go and pkg/task/sync.go
-// The task create command is now lightweight and delegates to the task manager
+// IMPORTANT: Task commands MUST BE lightweight and delegate to the task manager (pkg/task)
 
 // buildTemplateVariables builds template variables for task creation
 // This is a stub implementation for test compatibility

@@ -343,48 +343,6 @@ func (m *Manager) CreateTask(ctx context.Context, request *CreateTaskRequest) (*
 		return nil, fmt.Errorf("task already exists: %s", request.ID)
 	}
 
-	// Fetch data from external source if specified
-	var sourceData *TaskData
-	if request.FromSource != "" {
-		var err error
-		sourceData, err = m.fetchFromSource(ctx, request.ID, request.FromSource)
-		if err != nil {
-			// Log warning but continue with local task creation
-			m.logger.Warn("failed to fetch from external source, creating local task",
-				"task_id", request.ID,
-				"source", request.FromSource,
-				"error", err)
-			
-			// Print warning to user
-			fmt.Fprintf(m.io.ErrOut, "%s Failed to fetch from %s: %v\n",
-				m.io.FormatWarning("⚠"), request.FromSource, err)
-			fmt.Fprintf(m.io.ErrOut, "%s Creating local task without external data\n",
-				m.io.ColorInfo("ℹ"))
-			
-			// Continue with local task creation
-			sourceData = nil
-		}
-
-		// Override request fields with source data (External SoR) if fetch was successful
-		if sourceData != nil {
-			if sourceData.Title != "" {
-				request.Title = sourceData.Title
-			}
-			if sourceData.Type != "" {
-				request.Type = sourceData.Type
-			}
-			if sourceData.Owner != "" {
-				request.Owner = sourceData.Owner
-			}
-			if sourceData.Team != "" {
-				request.Team = sourceData.Team
-			}
-			if sourceData.Priority != "" {
-				request.Priority = sourceData.Priority
-			}
-		}
-	}
-
 	// Create task structure
 	task := &Task{
 		ID:           request.ID,
@@ -420,22 +378,72 @@ func (m *Manager) CreateTask(ctx context.Context, request *CreateTaskRequest) (*
 		task.Team = "default"
 	}
 
-	// Add external source if data was fetched
-	if sourceData != nil {
-		task.Sources[request.FromSource] = &TaskSource{
-			System:        request.FromSource,
-			ExternalID:    sourceData.ExternalID,
-			ExternalURL:   sourceData.ExternalURL,
-			LastSync:      time.Now(),
-			SyncEnabled:   true,
-			SyncDirection: string(SyncDirectionBidirectional),
-			Metadata:      sourceData.Metadata,
-		}
+	// Create task directory structure first
+	if err := m.createTaskStructure(ctx, task, request); err != nil {
+		return nil, fmt.Errorf("failed to create task structure: %w", err)
 	}
 
-	// Create task directory structure
-	if err := m.createTaskStructure(ctx, task, request, sourceData); err != nil {
-		return nil, fmt.Errorf("failed to create task structure: %w", err)
+	// Fetch data from external source if specified (after folder creation)
+	var sourceData *TaskData
+	if request.FromSource != "" {
+		var err error
+		sourceData, err = m.fetchFromSource(ctx, request.ID, request.FromSource)
+		if err != nil {
+			// Log debug message but continue with local task creation
+			m.logger.Debug("failed to fetch from external source, creating local task",
+				"task_id", request.ID,
+				"source", request.FromSource,
+				"error", err)
+
+			// Print simple failure message with proper formatting
+			fmt.Fprintf(m.io.Out, "%s\n",
+				m.io.FormatError(fmt.Sprintf("Task data fetch for %s failed", request.FromSource)))
+
+			// Continue with local task creation
+			sourceData = nil
+		}
+
+		// Override request fields with source data (External SoR) if fetch was successful
+		if sourceData != nil {
+			if sourceData.Title != "" {
+				request.Title = sourceData.Title
+				task.Title = sourceData.Title
+			}
+			if sourceData.Type != "" {
+				request.Type = sourceData.Type
+				task.Type = sourceData.Type
+			}
+			if sourceData.Owner != "" {
+				request.Owner = sourceData.Owner
+				task.Owner = sourceData.Owner
+			}
+			if sourceData.Team != "" {
+				request.Team = sourceData.Team
+				task.Team = sourceData.Team
+			}
+			if sourceData.Priority != "" {
+				request.Priority = sourceData.Priority
+				task.Priority = sourceData.Priority
+			}
+		}
+
+		// Add external source if data was fetched
+		if sourceData != nil {
+			task.Sources[request.FromSource] = &TaskSource{
+				System:        request.FromSource,
+				ExternalID:    sourceData.ExternalID,
+				ExternalURL:   sourceData.ExternalURL,
+				LastSync:      time.Now(),
+				SyncEnabled:   true,
+				SyncDirection: string(SyncDirectionBidirectional),
+				Metadata:      sourceData.Metadata,
+			}
+		}
+
+		// Generate task files with updated data and save source metadata
+		if err := m.updateTaskWithSourceData(ctx, task, request, sourceData); err != nil {
+			return nil, fmt.Errorf("failed to update task with source data: %w", err)
+		}
 	}
 
 	m.logger.Info("task created successfully", "id", task.ID, "type", task.Type, "source", request.FromSource)
@@ -792,7 +800,7 @@ func (m *Manager) updateTaskFromSourceData(ctx context.Context, task *Task, sour
 }
 
 // createTaskStructure creates the complete task directory structure
-func (m *Manager) createTaskStructure(ctx context.Context, task *Task, request *CreateTaskRequest, sourceData *TaskData) error {
+func (m *Manager) createTaskStructure(ctx context.Context, task *Task, request *CreateTaskRequest) error {
 	// Get workspace manager
 	ws, err := m.factory.WorkspaceManager()
 	if err != nil {
@@ -810,20 +818,34 @@ func (m *Manager) createTaskStructure(ctx context.Context, task *Task, request *
 		return fmt.Errorf("failed to create task directories: %w", err)
 	}
 
+	// Show folder creation success
+	fmt.Fprintf(m.io.Out, "%s\n",
+		m.io.FormatSuccess(fmt.Sprintf("Task folder created: %s", taskDir)))
+
 	// Set task paths
 	task.WorkspacePath = taskDir
 	task.IndexPath = filepath.Join(taskDir, "index.md")
 	task.ManifestPath = filepath.Join(taskDir, "manifest.yaml")
 	task.MetadataPath = filepath.Join(taskDir, "metadata")
 
-	// Generate task files from templates
-	if err := m.generateTaskFiles(ctx, task, request, sourceData); err != nil {
+	// Generate initial task files from templates (without source data)
+	if err := m.generateTaskFiles(ctx, task, request, nil); err != nil {
 		return fmt.Errorf("failed to generate task files: %w", err)
 	}
 
-	// Save source metadata if available
+	return nil
+}
+
+// updateTaskWithSourceData updates task files with source data and saves metadata
+func (m *Manager) updateTaskWithSourceData(ctx context.Context, task *Task, request *CreateTaskRequest, sourceData *TaskData) error {
+	// Regenerate task files with source data
+	if err := m.generateTaskFiles(ctx, task, request, sourceData); err != nil {
+		return fmt.Errorf("failed to regenerate task files with source data: %w", err)
+	}
+
+	// Save source metadata
 	if sourceData != nil {
-		if err := m.saveSourceMetadata(taskDir, sourceData, request.FromSource); err != nil {
+		if err := m.saveSourceMetadata(task.WorkspacePath, sourceData, request.FromSource); err != nil {
 			m.logger.Warn("failed to save source metadata", "error", err)
 		}
 	}

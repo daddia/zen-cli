@@ -108,8 +108,7 @@ func (ops *Operations) initializeIntegrationComponents() error {
 
 // FetchFromSource fetches task details from any configured external source system
 func (ops *Operations) FetchFromSource(ctx context.Context, taskID string, source string) (*TaskData, error) {
-	fmt.Fprintf(ops.io.Out, "%s Fetching task details from %s...\n",
-		ops.io.ColorInfo("ℹ"), source)
+	// Removed verbose fetching message to follow Zen design guidelines
 
 	// Check if integration components are available
 	if ops.clientFactory == nil {
@@ -249,20 +248,8 @@ func (ops *Operations) convertPluginTaskDataToTaskData(pluginData *plugin.TaskDa
 
 // displayFetchedTaskInfo displays information about the fetched task
 func (ops *Operations) displayFetchedTaskInfo(taskData *TaskData) {
-	fmt.Fprintf(ops.io.Out, "%s Fetched %s task: %s\n",
-		ops.io.FormatSuccess("✓"), taskData.Source, taskData.ID)
-	fmt.Fprintf(ops.io.Out, "  %s Title: %s\n",
-		ops.io.ColorNeutral("→"), taskData.Title)
-	fmt.Fprintf(ops.io.Out, "  %s Type: %s\n",
-		ops.io.ColorNeutral("→"), taskData.Type)
-	fmt.Fprintf(ops.io.Out, "  %s Status: %s\n",
-		ops.io.ColorNeutral("→"), taskData.Status)
-	fmt.Fprintf(ops.io.Out, "  %s Priority: %s\n",
-		ops.io.ColorNeutral("→"), taskData.Priority)
-	if taskData.Assignee != "" {
-		fmt.Fprintf(ops.io.Out, "  %s Assignee: %s\n",
-			ops.io.ColorNeutral("→"), taskData.Assignee)
-	}
+	fmt.Fprintf(ops.io.Out, "%s\n",
+		ops.io.FormatSuccess(fmt.Sprintf("Task data fetch for %s success", taskData.Source)))
 }
 
 // extractSourceFromMetadata extracts the source system from metadata

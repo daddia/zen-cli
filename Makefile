@@ -307,7 +307,7 @@ deps-upgrade: ## Upgrade all dependencies
 
 ## Utility targets
 
-clean: docs-clean ## Clean build artifacts and cache
+clean: ## Clean build artifacts and cache
 	@echo "$(NEUTRAL) Cleaning build artifacts..."
 	@$(GOCLEAN)
 	@rm -rf $(BINARY_DIR)/
