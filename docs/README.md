@@ -37,8 +37,6 @@ Technical architecture and design decisions:
 
 - **[Architecture Overview](architecture/overview.md)** - System design and components
 - **[Architecture Decisions](architecture/decisions/register.md)** - ADR register
-- **[Product Overview](architecture/product-overview.md)** - Product vision and strategy
-- **[Roadmap](architecture/roadmap.md)** - Future development plans
 
 ### Design System
 

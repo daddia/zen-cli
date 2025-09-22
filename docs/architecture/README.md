@@ -111,16 +111,11 @@ graph TB
 | **Test Coverage** | > 80% | ✓ 85% |
 | **Security** | Zero CVEs | ✓ Passing |
 
-## Key Design Decisions
+## Key Technical Architecture Design Decisions
 
-| ADR | Decision | Status |
-|-----|----------|--------|
-| [ADR-0001](decisions/ADR-0001-language-choice.md) | Go 1.25+ for implementation | Accepted |
-| [ADR-0002](decisions/ADR-0002-cli-framework.md) | Cobra CLI framework | Accepted |
-| [ADR-0006](decisions/ADR-0006-factory-pattern.md) | Factory pattern for DI | Accepted |
-| [ADR-0008](decisions/ADR-0008-plugin-architecture.md) | WASM-based plugins | Accepted |
-| [ADR-0009](decisions/ADR-0009-agent-orchestration.md) | Centralized AI orchestration | Accepted |
-| [ADR-0015](decisions/ADR-0015-security-model.md) | Comprehensive security | Accepted |
+- **[Architecture Overview](architecture/README.md)** - Architecture overview & navigation
+- **[Principles](architecture/README.md)** - Architectural principles & constraints
+- **[Architecture Decisions](architecture/decisions/register.md)** - ADR register
 
 ## Directory Structure
 
@@ -139,17 +134,7 @@ zen/
 
 ## Contributing
 
-- Review [Design Patterns](patterns/design-patterns.md) before coding
-- Follow [Security Patterns](patterns/security-patterns.md) for sensitive operations
-- Document decisions in [ADRs](decisions/adr-template.md)
-- Update relevant architecture views when making structural changes
-
-## Resources
-
-- **[ADR Register](decisions/register.md)** - All architecture decisions
-- **[Product Overview](product-overview.md)** - Product vision and strategy
-- **[Roadmap](roadmap.md)** - Technical roadmap
-- **[Contributing Guide](../contributing/)** - Development guidelines
+Read the **[Contributing Guide](../contributing/)** for development guidelines.
 
 ---
 
