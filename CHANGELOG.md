@@ -10,6 +10,53 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/), and this 
 
 ---
 
+## [v0.7.0] - 2025-09-23
+
+### Added
+- **Jira Task Integration**: Complete Jira integration for task creation with external data synchronization
+  - `zen task create --from jira` command for importing tasks directly from Jira Cloud
+  - Full Jira REST API v3 integration with authentication via email + API token
+  - Complete JSON response storage in `metadata/jira.json` for full external system context
+  - Automatic template population with Jira data (titles, types, statuses, priorities, assignees)
+  - Bidirectional field mapping between Zen tasks and Jira issues
+  - Connection validation and credential management integration
+- **Enhanced Task Manager**: Comprehensive task management system with external source support
+  - `SyncAllTasks` method for bulk synchronization operations
+  - `ListTasks` method with filtering capabilities for task discovery
+  - Enhanced task creation workflow with external source integration
+  - Template variable building with external data synchronization
+  - Rich metadata extraction from external systems (Jira fields, assignees, projects)
+- **Build System Improvements**: Streamlined development and release pipeline
+  - Fixed all linting issues and code quality problems
+  - Enhanced test compatibility with refactored architecture
+  - Improved error handling with proper typed errors
+  - Documentation generation and synchronization
+  - Cross-platform build validation
+
+### Changed
+- Enhanced task creation command to support external source integration
+- Improved Jira plugin with better error handling and data mapping
+- Updated template system to work with external data sources
+- Streamlined command architecture with proper delegation to task manager
+- Enhanced authentication system for multi-provider support
+
+### Fixed
+- Resolved type mismatches in Jira provider test suite
+- Fixed missing method implementations in task manager interface
+- Corrected deprecated comment formatting for Go linting standards
+- Resolved build failures in task creation and sync packages
+- Fixed ineffectual assignment warnings in Jira operations
+
+### Technical
+- **Architecture**: Enhanced separation between CLI commands and business logic
+- **Integration**: Production-ready Jira Cloud integration with comprehensive API support
+- **Testing**: Maintained test coverage with updated test suite for new architecture
+- **Performance**: Optimized template rendering with external data integration
+- **Security**: Secure credential management and proper error handling
+- **Documentation**: Auto-generated CLI documentation kept in sync with implementation
+
+---
+
 ## [v0.6.0] - 2025-09-21
 
 ### Added

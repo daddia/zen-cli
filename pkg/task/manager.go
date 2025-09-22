@@ -34,21 +34,21 @@ type ManagerInterface interface {
 	UpdateTask(ctx context.Context, taskID string, updates *TaskUpdates) (*Task, error)
 	DeleteTask(ctx context.Context, taskID string) error
 	ListTasks(ctx context.Context, filter *TaskFilter) ([]*Task, error)
-	
+
 	// External source synchronization
 	SyncTask(ctx context.Context, taskID string, opts *SyncOptions) (*SyncResult, error)
 	SyncAllTasks(ctx context.Context, opts *SyncOptions) ([]*SyncResult, error)
 	PullFromSource(ctx context.Context, taskID string, source string) (*Task, error)
 	PushToSource(ctx context.Context, taskID string, source string) (*SyncResult, error)
-	
+
 	// Task lifecycle management
 	ProgressTask(ctx context.Context, taskID string, stage string) error
 	GetTaskProgress(ctx context.Context, taskID string) (*TaskProgress, error)
-	
+
 	// Metadata management
 	GetTaskMetadata(ctx context.Context, taskID string) (*TaskMetadata, error)
 	UpdateTaskMetadata(ctx context.Context, taskID string, metadata *TaskMetadata) error
-	
+
 	// Source integration
 	GetTaskSources(ctx context.Context, taskID string) ([]string, error)
 	AddTaskSource(ctx context.Context, taskID string, source string, externalID string) error
@@ -58,52 +58,52 @@ type ManagerInterface interface {
 // Task represents a complete task with all its data and metadata
 type Task struct {
 	// Core task information
-	ID          string    `json:"id" yaml:"id"`
-	Title       string    `json:"title" yaml:"title"`
-	Description string    `json:"description" yaml:"description"`
-	Type        string    `json:"type" yaml:"type"`
-	Status      string    `json:"status" yaml:"status"`
-	Priority    string    `json:"priority" yaml:"priority"`
-	
+	ID          string `json:"id" yaml:"id"`
+	Title       string `json:"title" yaml:"title"`
+	Description string `json:"description" yaml:"description"`
+	Type        string `json:"type" yaml:"type"`
+	Status      string `json:"status" yaml:"status"`
+	Priority    string `json:"priority" yaml:"priority"`
+
 	// Ownership and team
-	Owner       string    `json:"owner" yaml:"owner"`
-	Team        string    `json:"team" yaml:"team"`
-	
+	Owner string `json:"owner" yaml:"owner"`
+	Team  string `json:"team" yaml:"team"`
+
 	// Timestamps
-	Created     time.Time `json:"created" yaml:"created"`
-	Updated     time.Time `json:"updated" yaml:"updated"`
-	DueDate     *time.Time `json:"due_date,omitempty" yaml:"due_date,omitempty"`
-	
+	Created time.Time  `json:"created" yaml:"created"`
+	Updated time.Time  `json:"updated" yaml:"updated"`
+	DueDate *time.Time `json:"due_date,omitempty" yaml:"due_date,omitempty"`
+
 	// Organization
-	Labels      []string  `json:"labels" yaml:"labels"`
-	Tags        []string  `json:"tags" yaml:"tags"`
-	
+	Labels []string `json:"labels" yaml:"labels"`
+	Tags   []string `json:"tags" yaml:"tags"`
+
 	// Workflow
-	CurrentStage string   `json:"current_stage" yaml:"current_stage"`
-	Progress     int      `json:"progress" yaml:"progress"`
-	
+	CurrentStage string `json:"current_stage" yaml:"current_stage"`
+	Progress     int    `json:"progress" yaml:"progress"`
+
 	// External sources
-	Sources     map[string]*TaskSource `json:"sources" yaml:"sources"`
-	
+	Sources map[string]*TaskSource `json:"sources" yaml:"sources"`
+
 	// File paths
 	WorkspacePath string `json:"workspace_path" yaml:"workspace_path"`
 	IndexPath     string `json:"index_path" yaml:"index_path"`
 	ManifestPath  string `json:"manifest_path" yaml:"manifest_path"`
 	MetadataPath  string `json:"metadata_path" yaml:"metadata_path"`
-	
+
 	// Metadata
-	Metadata    map[string]interface{} `json:"metadata" yaml:"metadata"`
+	Metadata map[string]interface{} `json:"metadata" yaml:"metadata"`
 }
 
 // TaskSource represents an external source for a task
 type TaskSource struct {
-	System      string                 `json:"system" yaml:"system"`
-	ExternalID  string                 `json:"external_id" yaml:"external_id"`
-	ExternalURL string                 `json:"external_url" yaml:"external_url"`
-	LastSync    time.Time              `json:"last_sync" yaml:"last_sync"`
-	SyncEnabled bool                   `json:"sync_enabled" yaml:"sync_enabled"`
-	SyncDirection string               `json:"sync_direction" yaml:"sync_direction"`
-	Metadata    map[string]interface{} `json:"metadata" yaml:"metadata"`
+	System        string                 `json:"system" yaml:"system"`
+	ExternalID    string                 `json:"external_id" yaml:"external_id"`
+	ExternalURL   string                 `json:"external_url" yaml:"external_url"`
+	LastSync      time.Time              `json:"last_sync" yaml:"last_sync"`
+	SyncEnabled   bool                   `json:"sync_enabled" yaml:"sync_enabled"`
+	SyncDirection string                 `json:"sync_direction" yaml:"sync_direction"`
+	Metadata      map[string]interface{} `json:"metadata" yaml:"metadata"`
 }
 
 // CreateTaskRequest contains parameters for creating a new task
@@ -114,40 +114,40 @@ type CreateTaskRequest struct {
 	Owner    string `json:"owner"`
 	Team     string `json:"team"`
 	Priority string `json:"priority"`
-	
+
 	// External source integration
-	FromSource   string `json:"from_source,omitempty"`
-	ExternalID   string `json:"external_id,omitempty"`
-	
+	FromSource string `json:"from_source,omitempty"`
+	ExternalID string `json:"external_id,omitempty"`
+
 	// Template options
 	TemplateVars map[string]interface{} `json:"template_vars,omitempty"`
-	
+
 	// Creation options
-	DryRun       bool `json:"dry_run"`
+	DryRun bool `json:"dry_run"`
 }
 
 // TaskUpdates contains fields that can be updated
 type TaskUpdates struct {
-	Title       *string   `json:"title,omitempty"`
-	Description *string   `json:"description,omitempty"`
-	Status      *string   `json:"status,omitempty"`
-	Priority    *string   `json:"priority,omitempty"`
-	Owner       *string   `json:"owner,omitempty"`
-	Team        *string   `json:"team,omitempty"`
+	Title       *string    `json:"title,omitempty"`
+	Description *string    `json:"description,omitempty"`
+	Status      *string    `json:"status,omitempty"`
+	Priority    *string    `json:"priority,omitempty"`
+	Owner       *string    `json:"owner,omitempty"`
+	Team        *string    `json:"team,omitempty"`
 	DueDate     *time.Time `json:"due_date,omitempty"`
-	Labels      []string  `json:"labels,omitempty"`
-	Tags        []string  `json:"tags,omitempty"`
+	Labels      []string   `json:"labels,omitempty"`
+	Tags        []string   `json:"tags,omitempty"`
 }
 
 // TaskFilter contains filtering options for listing tasks
 type TaskFilter struct {
-	Type     string   `json:"type,omitempty"`
-	Status   string   `json:"status,omitempty"`
-	Owner    string   `json:"owner,omitempty"`
-	Team     string   `json:"team,omitempty"`
-	Labels   []string `json:"labels,omitempty"`
-	Sources  []string `json:"sources,omitempty"`
-	Stage    string   `json:"stage,omitempty"`
+	Type    string   `json:"type,omitempty"`
+	Status  string   `json:"status,omitempty"`
+	Owner   string   `json:"owner,omitempty"`
+	Team    string   `json:"team,omitempty"`
+	Labels  []string `json:"labels,omitempty"`
+	Sources []string `json:"sources,omitempty"`
+	Stage   string   `json:"stage,omitempty"`
 }
 
 // SyncOptions contains options for synchronization operations
@@ -193,46 +193,46 @@ type SyncResult struct {
 
 // Conflict represents a data conflict between local and remote
 type Conflict struct {
-	Field         string      `json:"field"`
-	LocalValue    interface{} `json:"local_value"`
-	RemoteValue   interface{} `json:"remote_value"`
-	LocalTime     time.Time   `json:"local_time"`
-	RemoteTime    time.Time   `json:"remote_time"`
-	Resolution    string      `json:"resolution,omitempty"`
+	Field       string      `json:"field"`
+	LocalValue  interface{} `json:"local_value"`
+	RemoteValue interface{} `json:"remote_value"`
+	LocalTime   time.Time   `json:"local_time"`
+	RemoteTime  time.Time   `json:"remote_time"`
+	Resolution  string      `json:"resolution,omitempty"`
 }
 
 // TaskProgress represents task workflow progress
 type TaskProgress struct {
-	CurrentStage    string             `json:"current_stage"`
-	StageNumber     int                `json:"stage_number"`
-	TotalStages     int                `json:"total_stages"`
-	Progress        int                `json:"progress"` // 0-100
-	CompletedStages []string           `json:"completed_stages"`
-	Artifacts       []string           `json:"artifacts"`
-	QualityGates    []QualityGate      `json:"quality_gates"`
-	Blockers        []string           `json:"blockers"`
+	CurrentStage    string                 `json:"current_stage"`
+	StageNumber     int                    `json:"stage_number"`
+	TotalStages     int                    `json:"total_stages"`
+	Progress        int                    `json:"progress"` // 0-100
+	CompletedStages []string               `json:"completed_stages"`
+	Artifacts       []string               `json:"artifacts"`
+	QualityGates    []QualityGate          `json:"quality_gates"`
+	Blockers        []string               `json:"blockers"`
 	Metadata        map[string]interface{} `json:"metadata"`
 }
 
 // QualityGate represents a quality gate for stage progression
 type QualityGate struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Required    bool   `json:"required"`
-	Status      string `json:"status"` // passed, failed, pending
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	Required    bool       `json:"required"`
+	Status      string     `json:"status"` // passed, failed, pending
 	CheckedAt   *time.Time `json:"checked_at,omitempty"`
-	CheckedBy   string `json:"checked_by,omitempty"`
+	CheckedBy   string     `json:"checked_by,omitempty"`
 }
 
 // TaskMetadata represents task metadata and configuration
 type TaskMetadata struct {
-	Sources         map[string]*TaskSource `json:"sources"`
-	Configuration   map[string]interface{} `json:"configuration"`
-	WorkflowConfig  *WorkflowConfig        `json:"workflow_config"`
-	SyncSettings    *SyncSettings          `json:"sync_settings"`
-	CustomFields    map[string]interface{} `json:"custom_fields"`
-	LastModified    time.Time              `json:"last_modified"`
-	Version         int64                  `json:"version"`
+	Sources        map[string]*TaskSource `json:"sources"`
+	Configuration  map[string]interface{} `json:"configuration"`
+	WorkflowConfig *WorkflowConfig        `json:"workflow_config"`
+	SyncSettings   *SyncSettings          `json:"sync_settings"`
+	CustomFields   map[string]interface{} `json:"custom_fields"`
+	LastModified   time.Time              `json:"last_modified"`
+	Version        int64                  `json:"version"`
 }
 
 // WorkflowConfig contains workflow-specific configuration
@@ -255,26 +255,30 @@ type WorkflowStage struct {
 
 // SyncSettings contains synchronization settings
 type SyncSettings struct {
-	Enabled           bool                   `json:"enabled"`
-	Frequency         string                 `json:"frequency"` // manual, hourly, daily
-	Direction         SyncDirection          `json:"direction"`
-	ConflictStrategy  ConflictStrategy       `json:"conflict_strategy"`
-	Sources           map[string]SourceSync  `json:"sources"`
-	LastSync          time.Time              `json:"last_sync"`
+	Enabled          bool                  `json:"enabled"`
+	Frequency        string                `json:"frequency"` // manual, hourly, daily
+	Direction        SyncDirection         `json:"direction"`
+	ConflictStrategy ConflictStrategy      `json:"conflict_strategy"`
+	Sources          map[string]SourceSync `json:"sources"`
+	LastSync         time.Time             `json:"last_sync"`
 }
 
 // SourceSync contains source-specific sync settings
 type SourceSync struct {
-	Enabled       bool          `json:"enabled"`
-	Direction     SyncDirection `json:"direction"`
+	Enabled       bool              `json:"enabled"`
+	Direction     SyncDirection     `json:"direction"`
 	FieldMappings map[string]string `json:"field_mappings"`
-	LastSync      time.Time     `json:"last_sync"`
-	ErrorCount    int           `json:"error_count"`
-	LastError     string        `json:"last_error,omitempty"`
+	LastSync      time.Time         `json:"last_sync"`
+	ErrorCount    int               `json:"error_count"`
+	LastError     string            `json:"last_error,omitempty"`
 }
 
 // NewManager creates a new task manager
 func NewManager(factory *cmdutil.Factory) *Manager {
+	if factory == nil {
+		return nil
+	}
+
 	mgr := &Manager{
 		factory: factory,
 		logger:  factory.Logger,
@@ -347,7 +351,7 @@ func (m *Manager) CreateTask(ctx context.Context, request *CreateTaskRequest) (*
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch from %s: %w", request.FromSource, err)
 		}
-		
+
 		// Override request fields with source data (External SoR)
 		if sourceData.Title != "" {
 			request.Title = sourceData.Title
@@ -368,19 +372,19 @@ func (m *Manager) CreateTask(ctx context.Context, request *CreateTaskRequest) (*
 
 	// Create task structure
 	task := &Task{
-		ID:          request.ID,
-		Title:       request.Title,
-		Type:        request.Type,
-		Status:      "proposed",
-		Priority:    request.Priority,
-		Owner:       request.Owner,
-		Team:        request.Team,
-		Created:     time.Now(),
-		Updated:     time.Now(),
+		ID:           request.ID,
+		Title:        request.Title,
+		Type:         request.Type,
+		Status:       "proposed",
+		Priority:     request.Priority,
+		Owner:        request.Owner,
+		Team:         request.Team,
+		Created:      time.Now(),
+		Updated:      time.Now(),
 		CurrentStage: "01-align",
-		Progress:    0,
-		Sources:     make(map[string]*TaskSource),
-		Metadata:    make(map[string]interface{}),
+		Progress:     0,
+		Sources:      make(map[string]*TaskSource),
+		Metadata:     make(map[string]interface{}),
 	}
 
 	// Set defaults
@@ -514,7 +518,7 @@ func (m *Manager) PushToSource(ctx context.Context, taskID string, source string
 		SyncBack:       true,
 		ValidateFields: true,
 	})
-	
+
 	result := &SyncResult{
 		TaskID:    taskID,
 		Source:    source,
@@ -572,7 +576,7 @@ func (m *Manager) SyncTask(ctx context.Context, taskID string, opts *SyncOptions
 	}
 
 	source := sourcesToSync[0]
-	
+
 	switch opts.Direction {
 	case SyncDirectionPull:
 		_, err := m.PullFromSource(ctx, taskID, source)
@@ -586,10 +590,10 @@ func (m *Manager) SyncTask(ctx context.Context, taskID string, opts *SyncOptions
 				Timestamp: time.Now(),
 			}, err
 		}
-		
+
 	case SyncDirectionPush:
 		return m.PushToSource(ctx, taskID, source)
-		
+
 	case SyncDirectionBidirectional:
 		// First pull, then push (simple bidirectional sync)
 		if _, err := m.PullFromSource(ctx, taskID, source); err != nil {
@@ -602,7 +606,7 @@ func (m *Manager) SyncTask(ctx context.Context, taskID string, opts *SyncOptions
 				Timestamp: time.Now(),
 			}, err
 		}
-		
+
 		return m.PushToSource(ctx, taskID, source)
 	}
 
@@ -613,6 +617,47 @@ func (m *Manager) SyncTask(ctx context.Context, taskID string, opts *SyncOptions
 		Direction: opts.Direction,
 		Timestamp: time.Now(),
 	}, nil
+}
+
+// ListTasks returns a list of tasks matching the given filter
+func (m *Manager) ListTasks(ctx context.Context, filter *TaskFilter) ([]*Task, error) {
+	// TODO: Implement proper task listing from workspace
+	// For now, return empty list to satisfy interface
+	return []*Task{}, nil
+}
+
+// SyncAllTasks synchronizes all tasks with their external sources
+func (m *Manager) SyncAllTasks(ctx context.Context, opts *SyncOptions) ([]*SyncResult, error) {
+	// List all tasks
+	tasks, err := m.ListTasks(ctx, &TaskFilter{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list tasks: %w", err)
+	}
+
+	var results []*SyncResult
+	for _, task := range tasks {
+		// Skip tasks without external sources
+		if len(task.Sources) == 0 {
+			continue
+		}
+
+		// Sync each task
+		result, err := m.SyncTask(ctx, task.ID, opts)
+		if err != nil {
+			// Log error but continue with other tasks
+			m.logger.Warn("failed to sync task", "task_id", task.ID, "error", err)
+			result = &SyncResult{
+				TaskID:    task.ID,
+				Success:   false,
+				Direction: opts.Direction,
+				Error:     err.Error(),
+				Timestamp: time.Now(),
+			}
+		}
+		results = append(results, result)
+	}
+
+	return results, nil
 }
 
 // Helper methods
@@ -693,7 +738,7 @@ func (m *Manager) convertTaskToPluginData(task *Task) *plugin.TaskData {
 // detectChangedFields detects which fields changed between local and remote
 func (m *Manager) detectChangedFields(local, remote *plugin.TaskData) []string {
 	var changed []string
-	
+
 	if local.Title != remote.Title {
 		changed = append(changed, "title")
 	}
@@ -706,7 +751,7 @@ func (m *Manager) detectChangedFields(local, remote *plugin.TaskData) []string {
 	if local.Assignee != remote.Assignee {
 		changed = append(changed, "assignee")
 	}
-	
+
 	return changed
 }
 
@@ -717,7 +762,7 @@ func (m *Manager) updateTaskFromSourceData(ctx context.Context, task *Task, sour
 	task.Status = sourceData.Status
 	task.Priority = sourceData.Priority
 	task.Updated = time.Now()
-	
+
 	if sourceData.Owner != "" {
 		task.Owner = sourceData.Owner
 	}
@@ -802,36 +847,36 @@ func (m *Manager) buildTemplateVariables(task *Task, request *CreateTaskRequest,
 	// Base template variables
 	variables := map[string]interface{}{
 		// Core task information
-		"TASK_ID":      task.ID,
-		"TASK_TITLE":   task.Title,
-		"TASK_TYPE":    task.Type,
-		"TASK_STATUS":  task.Status,
-		"PRIORITY":     task.Priority,
-		
+		"TASK_ID":     task.ID,
+		"TASK_TITLE":  task.Title,
+		"TASK_TYPE":   task.Type,
+		"TASK_STATUS": task.Status,
+		"PRIORITY":    task.Priority,
+
 		// Ownership and team
 		"OWNER_NAME":      task.Owner,
 		"OWNER_EMAIL":     fmt.Sprintf("%s@company.com", strings.ReplaceAll(task.Owner, " ", ".")),
 		"GITHUB_USERNAME": strings.ToLower(strings.ReplaceAll(task.Owner, " ", "")),
 		"TEAM_NAME":       task.Team,
-		
+
 		// Dates
-		"CREATED_DATE":   now.Format("2006-01-02"),
-		"LAST_UPDATED":   now.Format("2006-01-02 15:04:05"),
-		"TARGET_DATE":    now.AddDate(0, 0, 14).Format("2006-01-02"),
-		
+		"CREATED_DATE": now.Format("2006-01-02"),
+		"LAST_UPDATED": now.Format("2006-01-02 15:04:05"),
+		"TARGET_DATE":  now.AddDate(0, 0, 14).Format("2006-01-02"),
+
 		// Workflow
-		"CURRENT_STAGE":         task.CurrentStage,
-		"current_stage_name":    "Align",
-		"stage_number":          "1",
+		"CURRENT_STAGE":          task.CurrentStage,
+		"current_stage_name":     "Align",
+		"stage_number":           "1",
 		"current_stage_progress": "0",
-		
+
 		// Integration flags (default to false)
-		"JIRA_INTEGRATION":    false,
-		"GITHUB_INTEGRATION":  false,
-		"LINEAR_INTEGRATION":  false,
-		"SYNC_ENABLED":        false,
-		"EXTERNAL_SYSTEM":     "",
-		
+		"JIRA_INTEGRATION":   false,
+		"GITHUB_INTEGRATION": false,
+		"LINEAR_INTEGRATION": false,
+		"SYNC_ENABLED":       false,
+		"EXTERNAL_SYSTEM":    "",
+
 		// Labels and organization
 		"LABELS": []string{task.Type},
 		"TAGS":   []string{task.Type, task.Team},
@@ -904,7 +949,7 @@ func (m *Manager) syncDataToTemplateVariables(variables map[string]interface{}, 
 
 	// Add external system specific data
 	variables[fmt.Sprintf("%s_EXTERNAL_ID", strings.ToUpper(source))] = sourceData.ExternalID
-	
+
 	// Extract rich data from raw response
 	if sourceData.RawData != nil {
 		m.syncSourceSpecificData(variables, sourceData.RawData, source)

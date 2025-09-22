@@ -80,10 +80,10 @@ func TestProvider_GetTaskData(t *testing.T) {
 			ID:  "10001",
 			Key: "PROJ-123",
 			Fields: struct {
-				Summary     string    `json:"summary"`
-				Description string    `json:"description"`
-				Created     time.Time `json:"created"`
-				Updated     time.Time `json:"updated"`
+				Summary     string   `json:"summary"`
+				Description string   `json:"description"`
+				Created     JiraTime `json:"created"`
+				Updated     JiraTime `json:"updated"`
 				Status      struct {
 					Name string `json:"name"`
 					ID   string `json:"id"`
@@ -109,8 +109,8 @@ func TestProvider_GetTaskData(t *testing.T) {
 			}{
 				Summary:     "Test Issue",
 				Description: "Test issue description",
-				Created:     time.Now().Add(-24 * time.Hour),
-				Updated:     time.Now().Add(-1 * time.Hour),
+				Created:     JiraTime{time.Now().Add(-24 * time.Hour)},
+				Updated:     JiraTime{time.Now().Add(-1 * time.Hour)},
 				Status: struct {
 					Name string `json:"name"`
 					ID   string `json:"id"`
@@ -143,10 +143,10 @@ func TestProvider_GetTaskData(t *testing.T) {
 
 	// Create provider
 	config := &config.IntegrationProviderConfig{
-		ServerURL:      server.URL,
-		ProjectKey:     "PROJ",
-		AuthType:       "basic",
-		CredentialsRef: "jira_creds",
+		URL:         server.URL,
+		ProjectKey:  "PROJ",
+		Type:        "basic",
+		Credentials: "jira_creds",
 	}
 
 	logger := logging.NewBasic()
@@ -203,10 +203,10 @@ func TestProvider_CreateTask(t *testing.T) {
 
 	// Create provider
 	config := &config.IntegrationProviderConfig{
-		ServerURL:      server.URL,
-		ProjectKey:     "PROJ",
-		AuthType:       "token",
-		CredentialsRef: "jira_token",
+		URL:         server.URL,
+		ProjectKey:  "PROJ",
+		Type:        "token",
+		Credentials: "jira_token",
 	}
 
 	logger := logging.NewBasic()
@@ -254,10 +254,10 @@ func TestProvider_UpdateTask(t *testing.T) {
 			issue := JiraIssue{
 				Key: "PROJ-123",
 				Fields: struct {
-					Summary     string    `json:"summary"`
-					Description string    `json:"description"`
-					Created     time.Time `json:"created"`
-					Updated     time.Time `json:"updated"`
+					Summary     string   `json:"summary"`
+					Description string   `json:"description"`
+					Created     JiraTime `json:"created"`
+					Updated     JiraTime `json:"updated"`
 					Status      struct {
 						Name string `json:"name"`
 						ID   string `json:"id"`
@@ -283,7 +283,7 @@ func TestProvider_UpdateTask(t *testing.T) {
 				}{
 					Summary:     "Updated Task",
 					Description: "Updated description",
-					Updated:     time.Now(),
+					Updated:     JiraTime{time.Now()},
 					Status: struct {
 						Name string `json:"name"`
 						ID   string `json:"id"`
@@ -303,10 +303,10 @@ func TestProvider_UpdateTask(t *testing.T) {
 
 	// Create provider
 	config := &config.IntegrationProviderConfig{
-		ServerURL:      server.URL,
-		ProjectKey:     "PROJ",
-		AuthType:       "basic",
-		CredentialsRef: "jira_creds",
+		URL:         server.URL,
+		ProjectKey:  "PROJ",
+		Type:        "basic",
+		Credentials: "jira_creds",
 	}
 
 	logger := logging.NewBasic()
@@ -379,10 +379,10 @@ func TestProvider_ValidateConnection(t *testing.T) {
 
 			// Create provider
 			config := &config.IntegrationProviderConfig{
-				ServerURL:      server.URL,
-				ProjectKey:     "PROJ",
-				AuthType:       "basic",
-				CredentialsRef: "jira_creds",
+				URL:         server.URL,
+				ProjectKey:  "PROJ",
+				Type:        "basic",
+				Credentials: "jira_creds",
 			}
 
 			logger := logging.NewBasic()
@@ -418,10 +418,10 @@ func TestProvider_HealthCheck(t *testing.T) {
 
 	// Create provider
 	config := &config.IntegrationProviderConfig{
-		ServerURL:      server.URL,
-		ProjectKey:     "PROJ",
-		AuthType:       "basic",
-		CredentialsRef: "jira_creds",
+		URL:         server.URL,
+		ProjectKey:  "PROJ",
+		Type:        "basic",
+		Credentials: "jira_creds",
 	}
 
 	logger := logging.NewBasic()
@@ -455,10 +455,10 @@ func TestProvider_SearchTasks(t *testing.T) {
 				{
 					Key: "PROJ-123",
 					Fields: struct {
-						Summary     string    `json:"summary"`
-						Description string    `json:"description"`
-						Created     time.Time `json:"created"`
-						Updated     time.Time `json:"updated"`
+						Summary     string   `json:"summary"`
+						Description string   `json:"description"`
+						Created     JiraTime `json:"created"`
+						Updated     JiraTime `json:"updated"`
 						Status      struct {
 							Name string `json:"name"`
 							ID   string `json:"id"`
@@ -502,10 +502,10 @@ func TestProvider_SearchTasks(t *testing.T) {
 
 	// Create provider
 	config := &config.IntegrationProviderConfig{
-		ServerURL:      server.URL,
-		ProjectKey:     "PROJ",
-		AuthType:       "token",
-		CredentialsRef: "jira_token",
+		URL:         server.URL,
+		ProjectKey:  "PROJ",
+		Type:        "token",
+		Credentials: "jira_token",
 	}
 
 	logger := logging.NewBasic()
@@ -532,7 +532,7 @@ func TestProvider_SearchTasks(t *testing.T) {
 
 func TestProvider_DataMapping(t *testing.T) {
 	config := &config.IntegrationProviderConfig{
-		ServerURL:  "https://test.atlassian.net",
+		URL:        "https://test.atlassian.net",
 		ProjectKey: "PROJ",
 	}
 

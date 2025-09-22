@@ -24,19 +24,22 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 ## Release Candidate
 
-### **Task Enhanced** → Target Release [v0.7.0]
+### **Task Enhanced** → Target Release [TBD]
 
-- [ ] **[ZEN-011] Template Generation Command**
+- [x] **[ZEN-011] Template Generation Command**
   - **Deliverable**: `zen draft <activity>` renders template as plain format
   - **Acceptance**: Generate document template
+  - **Status**: Done - Template generation working with zen-assets integration
 
 - [ ] **[ZEN-012] AI Client Foundation**
   - **Deliverable**: Multi-provider LLM client (OpenAI, Anthropic, Azure) with strategy pattern
   - **Acceptance**: Unified interface for content enhancement, cost tracking, and provider switching
+  - **Status**: In progress - Foundation architecture in place
 
 - [ ] **[ZEN-013] Content Generation Commands**
   - **Deliverable**: `zen write <activity>` for content creation
   - **Acceptance**: Generate content from templates with AI enhancement and variable prompting
+  - **Status**: In progress - Template rendering working, AI enhancement pending
 
 ### **Work Management & Workflow** → Target Release [TBD]
 
@@ -116,6 +119,7 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 ### Phase 1: Golden Path Proven
 - [x] Create task with `zen task create --type story`
+- [x] Create task with Jira integration `zen task create --from jira`
 - [ ] Progress through all workflow stages
 - [ ] Generate technical artifacts (ADRs, designs, docs)
 - [ ] Ship complete Zen feature developed with Zen
@@ -154,3 +158,5 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 - [x] **[ZEN-025] Integration Services Layer** Plugin-based external integration architecture
 - [x] **[ZEN-026] Task Integration** Task synchronization foundation
+- [x] **[ZEN-027] Task Creation with Jira Integration** Complete Jira task creation workflow
+- [x] **[ZEN-028] Code Quality & Build System** Refactoring analysis and build system fixes

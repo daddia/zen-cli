@@ -9,7 +9,7 @@ import (
 // by the new standardized plugin architecture in data_mapping.go
 
 // FieldMapping defines how Jira fields map to Zen template variables
-// DEPRECATED: Use FieldMappingConfig from data_mapping.go instead
+// Deprecated: Use FieldMappingConfig from data_mapping.go instead
 type FieldMapping struct {
 	// Source field path in Jira response (dot notation for nested fields)
 	JiraField string

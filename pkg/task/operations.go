@@ -403,13 +403,6 @@ func (ops *Operations) GetSourceMetadata(taskDir string, source string) (*Metada
 
 // Helper methods
 
-// inferTaskTypeFromExternalData infers the task type from external data
-func (ops *Operations) inferTaskTypeFromExternalData(externalData interface{}, source string) string {
-	// This would use the provider's field mapping to determine the correct type
-	// For now, return a default
-	return "task"
-}
-
 // buildExternalURL builds the external URL for a task
 func (ops *Operations) buildExternalURL(source string, taskID string) string {
 	// Get configuration to build proper URLs

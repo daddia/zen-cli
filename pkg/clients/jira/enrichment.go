@@ -14,7 +14,7 @@ import (
 // by the new standardized plugin architecture in data_mapping.go
 
 // EnrichmentData contains enriched data extracted from Jira
-// DEPRECATED: Use TaskData from plugin.go instead
+// Deprecated: Use TaskData from plugin.go instead
 type EnrichmentData struct {
 	// Basic information
 	Key     string

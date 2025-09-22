@@ -425,7 +425,7 @@ func (j *JiraPluginAdapter) FetchTask(ctx context.Context, externalID string, op
 
 	// Use the real Jira plugin
 	if j.jiraPlugin == nil {
-		return nil, fmt.Errorf("Jira plugin not initialized")
+		return nil, fmt.Errorf("jira plugin not initialized")
 	}
 
 	jiraTaskData, err := j.jiraPlugin.FetchTask(ctx, externalID, &jira.FetchOptions{

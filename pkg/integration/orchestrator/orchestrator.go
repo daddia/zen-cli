@@ -220,7 +220,7 @@ func (o *OperationOrchestrator) ExecuteOperation(ctx context.Context, operation 
 		case <-ctx.Done():
 			result.Success = false
 			result.Error = ctx.Err().Error()
-			result.ErrorCode = "CONTEXT_CANCELLED"
+			result.ErrorCode = "CONTEXT_CANCELED"
 			result.Duration = time.Since(start)
 			return result, ctx.Err()
 		default:
@@ -264,7 +264,7 @@ func (o *OperationOrchestrator) ExecuteOperation(ctx context.Context, operation 
 			timer.Stop()
 			result.Success = false
 			result.Error = ctx.Err().Error()
-			result.ErrorCode = "CONTEXT_CANCELLED"
+			result.ErrorCode = "CONTEXT_CANCELED"
 			result.Duration = time.Since(start)
 			return result, ctx.Err()
 		case <-timer.C:

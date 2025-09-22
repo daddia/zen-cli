@@ -73,10 +73,6 @@ func (p *Plugin) FetchTask(ctx context.Context, externalID string, opts *FetchOp
 
 // CreateTask creates a new task in Jira
 func (p *Plugin) CreateTask(ctx context.Context, taskData *PluginTaskData, opts *CreateOptions) (*PluginTaskData, error) {
-	if opts == nil {
-		opts = &CreateOptions{}
-	}
-
 	p.logger.Debug("creating task in Jira", "title", taskData.Title)
 
 	// Convert to Jira format
@@ -137,10 +133,6 @@ func (p *Plugin) CreateTask(ctx context.Context, taskData *PluginTaskData, opts 
 
 // UpdateTask updates an existing task in Jira
 func (p *Plugin) UpdateTask(ctx context.Context, externalID string, taskData *PluginTaskData, opts *UpdateOptions) (*PluginTaskData, error) {
-	if opts == nil {
-		opts = &UpdateOptions{}
-	}
-
 	p.logger.Debug("updating task in Jira", "external_id", externalID, "title", taskData.Title)
 
 	// Convert to Jira update format
@@ -195,10 +187,6 @@ func (p *Plugin) UpdateTask(ctx context.Context, externalID string, taskData *Pl
 
 // DeleteTask deletes a task in Jira
 func (p *Plugin) DeleteTask(ctx context.Context, externalID string, opts *DeleteOptions) error {
-	if opts == nil {
-		opts = &DeleteOptions{}
-	}
-
 	p.logger.Debug("deleting task in Jira", "external_id", externalID)
 
 	// Build request

@@ -74,7 +74,7 @@ zen task create LIN-789 --from linear
 ### Options
 
 ```
-      --from string       Fetch task details from source system (jira, github, linear, etc.)
+      --from string       Fetch task details from external source system (jira, github, linear, etc.)
   -h, --help              help for create
       --owner string      Task owner (optional, defaults to current user)
       --priority string   Task priority (P0|P1|P2|P3) (default "P2")

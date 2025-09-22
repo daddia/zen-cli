@@ -93,9 +93,9 @@ func createMockJiraIssue() JiraIssue {
 		Self: "https://test.atlassian.net/rest/api/3/issue/10001",
 		Fields: JiraFields{
 			Summary:     "Test Issue",
-			Description: "Test issue description",
-			Created:     time.Now().Add(-24 * time.Hour),
-			Updated:     time.Now().Add(-1 * time.Hour),
+			Description: JiraDescription{Text: "Test issue description"},
+			Created:     JiraTime(time.Now().Add(-24 * time.Hour)),
+			Updated:     JiraTime(time.Now().Add(-1 * time.Hour)),
 			Status: JiraStatus{
 				ID:   "3",
 				Name: "In Progress",
@@ -238,7 +238,7 @@ func TestPlugin_CreateTask(t *testing.T) {
 			issue := createMockJiraIssue()
 			issue.Key = "TEST-124"
 			issue.Fields.Summary = "New Task"
-			issue.Fields.Description = "Task description"
+			issue.Fields.Description = JiraDescription{Text: "Task description"}
 
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(issue)

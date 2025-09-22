@@ -238,23 +238,23 @@ func (m *Manager) syncGitHubSpecificData(variables map[string]interface{}, rawDa
 		variables["GITHUB_NUMBER"] = int(number)
 		variables["GITHUB_EXTERNAL_ID"] = fmt.Sprintf("%.0f", number)
 	}
-	
+
 	if htmlURL, ok := rawData["html_url"].(string); ok {
 		variables["GITHUB_URL"] = htmlURL
 	}
-	
+
 	if state, ok := rawData["state"].(string); ok {
 		variables["GITHUB_STATE"] = state
 		variables["TASK_STATUS"] = m.mapExternalStatusToZenStatus(state, "github")
 	}
-	
+
 	if user, ok := rawData["user"].(map[string]interface{}); ok {
 		if login, ok := user["login"].(string); ok {
 			variables["GITHUB_AUTHOR"] = login
 			variables["GITHUB_USERNAME"] = login
 		}
 	}
-	
+
 	if assignees, ok := rawData["assignees"].([]interface{}); ok && len(assignees) > 0 {
 		if assignee, ok := assignees[0].(map[string]interface{}); ok {
 			if login, ok := assignee["login"].(string); ok {
@@ -263,7 +263,7 @@ func (m *Manager) syncGitHubSpecificData(variables map[string]interface{}, rawDa
 			}
 		}
 	}
-	
+
 	if labels, ok := rawData["labels"].([]interface{}); ok {
 		labelNames := make([]string, 0, len(labels))
 		for _, label := range labels {
@@ -287,23 +287,23 @@ func (m *Manager) syncLinearSpecificData(variables map[string]interface{}, rawDa
 		variables["LINEAR_IDENTIFIER"] = identifier
 		variables["LINEAR_EXTERNAL_ID"] = identifier
 	}
-	
+
 	if url, ok := rawData["url"].(string); ok {
 		variables["LINEAR_URL"] = url
 	}
-	
+
 	if state, ok := rawData["state"].(map[string]interface{}); ok {
 		if name, ok := state["name"].(string); ok {
 			variables["LINEAR_STATE"] = name
 			variables["TASK_STATUS"] = m.mapExternalStatusToZenStatus(name, "linear")
 		}
 	}
-	
+
 	if priority, ok := rawData["priority"].(float64); ok {
 		variables["LINEAR_PRIORITY"] = int(priority)
 		variables["PRIORITY"] = m.mapLinearPriorityToZenPriority(int(priority))
 	}
-	
+
 	if assignee, ok := rawData["assignee"].(map[string]interface{}); ok {
 		if displayName, ok := assignee["displayName"].(string); ok {
 			variables["LINEAR_ASSIGNEE"] = displayName
@@ -314,7 +314,7 @@ func (m *Manager) syncLinearSpecificData(variables map[string]interface{}, rawDa
 			variables["OWNER_EMAIL"] = email
 		}
 	}
-	
+
 	if team, ok := rawData["team"].(map[string]interface{}); ok {
 		if name, ok := team["name"].(string); ok {
 			variables["LINEAR_TEAM"] = name
@@ -382,7 +382,7 @@ func (m *Manager) extractPlainTextFromJiraDescription(description map[string]int
 						}
 						plainText.WriteString("\n\n")
 					}
-					
+
 				case "heading":
 					if attrs, ok := blockMap["attrs"].(map[string]interface{}); ok {
 						if level, ok := attrs["level"].(float64); ok {
@@ -399,7 +399,7 @@ func (m *Manager) extractPlainTextFromJiraDescription(description map[string]int
 						}
 						plainText.WriteString("\n\n")
 					}
-					
+
 				case "bulletList", "orderedList":
 					if blockContent, ok := blockMap["content"].([]interface{}); ok {
 						for i, listItem := range blockContent {
@@ -429,7 +429,7 @@ func (m *Manager) extractPlainTextFromJiraDescription(description map[string]int
 						}
 						plainText.WriteString("\n")
 					}
-					
+
 				case "codeBlock":
 					if blockContent, ok := blockMap["content"].([]interface{}); ok {
 						plainText.WriteString("```\n")
@@ -467,29 +467,29 @@ func (m *Manager) saveSourceMetadata(taskDir string, sourceData *TaskData, sourc
 		"last_sync":       time.Now().Format(time.RFC3339),
 		"plugin_version":  "1.0.0",
 		"sync_direction":  "bidirectional",
-		
+
 		// Synced task data
 		"task_data": map[string]interface{}{
-			"id":          sourceData.ID,
-			"external_id": sourceData.ExternalID,
-			"title":       sourceData.Title,
-			"description": sourceData.Description,
-			"type":        sourceData.Type,
-			"status":      sourceData.Status,
-			"priority":    sourceData.Priority,
-			"assignee":    sourceData.Assignee,
-			"owner":       sourceData.Owner,
-			"team":        sourceData.Team,
-			"created":     sourceData.Created.Format(time.RFC3339),
-			"updated":     sourceData.Updated.Format(time.RFC3339),
+			"id":           sourceData.ID,
+			"external_id":  sourceData.ExternalID,
+			"title":        sourceData.Title,
+			"description":  sourceData.Description,
+			"type":         sourceData.Type,
+			"status":       sourceData.Status,
+			"priority":     sourceData.Priority,
+			"assignee":     sourceData.Assignee,
+			"owner":        sourceData.Owner,
+			"team":         sourceData.Team,
+			"created":      sourceData.Created.Format(time.RFC3339),
+			"updated":      sourceData.Updated.Format(time.RFC3339),
 			"external_url": sourceData.ExternalURL,
-			"labels":      sourceData.Labels,
-			"components":  sourceData.Components,
+			"labels":       sourceData.Labels,
+			"components":   sourceData.Components,
 		},
-		
+
 		// Source metadata
 		"source_metadata": sourceData.Metadata,
-		
+
 		// Raw response data for future processing
 		"raw_data": sourceData.RawData,
 	}
@@ -574,7 +574,7 @@ func (m *Manager) loadTaskFromManifest(taskID string) (*Task, error) {
 // loadTaskSources loads external source information for a task
 func (m *Manager) loadTaskSources(task *Task) error {
 	metadataDir := task.MetadataPath
-	
+
 	// Check if metadata directory exists
 	if _, err := os.Stat(metadataDir); os.IsNotExist(err) {
 		return nil // No metadata directory
@@ -593,7 +593,7 @@ func (m *Manager) loadTaskSources(task *Task) error {
 
 		// Extract source name from filename
 		source := strings.TrimSuffix(entry.Name(), ".json")
-		
+
 		// Load source metadata
 		sourceMetadataPath := filepath.Join(metadataDir, entry.Name())
 		sourceData, err := os.ReadFile(sourceMetadataPath)
@@ -652,7 +652,7 @@ func (m *Manager) saveTask(ctx context.Context, task *Task) error {
 // updateSourceMetadata updates source metadata file
 func (m *Manager) updateSourceMetadata(metadataDir, source string, sourceInfo *TaskSource) error {
 	sourceMetadataPath := filepath.Join(metadataDir, fmt.Sprintf("%s.json", source))
-	
+
 	// Read existing metadata
 	var metadata map[string]interface{}
 	if data, err := os.ReadFile(sourceMetadataPath); err == nil {
