@@ -26,7 +26,7 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 
 ### **Task Enhanced** → Target Release [v0.7.0]
 
-- [] **[ZEN-011] Template Generation Command**
+- [ ] **[ZEN-011] Template Generation Command**
   - **Deliverable**: `zen draft <activity>` renders template as plain format
   - **Acceptance**: Generate document template
 
@@ -103,6 +103,12 @@ Build a **v1 Golden Path** that demonstrates Zen's core value proposition: AI-po
 - [ ] **[ZEN-028] Documentation Publishing**
   - **Deliverable**: Publish to Confluence, GitHub Wiki, etc.
   - **Acceptance**: Automated documentation distribution
+
+---
+
+- [ ] **[ZEN-###] Migrate Makefile to Task**
+  - **Deliverable**: Implement Task, migrate Makefile scripts, update CI, remove Makefile.
+  - **Acceptance**: Everything works on cross-platform
 
 ---
 

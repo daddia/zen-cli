@@ -3,7 +3,7 @@ title: "Zen CLI Reference"
 slug: "/cli"
 description: "Command-line reference documentation for Zen CLI"
 section: "CLI Reference"
-date: 2025-09-21
+date: 2025-09-22
 keywords:
   - zen
   - cli
@@ -61,4 +61,4 @@ Generate shell completion scripts
 ---
 
 _This documentation is automatically generated from the Zen command definitions._
-_Last updated: 2025-09-21_
+_Last updated: 2025-09-22_

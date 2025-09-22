@@ -5,7 +5,7 @@ description: "CLI reference for zen task create"
 section: "CLI Reference"
 man_section: 1
 since: v0.0.0
-date: 2025-09-21
+date: 2025-09-22
 keywords:
   - zen
   - cli
@@ -49,8 +49,8 @@ zen task create <task-id> [flags]
 ### Examples
 
 ```
-# Create a user story for feature development
-zen task create USER-123 --type story --title "User login with SSO"
+# Create a user story (type defaults to story)
+zen task create USER-123 --title "User login with SSO"
 
 # Create a bug fix task
 zen task create BUG-456 --type bug --title "Fix memory leak in auth service"
@@ -62,7 +62,10 @@ zen task create EPIC-789 --type epic --title "Implement new payment system"
 zen task create SPIKE-101 --type spike --title "Evaluate GraphQL vs REST"
 
 # Create with additional metadata
-zen task create PROJ-200 --type story --title "Dashboard redesign" --owner "jane.doe" --team "frontend"
+zen task create PROJ-200 --title "Dashboard redesign" --owner "jane.doe" --team "frontend"
+
+# Create task from existing Jira issue (type and details fetched from Jira)
+zen task create ZEN-123 --jira
 
 ```
 
@@ -70,11 +73,12 @@ zen task create PROJ-200 --type story --title "Dashboard redesign" --owner "jane
 
 ```
   -h, --help              help for create
+      --jira              Fetch task details from Jira using the task ID
       --owner string      Task owner (optional, defaults to current user)
       --priority string   Task priority (P0|P1|P2|P3) (default "P2")
       --team string       Team name (optional)
       --title string      Task title (optional, will prompt if not provided)
-  -t, --type string       Task type (story|bug|epic|spike|task)
+  -t, --type string       Task type (story|bug|epic|spike|task, defaults to story)
 ```
 
 ### Options inherited from parent commands

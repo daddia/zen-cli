@@ -5,7 +5,7 @@ description: "CLI reference for zen assets auth"
 section: "CLI Reference"
 man_section: 1
 since: v0.0.0
-date: 2025-09-21
+date: 2025-09-22
 keywords:
   - zen
   - cli
