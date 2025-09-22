@@ -152,7 +152,7 @@ func TestBuildTemplateVariables(t *testing.T) {
 		Priority: "P1",
 	}
 
-	variables := buildTemplateVariables(opts)
+	variables := buildTemplateVariables(opts, "")
 
 	// Test basic task information
 	assert.Equal(t, "PROJ-123", variables["TASK_ID"])
@@ -206,7 +206,7 @@ func TestBuildTemplateVariablesWithDefaults(t *testing.T) {
 		}
 	}()
 
-	variables := buildTemplateVariables(opts)
+	variables := buildTemplateVariables(opts, "")
 
 	// Test defaults
 	assert.Equal(t, "New bug task", variables["TASK_TITLE"])
@@ -569,7 +569,7 @@ func TestBuildTemplateVariables_EdgeCases(t *testing.T) {
 		}
 	}()
 
-	variables := buildTemplateVariables(opts)
+	variables := buildTemplateVariables(opts, "")
 
 	// Test defaults when no environment
 	assert.Equal(t, "MIN-123", variables["TASK_ID"])

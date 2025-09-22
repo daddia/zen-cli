@@ -2,7 +2,11 @@ package create
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,7 +35,7 @@ type CreateOptions struct {
 	Team     string
 	Priority string
 	DryRun   bool
-	FromJira bool // Flag to fetch task details from Jira
+	Source   string // Source system to fetch task details from (jira, github, linear, etc.)
 
 	// Task operations for external integrations
 	TaskOps *task.Operations
@@ -122,8 +126,10 @@ Task types determine the workflow focus:
 			# Create with additional metadata
 			zen task create PROJ-200 --title "Dashboard redesign" --owner "jane.doe" --team "frontend"
 
-			# Create task from existing Jira issue (type and details fetched from Jira)
-			zen task create ZEN-123 --jira
+			# Create task from existing external source (type and details fetched from source)
+			zen task create ZEN-123 --from jira
+			zen task create GH-456 --from github
+			zen task create LIN-789 --from linear
 		`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -134,10 +140,10 @@ Task types determine the workflow focus:
 				return err
 			}
 
-			// Apply type rules:
-			// 1. Type is always optional
+			// Task type rules:
+			// 1. Type is optional
 			// 2. Default to "story" if not set
-			// 3. External system (Jira) will override type
+			// 3. External source system (Jira) overrides type
 			if opts.TaskType == "" {
 				opts.TaskType = "story" // Default to story
 			}
@@ -161,7 +167,7 @@ Task types determine the workflow focus:
 	cmd.Flags().StringVar(&opts.Owner, "owner", "", "Task owner (optional, defaults to current user)")
 	cmd.Flags().StringVar(&opts.Team, "team", "", "Team name (optional)")
 	cmd.Flags().StringVar(&opts.Priority, "priority", "P2", "Task priority (P0|P1|P2|P3)")
-	cmd.Flags().BoolVar(&opts.FromJira, "jira", false, "Fetch task details from Jira using the task ID")
+	cmd.Flags().StringVar(&opts.Source, "from", "", "Fetch task details from source system (jira, github, linear, etc.)")
 
 	// No required flags - type is optional with default
 
@@ -201,10 +207,10 @@ func validateTaskID(taskID string) error {
 func createRun(opts *CreateOptions) error {
 	ctx := context.Background()
 
-	// If --jira flag is used, fetch task details from Jira first
-	if opts.FromJira {
-		if err := fetchTaskFromJira(ctx, opts); err != nil {
-			return fmt.Errorf("failed to fetch from Jira: %w", err)
+	// If --from flag is used, fetch task details from external source first
+	if opts.Source != "" {
+		if err := fetchTaskFromSource(ctx, opts); err != nil {
+			return fmt.Errorf("failed to fetch from %s: %w", opts.Source, err)
 		}
 	}
 
@@ -267,18 +273,22 @@ func createRun(opts *CreateOptions) error {
 		return fmt.Errorf("failed to create task directories: %w", err)
 	}
 
-	// Generate task files from templates
-	if err := generateTaskFiles(ctx, opts, taskDir); err != nil {
-		return fmt.Errorf("failed to generate task files: %w", err)
+	// Create external system metadata first if task was fetched from external source
+	if opts.Source != "" {
+		// Save raw response from external provider using config credentials
+		if err := saveRawResponse(opts, taskDir, opts.TaskID, opts.Source); err != nil {
+			// Log warning but don't fail task creation
+			fmt.Fprintf(opts.IO.Out, "%s Failed to create %s metadata: %v\n",
+				opts.IO.FormatWarning("!"), opts.Source, err)
+		} else {
+			fmt.Fprintf(opts.IO.Out, "%s Created %s metadata: %s\n",
+				opts.IO.FormatSuccess("✓"), opts.Source, fmt.Sprintf("metadata/%s.json", opts.Source))
+		}
 	}
 
-	// Create Jira metadata if task was fetched from Jira
-	if opts.FromJira {
-		if err := opts.TaskOps.CreateJiraMetadataFromTask(taskDir, opts.TaskID); err != nil {
-			// Log warning but don't fail task creation
-			fmt.Fprintf(opts.IO.Out, "%s Failed to create Jira metadata: %v\n",
-				opts.IO.FormatWarning("!"), err)
-		}
+	// Generate task files from templates (now with external source data available)
+	if err := generateTaskFiles(ctx, opts, taskDir); err != nil {
+		return fmt.Errorf("failed to generate task files: %w", err)
 	}
 
 	// Try to sync with external system if configured
@@ -315,8 +325,8 @@ func generateTaskFiles(ctx context.Context, opts *CreateOptions, taskDir string)
 	// Create local template loader
 	templateLoader := templates.NewLocalTemplateLoader()
 
-	// Prepare template variables
-	variables := buildTemplateVariables(opts)
+	// Prepare template variables (enriched with Jira data if available)
+	variables := buildTemplateVariables(opts, taskDir)
 
 	// Generate index.md from template
 	if err := generateFileFromTemplate(templateLoader, "index.md", taskDir, "index.md", variables); err != nil {
@@ -352,7 +362,7 @@ func generateFileFromTemplate(loader *templates.LocalTemplateLoader, templateNam
 }
 
 // buildTemplateVariables builds the template variables map
-func buildTemplateVariables(opts *CreateOptions) map[string]interface{} {
+func buildTemplateVariables(opts *CreateOptions, taskDir string) map[string]interface{} {
 	now := time.Now()
 
 	// Default values
@@ -447,7 +457,8 @@ func buildTemplateVariables(opts *CreateOptions) map[string]interface{} {
 		},
 	}
 
-	return map[string]interface{}{
+	// Create base template variables
+	variables := map[string]interface{}{
 		// Basic task information
 		"TASK_ID":      opts.TaskID,
 		"TASK_TITLE":   title,
@@ -596,6 +607,15 @@ func buildTemplateVariables(opts *CreateOptions) map[string]interface{} {
 		"last_updated":           now.Format("January 2, 2006"),
 		"next_review_date":       now.AddDate(0, 0, 7).Format("January 2, 2006"),
 	}
+
+	// Enrich with external source data if available using field mappings
+	if opts.Source != "" {
+		if sourceData, err := loadSourceData(taskDir, opts.Source); err == nil {
+			enrichTemplateVariables(variables, sourceData, opts.Source)
+		}
+	}
+
+	return variables
 }
 
 // tryIntegrationSync attempts to sync the newly created task with external systems
@@ -634,19 +654,188 @@ func tryIntegrationSync(ctx context.Context, opts *CreateOptions) error {
 	return nil
 }
 
-// fetchTaskFromJira fetches task details from Jira and populates the CreateOptions
-func fetchTaskFromJira(ctx context.Context, opts *CreateOptions) error {
-	// Use task operations to fetch from Jira
-	jiraData, err := opts.TaskOps.FetchFromJira(ctx, opts.TaskID)
+// fetchTaskFromSource fetches task details from any external source and populates the CreateOptions
+func fetchTaskFromSource(ctx context.Context, opts *CreateOptions) error {
+	// Use task operations to fetch from external source
+	taskData, err := opts.TaskOps.FetchFromSource(ctx, opts.TaskID, opts.Source)
 	if err != nil {
 		return err
 	}
 
-	// Update options with Jira data (External SoR overrides)
-	opts.Title = jiraData.Title
-	opts.TaskType = jiraData.Type // Jira overrides type
-	if jiraData.Assignee != "" {
-		opts.Owner = jiraData.Assignee
+	// Update options with external source data (External SoR overrides)
+	opts.Title = taskData.Title
+	opts.TaskType = taskData.Type // External source overrides type
+	if taskData.Assignee != "" {
+		opts.Owner = taskData.Assignee
+	}
+	if taskData.Team != "" {
+		opts.Team = taskData.Team
+	}
+	if taskData.Priority != "" {
+		opts.Priority = taskData.Priority
+	}
+
+	return nil
+}
+
+// loadSourceData loads and parses source data from a task's metadata file
+func loadSourceData(taskDir string, source string) (map[string]interface{}, error) {
+	sourceFilePath := filepath.Join(taskDir, "metadata", fmt.Sprintf("%s.json", source))
+
+	// Check if file exists
+	if _, err := os.Stat(sourceFilePath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("%s metadata file not found", source)
+	}
+
+	// Read and parse the file
+	data, err := os.ReadFile(sourceFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read %s metadata: %w", source, err)
+	}
+
+	var sourceData map[string]interface{}
+	if err := json.Unmarshal(data, &sourceData); err != nil {
+		return nil, fmt.Errorf("failed to parse %s metadata: %w", source, err)
+	}
+
+	return sourceData, nil
+}
+
+// enrichTemplateVariables enriches template variables with external source data
+func enrichTemplateVariables(variables map[string]interface{}, sourceData map[string]interface{}, source string) {
+	// Set integration flags
+	variables[fmt.Sprintf("%s_INTEGRATION", strings.ToUpper(source))] = true
+	variables["EXTERNAL_SYSTEM"] = source
+	variables["SYNC_ENABLED"] = true
+
+	// Extract task data if available
+	if taskDataInterface, ok := sourceData["task_data"]; ok {
+		if taskData, ok := taskDataInterface.(map[string]interface{}); ok {
+			// Map common fields
+			if title, ok := taskData["title"].(string); ok {
+				variables["TASK_TITLE"] = title
+			}
+			if taskType, ok := taskData["type"].(string); ok {
+				variables["TASK_TYPE"] = taskType
+			}
+			if status, ok := taskData["status"].(string); ok {
+				variables["TASK_STATUS"] = status
+			}
+			if priority, ok := taskData["priority"].(string); ok {
+				variables["PRIORITY"] = priority
+			}
+			if assignee, ok := taskData["assignee"].(string); ok {
+				variables["OWNER_NAME"] = assignee
+			}
+			if team, ok := taskData["team"].(string); ok {
+				variables["TEAM_NAME"] = team
+			}
+			if externalURL, ok := taskData["external_url"].(string); ok {
+				variables[fmt.Sprintf("%s_URL", strings.ToUpper(source))] = externalURL
+			}
+			if labels, ok := taskData["labels"].([]interface{}); ok {
+				labelStrings := make([]string, 0, len(labels))
+				for _, label := range labels {
+					if labelStr, ok := label.(string); ok {
+						labelStrings = append(labelStrings, labelStr)
+					}
+				}
+				variables["LABELS"] = labelStrings
+			}
+		}
+	}
+
+	// Add source-specific prefixed variables
+	if rawData, ok := sourceData["raw_data"]; ok {
+		variables[fmt.Sprintf("%s_RAW_DATA", strings.ToUpper(source))] = rawData
+	}
+	if externalID, ok := sourceData["external_id"].(string); ok {
+		variables[fmt.Sprintf("%s_EXTERNAL_ID", strings.ToUpper(source))] = externalID
+	}
+}
+
+// saveRawResponse makes a direct API call to any provider and saves the raw response
+func saveRawResponse(opts *CreateOptions, taskDir, taskID, provider string) error {
+	// Get configuration to access provider settings
+	cfg, err := opts.Factory.Config()
+	if err != nil {
+		return fmt.Errorf("failed to get config: %w", err)
+	}
+
+	// Get provider configuration
+	providerConfig, exists := cfg.Integrations.Providers[provider]
+	if !exists {
+		return fmt.Errorf("provider %s not configured", provider)
+	}
+
+	// Build the API URL based on provider
+	var url string
+	switch provider {
+	case "jira":
+		url = fmt.Sprintf("%s/rest/api/3/issue/%s", providerConfig.URL, taskID)
+	case "github":
+		url = fmt.Sprintf("%s/repos/%s/issues/%s", providerConfig.URL, providerConfig.ProjectKey, taskID)
+	case "gitlab":
+		url = fmt.Sprintf("%s/projects/%s/issues/%s", providerConfig.URL, providerConfig.ProjectKey, taskID)
+	default:
+		return fmt.Errorf("unsupported provider: %s", provider)
+	}
+
+	// Create HTTP request
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Add authentication based on provider configuration
+	switch provider {
+	case "jira":
+		if providerConfig.Email != "" && providerConfig.APIKey != "" {
+			// Use Basic Auth for Jira
+			auth := providerConfig.Email + ":" + providerConfig.APIKey
+			encoded := base64.StdEncoding.EncodeToString([]byte(auth))
+			req.Header.Set("Authorization", "Basic "+encoded)
+		}
+	case "github":
+		if providerConfig.APIKey != "" {
+			req.Header.Set("Authorization", "Bearer "+providerConfig.APIKey)
+		}
+	case "gitlab":
+		if providerConfig.APIKey != "" {
+			req.Header.Set("Private-Token", providerConfig.APIKey)
+		}
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	// Make request
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read response
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	// Create metadata directory
+	metadataDir := filepath.Join(taskDir, "metadata")
+	if err := os.MkdirAll(metadataDir, 0755); err != nil {
+		return fmt.Errorf("failed to create metadata directory: %w", err)
+	}
+
+	// Save raw response
+	metadataFilePath := filepath.Join(metadataDir, fmt.Sprintf("%s.json", provider))
+	if err := os.WriteFile(metadataFilePath, body, 0644); err != nil {
+		return fmt.Errorf("failed to write %s metadata file: %w", provider, err)
 	}
 
 	return nil
