@@ -15,7 +15,7 @@ import (
 
 // Service implements the main integration service
 type Service struct {
-	config    *config.IntegrationsConfig
+	config    *config.Config
 	logger    logging.Logger
 	auth      auth.Manager
 	cache     cache.Manager[*TaskSyncRecord]
@@ -67,7 +67,7 @@ const (
 
 // NewService creates a new integration service
 func NewService(
-	cfg *config.IntegrationsConfig,
+	cfg *config.Config,
 	logger logging.Logger,
 	authManager auth.Manager,
 	cacheManager cache.Manager[*TaskSyncRecord],
@@ -160,14 +160,14 @@ func (s *Service) IsConfigured() bool {
 		return false
 	}
 
-	// Check if a task system is configured
-	if s.config.TaskSystem == "" || s.config.TaskSystem == "none" {
+	// Check if a task source is configured for external integration
+	if s.config.Work.Tasks.Source == "" || s.config.Work.Tasks.Source == "none" || s.config.Work.Tasks.Source == "local" {
 		return false
 	}
 
 	// Check if the configured provider exists
 	s.mu.RLock()
-	_, exists := s.providers[s.config.TaskSystem]
+	_, exists := s.providers[s.config.Work.Tasks.Source]
 	s.mu.RUnlock()
 
 	return exists
@@ -178,7 +178,7 @@ func (s *Service) GetTaskSystem() string {
 	if s.config == nil {
 		return ""
 	}
-	return s.config.TaskSystem
+	return s.config.Work.Tasks.Source
 }
 
 // IsSyncEnabled returns true if sync is enabled
@@ -186,7 +186,7 @@ func (s *Service) IsSyncEnabled() bool {
 	if s.config == nil {
 		return false
 	}
-	return s.config.SyncEnabled
+	return s.config.Integrations.SyncEnabled
 }
 
 // SyncTask synchronizes a single task with advanced error handling and conflict resolution
@@ -208,25 +208,25 @@ func (s *Service) SyncTask(ctx context.Context, taskID string, opts SyncOptions)
 	}
 
 	// Get the provider
-	provider, err := s.GetProvider(s.config.TaskSystem)
+	provider, err := s.GetProvider(s.config.Work.Tasks.Source)
 	if err != nil {
-		return nil, s.createIntegrationError(ErrCodeProviderError, fmt.Sprintf("failed to get provider: %v", err), s.config.TaskSystem, taskID)
+		return nil, s.createIntegrationError(ErrCodeProviderError, fmt.Sprintf("failed to get provider: %v", err), s.config.Work.Tasks.Source, taskID)
 	}
 
 	// Check circuit breaker
-	if !s.isCircuitBreakerClosed(s.config.TaskSystem) {
-		return nil, s.createIntegrationError(ErrCodeProviderError, "provider circuit breaker is open", s.config.TaskSystem, taskID)
+	if !s.isCircuitBreakerClosed(s.config.Work.Tasks.Source) {
+		return nil, s.createIntegrationError(ErrCodeProviderError, "provider circuit breaker is open", s.config.Work.Tasks.Source, taskID)
 	}
 
 	// Check rate limiting
-	if !s.checkRateLimit(s.config.TaskSystem) {
-		return nil, s.createIntegrationError(ErrCodeRateLimited, "rate limit exceeded", s.config.TaskSystem, taskID)
+	if !s.checkRateLimit(s.config.Work.Tasks.Source) {
+		return nil, s.createIntegrationError(ErrCodeRateLimited, "rate limit exceeded", s.config.Work.Tasks.Source, taskID)
 	}
 
 	// Get sync record
 	syncRecord, err := s.GetSyncRecord(ctx, taskID)
 	if err != nil {
-		return nil, s.createIntegrationError(ErrCodeInvalidData, fmt.Sprintf("sync record not found for task %s: %v", taskID, err), s.config.TaskSystem, taskID)
+		return nil, s.createIntegrationError(ErrCodeInvalidData, fmt.Sprintf("sync record not found for task %s: %v", taskID, err), s.config.Work.Tasks.Source, taskID)
 	}
 
 	result := &SyncResult{
@@ -270,7 +270,7 @@ func (s *Service) SyncTask(ctx context.Context, taskID string, opts SyncOptions)
 		}
 
 		// Record failure in circuit breaker
-		s.recordFailure(s.config.TaskSystem)
+		s.recordFailure(s.config.Work.Tasks.Source)
 
 		// Update sync record with error
 		syncRecord.Status = SyncStatusError
@@ -291,7 +291,7 @@ func (s *Service) SyncTask(ctx context.Context, taskID string, opts SyncOptions)
 	result.Duration = time.Since(start)
 
 	// Record success in circuit breaker
-	s.recordSuccess(s.config.TaskSystem)
+	s.recordSuccess(s.config.Work.Tasks.Source)
 
 	// Update sync record with success
 	syncRecord.Status = SyncStatusActive

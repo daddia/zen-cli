@@ -34,8 +34,14 @@ type Config struct {
 	// Development configuration
 	Development DevelopmentConfig `mapstructure:"development"`
 
+	// Work configuration
+	Work WorkConfig `mapstructure:"work"`
+
 	// Integration configuration
 	Integrations IntegrationsConfig `mapstructure:"integrations"`
+
+	// Provider configurations
+	Providers map[string]ProviderConfig `mapstructure:"providers"`
 
 	// Internal fields for configuration management
 	viper      *viper.Viper `mapstructure:"-" json:"-" yaml:"-"`
@@ -128,6 +134,42 @@ type DevelopmentConfig struct {
 	Profile bool `mapstructure:"profile"`
 }
 
+// WorkConfig contains work-related configuration
+type WorkConfig struct {
+	// Tasks configuration
+	Tasks TasksConfig `mapstructure:"tasks"`
+}
+
+// TasksConfig contains task-specific configuration
+type TasksConfig struct {
+	// Task source system (jira, github, linear, monday, asana, local, none)
+	Source string `mapstructure:"source" validate:"oneof=jira github linear monday asana local none ''"`
+
+	// Sync frequency (hourly, daily, manual, none)
+	Sync string `mapstructure:"sync" validate:"oneof=hourly daily manual none ''"`
+
+	// Project key or identifier for tasks
+	ProjectKey string `mapstructure:"project_key"`
+}
+
+// ProviderConfig contains provider-specific configuration
+type ProviderConfig struct {
+	// Provider type (jira, github, linear, etc.)
+	Type string `mapstructure:"type"`
+
+	// Server URL for the provider
+	URL string `mapstructure:"url"`
+
+	// Email for authentication (if required)
+	Email string `mapstructure:"email"`
+
+	// API key/token for authentication
+	APIToken string `mapstructure:"api_token"`
+
+	// Additional provider-specific settings
+	Settings map[string]interface{} `mapstructure:"settings"`
+}
+
 // IntegrationsConfig contains external integration configuration
 type IntegrationsConfig struct {
 	// Task system of record (jira, github, monday, asana, none)
@@ -174,6 +216,35 @@ type IntegrationProviderConfig struct {
 
 	// Additional provider-specific settings
 	Settings map[string]interface{} `mapstructure:"settings"`
+}
+
+// DefaultWorkConfig returns default work configuration
+func DefaultWorkConfig() WorkConfig {
+	return WorkConfig{
+		Tasks: TasksConfig{
+			Source:     "local",
+			Sync:       "manual",
+			ProjectKey: "",
+		},
+	}
+}
+
+// DefaultProvidersConfig returns default providers configuration
+func DefaultProvidersConfig() map[string]ProviderConfig {
+	return map[string]ProviderConfig{
+		"jira": {
+			Type: "jira",
+			URL:  "",
+		},
+		"github": {
+			Type: "github",
+			URL:  "https://api.github.com",
+		},
+		"linear": {
+			Type: "linear",
+			URL:  "https://api.linear.app",
+		},
+	}
 }
 
 // DefaultIntegrationsConfig returns default integration configuration

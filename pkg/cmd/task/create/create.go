@@ -83,6 +83,11 @@ This command creates a complete task structure in .zen/work/tasks/<task-id>/ inc
 - .taskrc.yaml: Task-specific configuration
 - Work-type directories: research/, spikes/, design/, execution/, outcomes/
 
+Source detection (in priority order):
+1. --from flag (jira, github, linear, local)
+2. config work.tasks.source setting
+3. local mode (no external sync)
+
 The task follows the seven-stage Zenflow workflow:
 1. Align: Define success criteria and stakeholder alignment
 2. Discover: Gather evidence and validate assumptions
@@ -99,25 +104,22 @@ Task types determine the workflow focus:
 - spike: Research and exploration with learning focus
 - task: General work items with flexible structure`,
 		Example: heredoc.Doc(`
-			# Create a user story (type defaults to story)
+			# Create a user story (uses config work.tasks.source or local)
 			zen task create USER-123 --title "User login with SSO"
 
-			# Create a bug fix task
+			# Create a bug fix task (auto-detects source from config)
 			zen task create BUG-456 --type bug --title "Fix memory leak in auth service"
 
-			# Create an epic for large initiative
-			zen task create EPIC-789 --type epic --title "Implement new payment system"
-
-			# Create a research spike
-			zen task create SPIKE-101 --type spike --title "Evaluate GraphQL vs REST"
-
-			# Create with additional metadata
-			zen task create PROJ-200 --title "Dashboard redesign" --owner "jane.doe" --team "frontend"
-
-			# Create task from existing external source (type and details fetched from source)
+			# Create task from specific external source
 			zen task create ZEN-123 --from jira
 			zen task create GH-456 --from github
 			zen task create LIN-789 --from linear
+
+			# Create local task (no external sync)
+			zen task create LOCAL-123 --from local
+
+			# Create with additional metadata
+			zen task create PROJ-200 --title "Dashboard redesign" --owner "jane.doe" --team "frontend"
 		`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -145,6 +147,22 @@ Task types determine the workflow focus:
 				}
 			}
 
+			// Auto-detect source from config if --from flag not provided
+			if opts.Source == "" {
+				source, err := determineTaskSourceFromConfig(f)
+				if err != nil {
+					// Log warning but continue with local mode
+					fmt.Fprintf(f.IOStreams.Out, "%s Failed to read config, using local mode: %v\n",
+						f.IOStreams.ColorWarning("!"), err)
+					source = "local"
+				}
+				if source != "local" && source != "none" {
+					opts.Source = source
+					fmt.Fprintf(f.IOStreams.Out, "%s Using configured source: %s\n",
+						f.IOStreams.ColorInfo("ℹ"), source)
+				}
+			}
+
 			return createRun(opts)
 		},
 	}
@@ -155,7 +173,7 @@ Task types determine the workflow focus:
 	cmd.Flags().StringVar(&opts.Owner, "owner", "", "Task owner (optional, defaults to current user)")
 	cmd.Flags().StringVar(&opts.Team, "team", "", "Team name (optional)")
 	cmd.Flags().StringVar(&opts.Priority, "priority", "P2", "Task priority (P0|P1|P2|P3)")
-	cmd.Flags().StringVar(&opts.Source, "from", "", "Fetch task details from external source system (jira, github, linear, etc.)")
+	cmd.Flags().StringVar(&opts.Source, "from", "", "Fetch task details from external source system (jira, github, linear, local) or use config work.tasks.source")
 
 	// No required flags - type is optional with default
 
@@ -315,4 +333,21 @@ func generateFileFromTemplate(templateLoader interface{}, templateName string, b
 func generateTaskFiles(ctx context.Context, opts *CreateOptions, taskDir string) error {
 	// Stub implementation - just return nil for tests
 	return nil
+}
+
+// determineTaskSourceFromConfig determines the task source from config
+func determineTaskSourceFromConfig(factory *cmdutil.Factory) (string, error) {
+	// Get configuration
+	config, err := factory.Config()
+	if err != nil {
+		return "", fmt.Errorf("failed to get config: %w", err)
+	}
+
+	// Check for configured task source
+	taskSource := config.Work.Tasks.Source
+	if taskSource == "" || taskSource == "none" {
+		return "local", nil
+	}
+
+	return taskSource, nil
 }

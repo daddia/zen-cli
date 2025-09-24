@@ -302,9 +302,9 @@ func (m *Manager) initializeIntegrationComponents() error {
 		return fmt.Errorf("failed to get config: %w", err)
 	}
 
-	// Check if integrations are configured
-	if config.Integrations.TaskSystem == "" || config.Integrations.TaskSystem == "none" {
-		return fmt.Errorf("no task system configured")
+	// Check if task source is configured for external integration
+	if config.Work.Tasks.Source == "" || config.Work.Tasks.Source == "none" || config.Work.Tasks.Source == "local" {
+		return fmt.Errorf("no external task system configured")
 	}
 
 	// Get auth manager

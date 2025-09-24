@@ -176,10 +176,91 @@ var Options = []ConfigOption{
 		DefaultValue:  "true",
 		Type:          "bool",
 	},
-	// Integration configuration options
+	// Work configuration options
+	{
+		Key:           "work.tasks.source",
+		Description:   "Task source system",
+		AllowedValues: []string{"jira", "github", "linear", "monday", "asana", "local", "none", ""},
+		DefaultValue:  "local",
+		Type:          "string",
+	},
+	{
+		Key:           "work.tasks.sync",
+		Description:   "Task synchronization frequency",
+		AllowedValues: []string{"hourly", "daily", "manual", "none", ""},
+		DefaultValue:  "manual",
+		Type:          "string",
+	},
+	{
+		Key:           "work.tasks.project_key",
+		Description:   "Project key or identifier for tasks",
+		AllowedValues: []string{},
+		DefaultValue:  "",
+		Type:          "string",
+	},
+
+	// Provider configuration options
+	{
+		Key:           "providers.jira.type",
+		Description:   "Jira provider type",
+		AllowedValues: []string{"jira"},
+		DefaultValue:  "jira",
+		Type:          "string",
+	},
+	{
+		Key:           "providers.jira.url",
+		Description:   "Jira server URL",
+		AllowedValues: []string{},
+		DefaultValue:  "",
+		Type:          "string",
+	},
+	{
+		Key:           "providers.jira.email",
+		Description:   "Jira user email for authentication",
+		AllowedValues: []string{},
+		DefaultValue:  "",
+		Type:          "string",
+	},
+	{
+		Key:           "providers.jira.api_token",
+		Description:   "Jira API token for authentication",
+		AllowedValues: []string{},
+		DefaultValue:  "",
+		Type:          "string",
+	},
+	{
+		Key:           "providers.github.type",
+		Description:   "GitHub provider type",
+		AllowedValues: []string{"github"},
+		DefaultValue:  "github",
+		Type:          "string",
+	},
+	{
+		Key:           "providers.github.url",
+		Description:   "GitHub API URL",
+		AllowedValues: []string{},
+		DefaultValue:  "https://api.github.com",
+		Type:          "string",
+	},
+	{
+		Key:           "providers.linear.type",
+		Description:   "Linear provider type",
+		AllowedValues: []string{"linear"},
+		DefaultValue:  "linear",
+		Type:          "string",
+	},
+	{
+		Key:           "providers.linear.url",
+		Description:   "Linear API URL",
+		AllowedValues: []string{},
+		DefaultValue:  "https://api.linear.app",
+		Type:          "string",
+	},
+
+	// Integration configuration options (legacy - kept for backward compatibility)
 	{
 		Key:           "integrations.task_system",
-		Description:   "Task system of record for external integration",
+		Description:   "Task system of record for external integration (deprecated: use work.tasks.source)",
 		AllowedValues: []string{"jira", "github", "monday", "asana", "none", ""},
 		DefaultValue:  "",
 		Type:          "string",
@@ -228,6 +309,10 @@ func (opt ConfigOption) getValueFromConfig(cfg *Config) string {
 			current = current.FieldByName("Templates")
 		case "development":
 			current = current.FieldByName("Development")
+		case "work":
+			current = current.FieldByName("Work")
+		case "providers":
+			current = current.FieldByName("Providers")
 		default:
 			// Convert snake_case to PascalCase for struct field names
 			fieldName := toPascalCase(part)
@@ -244,10 +329,12 @@ func (opt ConfigOption) getValueFromConfig(cfg *Config) string {
 			} else {
 				// Nested fields
 				switch part {
+				// CLI fields
 				case "no_color":
 					current = current.FieldByName("NoColor")
 				case "output_format":
 					current = current.FieldByName("OutputFormat")
+				// Workspace fields
 				case "config_file":
 					current = current.FieldByName("ConfigFile")
 				case "repository_url":
@@ -278,8 +365,23 @@ func (opt ConfigOption) getValueFromConfig(cfg *Config) string {
 					current = current.FieldByName("LeftDelim")
 				case "right_delim":
 					current = current.FieldByName("RightDelim")
+				// Work fields
+				case "tasks":
+					current = current.FieldByName("Tasks")
+				case "project_key":
+					current = current.FieldByName("ProjectKey")
 				default:
-					current = current.FieldByName(fieldName)
+					// Handle provider map access (providers.jira.type -> access map key "jira")
+					if current.Kind() == reflect.Map && i > 0 {
+						// This is a map access, get the key
+						mapKey := reflect.ValueOf(part)
+						current = current.MapIndex(mapKey)
+						if !current.IsValid() {
+							return ""
+						}
+					} else {
+						current = current.FieldByName(fieldName)
+					}
 				}
 			}
 		}

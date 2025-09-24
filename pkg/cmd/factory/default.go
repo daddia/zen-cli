@@ -554,7 +554,7 @@ func integrationFunc(f *cmdutil.Factory) func() (cmdutil.IntegrationManagerInter
 		syncCache := cache.NewManager(cacheConfig, logger, serializer)
 
 		// Create integration service
-		integrationService := integration.NewService(&cfg.Integrations, logger, authManager, syncCache)
+		integrationService := integration.NewService(cfg, logger, authManager, syncCache)
 
 		// Initialize plugin runtime (using simple runtime for now)
 		pluginRuntime := plugin.NewSimpleRuntime(logger, authManager)
@@ -568,7 +568,7 @@ func integrationFunc(f *cmdutil.Factory) func() (cmdutil.IntegrationManagerInter
 		}
 
 		// Register Jira provider if configured
-		if cfg.Integrations.TaskSystem == "jira" {
+		if cfg.Work.Tasks.Source == "jira" {
 			if providerConfig, ok := cfg.Integrations.Providers["jira"]; ok {
 				jiraProvider := jira.NewProvider(&providerConfig, logger, authManager)
 				if err := integrationService.RegisterProvider(jiraProvider); err != nil {

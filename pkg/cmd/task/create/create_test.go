@@ -9,6 +9,7 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/daddia/zen/pkg/iostreams"
 	zentemplate "github.com/daddia/zen/pkg/template"
@@ -713,4 +714,86 @@ func TestNewCmdTaskCreate_InvalidType(t *testing.T) {
 	err := cmd.Execute()
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid task type 'invalid'")
+}
+
+func TestDetermineTaskSourceFromConfig(t *testing.T) {
+	tests := []struct {
+		name        string
+		taskSource  string
+		expected    string
+		expectError bool
+	}{
+		{
+			name:       "configured jira source",
+			taskSource: "jira",
+			expected:   "jira",
+		},
+		{
+			name:       "configured github source",
+			taskSource: "github",
+			expected:   "github",
+		},
+		{
+			name:       "configured linear source",
+			taskSource: "linear",
+			expected:   "linear",
+		},
+		{
+			name:       "local source",
+			taskSource: "local",
+			expected:   "local",
+		},
+		{
+			name:       "none source",
+			taskSource: "none",
+			expected:   "local",
+		},
+		{
+			name:       "empty source",
+			taskSource: "",
+			expected:   "local",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			streams := iostreams.Test()
+			factory := cmdutil.NewTestFactory(streams)
+
+			// Mock config with task source
+			factory.Config = func() (*config.Config, error) {
+				return &config.Config{
+					Work: config.WorkConfig{
+						Tasks: config.TasksConfig{
+							Source: tt.taskSource,
+						},
+					},
+				}, nil
+			}
+
+			result, err := determineTaskSourceFromConfig(factory)
+
+			if tt.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestDetermineTaskSourceFromConfig_ConfigError(t *testing.T) {
+	streams := iostreams.Test()
+	factory := cmdutil.NewTestFactory(streams)
+
+	// Mock config to return error
+	factory.Config = func() (*config.Config, error) {
+		return nil, fmt.Errorf("config read error")
+	}
+
+	result, err := determineTaskSourceFromConfig(factory)
+	require.Error(t, err)
+	assert.Equal(t, "", result)
+	assert.Contains(t, err.Error(), "failed to get config")
 }

@@ -16,9 +16,10 @@ func TestNewCmdTask(t *testing.T) {
 	cmd := NewCmdTask(factory)
 
 	require.NotNil(t, cmd)
-	assert.Equal(t, "task <command>", cmd.Use)
+	assert.Equal(t, "task [<task-id> | <command>]", cmd.Use)
 	assert.Equal(t, "Manage tasks and workflow", cmd.Short)
 	assert.Contains(t, cmd.Long, "seven-stage Zenflow")
+	assert.Contains(t, cmd.Long, "Direct task operations")
 	assert.Equal(t, "core", cmd.GroupID)
 
 	// Check that it has subcommands
@@ -28,6 +29,21 @@ func TestNewCmdTask(t *testing.T) {
 	createCmd, _, err := cmd.Find([]string{"create"})
 	require.NoError(t, err)
 	assert.Equal(t, "create", createCmd.Name())
+
+	// Check for sync subcommand
+	syncCmd, _, err := cmd.Find([]string{"sync"})
+	require.NoError(t, err)
+	assert.Equal(t, "sync", syncCmd.Name())
+
+	// Check flags for direct operations
+	typeFlag := cmd.Flags().Lookup("type")
+	require.NotNil(t, typeFlag)
+
+	fromFlag := cmd.Flags().Lookup("from")
+	require.NotNil(t, fromFlag)
+
+	forceFlag := cmd.Flags().Lookup("force")
+	require.NotNil(t, forceFlag)
 }
 
 func TestTaskCommandHelp(t *testing.T) {

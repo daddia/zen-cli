@@ -137,9 +137,16 @@ func (m *MockAuthManager) GetProviderInfo(provider string) (*auth.ProviderInfo, 
 }
 
 func TestNewService(t *testing.T) {
-	cfg := &config.IntegrationsConfig{
-		TaskSystem:  "jira",
-		SyncEnabled: true,
+	cfg := &config.Config{
+		Work: config.WorkConfig{
+			Tasks: config.TasksConfig{
+				Source: "jira",
+				Sync:   "daily",
+			},
+		},
+		Integrations: config.IntegrationsConfig{
+			SyncEnabled: true,
+		},
 	}
 	logger := logging.NewBasic()
 	authManager := &MockAuthManager{}
@@ -239,9 +246,16 @@ func TestService_IsConfigured(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := &config.IntegrationsConfig{
-				TaskSystem:  tt.taskSystem,
-				SyncEnabled: true,
+			cfg := &config.Config{
+				Work: config.WorkConfig{
+					Tasks: config.TasksConfig{
+						Source: tt.taskSystem,
+						Sync:   "daily",
+					},
+				},
+				Integrations: config.IntegrationsConfig{
+					SyncEnabled: true,
+				},
 			}
 			service := createTestServiceWithConfig(t, cfg)
 
@@ -331,9 +345,16 @@ func TestService_SyncTask(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create service with real cache
-			cfg := &config.IntegrationsConfig{
-				TaskSystem:  "jira",
-				SyncEnabled: true,
+			cfg := &config.Config{
+				Work: config.WorkConfig{
+					Tasks: config.TasksConfig{
+						Source: "jira",
+						Sync:   "daily",
+					},
+				},
+				Integrations: config.IntegrationsConfig{
+					SyncEnabled: true,
+				},
 			}
 			logger := logging.NewBasic()
 			authManager := &MockAuthManager{}
@@ -376,9 +397,16 @@ func TestService_SyncTask(t *testing.T) {
 }
 
 func TestService_SyncTask_NotConfigured(t *testing.T) {
-	cfg := &config.IntegrationsConfig{
-		TaskSystem:  "",
-		SyncEnabled: false,
+	cfg := &config.Config{
+		Work: config.WorkConfig{
+			Tasks: config.TasksConfig{
+				Source: "",
+				Sync:   "manual",
+			},
+		},
+		Integrations: config.IntegrationsConfig{
+			SyncEnabled: false,
+		},
 	}
 	service := createTestServiceWithConfig(t, cfg)
 
@@ -393,14 +421,21 @@ func TestService_SyncTask_NotConfigured(t *testing.T) {
 }
 
 func createTestService(t *testing.T) *Service {
-	cfg := &config.IntegrationsConfig{
-		TaskSystem:  "jira",
-		SyncEnabled: true,
+	cfg := &config.Config{
+		Work: config.WorkConfig{
+			Tasks: config.TasksConfig{
+				Source: "jira",
+				Sync:   "daily",
+			},
+		},
+		Integrations: config.IntegrationsConfig{
+			SyncEnabled: true,
+		},
 	}
 	return createTestServiceWithConfig(t, cfg)
 }
 
-func createTestServiceWithConfig(t *testing.T, cfg *config.IntegrationsConfig) *Service {
+func createTestServiceWithConfig(t *testing.T, cfg *config.Config) *Service {
 	logger := logging.NewBasic()
 	authManager := &MockAuthManager{}
 	cacheConfig := cache.Config{
@@ -472,9 +507,16 @@ func TestService_ConflictResolution(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create service
-			cfg := &config.IntegrationsConfig{
-				TaskSystem:  "test",
-				SyncEnabled: true,
+			cfg := &config.Config{
+				Work: config.WorkConfig{
+					Tasks: config.TasksConfig{
+						Source: "test",
+						Sync:   "daily",
+					},
+				},
+				Integrations: config.IntegrationsConfig{
+					SyncEnabled: true,
+				},
 			}
 			service := createTestServiceWithConfig(t, cfg)
 
