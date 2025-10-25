@@ -66,7 +66,7 @@ func TestGetCurrentValue_DefaultValues(t *testing.T) {
 		{"cli.verbose", "false"},
 		{"cli.output_format", "text"},
 		{"workspace.root", "."},
-		{"workspace.config_file", "zen.yaml"},
+		{"workspace.config_file", "config"},
 		{"development.debug", "false"},
 		{"development.profile", "false"},
 	}

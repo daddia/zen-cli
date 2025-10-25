@@ -61,7 +61,7 @@ var Options = []ConfigOption{
 	{
 		Key:          "workspace.config_file",
 		Description:  "Set the workspace configuration file name",
-		DefaultValue: "zen.yaml",
+		DefaultValue: "config",
 		Type:         "string",
 	},
 	{
