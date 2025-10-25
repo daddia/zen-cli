@@ -74,7 +74,7 @@ func createTestPlugin() (*Plugin, *mockAuthManager) {
 		Timeout:    30 * time.Second,
 		Auth: &AuthConfig{
 			Type:           AuthTypeBasic,
-			CredentialsRef: "jira_creds",
+			CredentialsRef: "jira",
 		},
 	}
 
@@ -159,7 +159,7 @@ func TestPlugin_FetchTask(t *testing.T) {
 	plugin, authMgr := createTestPlugin()
 	plugin.config.BaseURL = server.URL
 
-	authMgr.On("GetCredentials", "jira_creds").Return("dXNlcjpwYXNz", nil) // base64 "user:pass"
+	authMgr.On("GetCredentials", "jira").Return("Basic dXNlcjpwYXNz", nil) // Basic auth header
 
 	// Test FetchTask
 	taskData, err := plugin.FetchTask(context.Background(), "TEST-123", &FetchOptions{})
@@ -192,7 +192,7 @@ func TestPlugin_FetchTask_WithRawData(t *testing.T) {
 	plugin, authMgr := createTestPlugin()
 	plugin.config.BaseURL = server.URL
 
-	authMgr.On("GetCredentials", "jira_creds").Return("dXNlcjpwYXNz", nil)
+	authMgr.On("GetCredentials", "jira").Return("Basic dXNlcjpwYXNz", nil)
 
 	// Test FetchTask with raw data
 	taskData, err := plugin.FetchTask(context.Background(), "TEST-123", &FetchOptions{
@@ -249,7 +249,7 @@ func TestPlugin_CreateTask(t *testing.T) {
 	plugin, authMgr := createTestPlugin()
 	plugin.config.BaseURL = server.URL
 
-	authMgr.On("GetCredentials", "jira_creds").Return("dXNlcjpwYXNz", nil).Times(2)
+	authMgr.On("GetCredentials", "jira").Return("Basic dXNlcjpwYXNz", nil).Times(2)
 
 	// Test CreateTask
 	taskData := &PluginTaskData{
@@ -294,7 +294,7 @@ func TestPlugin_SearchTasks(t *testing.T) {
 	plugin, authMgr := createTestPlugin()
 	plugin.config.BaseURL = server.URL
 
-	authMgr.On("GetCredentials", "jira_creds").Return("dXNlcjpwYXNz", nil)
+	authMgr.On("GetCredentials", "jira").Return("Basic dXNlcjpwYXNz", nil)
 
 	// Test SearchTasks
 	query := &SearchQuery{
@@ -333,7 +333,7 @@ func TestPlugin_HealthCheck(t *testing.T) {
 	plugin, authMgr := createTestPlugin()
 	plugin.config.BaseURL = server.URL
 
-	authMgr.On("GetCredentials", "jira_creds").Return("dXNlcjpwYXNz", nil)
+	authMgr.On("GetCredentials", "jira").Return("Basic dXNlcjpwYXNz", nil)
 
 	// Test health check
 	health, err := plugin.HealthCheck(context.Background())
@@ -508,7 +508,7 @@ func TestPlugin_ErrorHandling(t *testing.T) {
 			defer server.Close()
 
 			plugin.config.BaseURL = server.URL
-			authMgr.On("GetCredentials", "jira_creds").Return("dXNlcjpwYXNz", nil)
+			authMgr.On("GetCredentials", "jira").Return("Basic dXNlcjpwYXNz", nil)
 
 			_, err := plugin.FetchTask(context.Background(), "TEST-123", &FetchOptions{})
 
@@ -539,7 +539,7 @@ func TestPlugin_Configuration(t *testing.T) {
 				ProjectKey: "TEST",
 				Auth: &AuthConfig{
 					Type:           AuthTypeBasic,
-					CredentialsRef: "jira_creds",
+					CredentialsRef: "jira",
 				},
 			},
 			wantErr: false,
@@ -552,7 +552,7 @@ func TestPlugin_Configuration(t *testing.T) {
 				ProjectKey: "TEST",
 				Auth: &AuthConfig{
 					Type:           AuthTypeBasic,
-					CredentialsRef: "jira_creds",
+					CredentialsRef: "jira",
 				},
 			},
 			wantErr: true,
@@ -565,7 +565,7 @@ func TestPlugin_Configuration(t *testing.T) {
 				BaseURL: "https://test.atlassian.net",
 				Auth: &AuthConfig{
 					Type:           AuthTypeBasic,
-					CredentialsRef: "jira_creds",
+					CredentialsRef: "jira",
 				},
 			},
 			wantErr: true,

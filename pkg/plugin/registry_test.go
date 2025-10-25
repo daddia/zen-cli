@@ -115,7 +115,6 @@ configuration_schema:
 	// Create registry
 	logger := logging.NewBasic()
 	runtime := &mockRuntime{}
-	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
 
 	registry := NewRegistry(logger, []string{tempDir}, runtime)
 
@@ -174,7 +173,6 @@ security:
 	instance := &mockPluginInstance{name: "test-plugin"}
 
 	runtime.On("LoadPlugin", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*plugin.Manifest")).Return(instance, nil)
-	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
 
 	registry := NewRegistry(logger, []string{tempDir}, runtime)
 
@@ -206,7 +204,6 @@ func TestRegistry_UnloadPlugin(t *testing.T) {
 	instance := &mockPluginInstance{name: "test-plugin"}
 
 	runtime.On("UnloadPlugin", instance).Return(nil)
-	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
 
 	registry := NewRegistry(logger, []string{}, runtime)
 
@@ -335,7 +332,6 @@ func TestRegistry_RefreshPlugins(t *testing.T) {
 
 	logger := logging.NewBasic()
 	runtime := &mockRuntime{}
-	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
 
 	registry := NewRegistry(logger, []string{tempDir}, runtime)
 
@@ -507,7 +503,6 @@ plugin:
 	// Create registry
 	logger := logging.NewBasic()
 	runtime := &mockRuntime{}
-	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
 
 	registry := NewRegistry(logger, []string{tempDir}, runtime)
 
@@ -528,7 +523,6 @@ plugin:
 func TestRegistry_ConcurrentAccess(t *testing.T) {
 	logger := logging.NewBasic()
 	runtime := &mockRuntime{}
-	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
 
 	registry := NewRegistry(logger, []string{}, runtime)
 
@@ -566,7 +560,6 @@ func TestRegistry_Close(t *testing.T) {
 
 	runtime.On("UnloadPlugin", instance).Return(nil)
 	runtime.On("Close").Return(nil)
-	runtime.On("GetCapabilities").Return([]string{"wasm_execution"})
 
 	registry := NewRegistry(logger, []string{}, runtime)
 

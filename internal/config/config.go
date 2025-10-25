@@ -305,10 +305,8 @@ func LoadWithOptions(opts LoadOptions) (*Config, error) {
 	// Set configuration defaults from Options
 	setDefaults(v)
 
-	// Configure the 3 fixed file paths (Git-like hierarchy)
+	// Configure fixed file paths
 	configureSimpleFileDiscovery(v, opts.ConfigFile)
-
-	// NO environment variables - eliminated per refactor plan
 
 	// Bind CLI flags if command is provided
 	if opts.Command != nil {
@@ -332,8 +330,6 @@ func LoadWithOptions(opts LoadOptions) (*Config, error) {
 		configFile = v.ConfigFileUsed()
 		loadedFrom = append(loadedFrom, fmt.Sprintf("file:%s", configFile))
 	}
-
-	// NO environment variables - eliminated per refactor plan
 
 	// Check for CLI flags
 	if opts.Command != nil && hasFlagOverrides(opts.Command) {
@@ -390,7 +386,7 @@ func setDefaults(v *viper.Viper) {
 	}
 }
 
-// configureSimpleFileDiscovery sets up the 3 fixed configuration file paths (Git-like hierarchy)
+// configureSimpleFileDiscovery sets up the fixed configuration file paths
 func configureSimpleFileDiscovery(v *viper.Viper, configFile string) {
 	// If specific config file is provided, use it
 	if configFile != "" {
@@ -402,16 +398,16 @@ func configureSimpleFileDiscovery(v *viper.Viper, configFile string) {
 	v.SetConfigName("config")
 	v.SetConfigType("yaml")
 
-	// Add EXACTLY 3 fixed configuration paths per refactor plan:
-	// 1. Local/Project configuration (.zen/config)
+	// Add fixed configuration paths:
+	// Local/Project configuration (.zen/config)
 	v.AddConfigPath("./.zen")
 
-	// 2. Global/User configuration (~/.zen/config) - PRIMARY LOCATION ONLY
+	// Global/User configuration (~/.zen/config) - PRIMARY LOCATION ONLY
 	if home, err := os.UserHomeDir(); err == nil {
 		v.AddConfigPath(filepath.Join(home, ".zen"))
 	}
 
-	// 3. System configuration (/etc/zen/config or C:\ProgramData\zen\config)
+	// System configuration (/etc/zen/config or C:\ProgramData\zen\config)
 	if runtime.GOOS == "windows" {
 		if programData := os.Getenv("ProgramData"); programData != "" {
 			v.AddConfigPath(filepath.Join(programData, "zen"))

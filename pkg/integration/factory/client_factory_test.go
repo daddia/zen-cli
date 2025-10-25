@@ -89,6 +89,9 @@ func TestClientFactory_CreatePlugin(t *testing.T) {
 	config := createTestConfig()
 	authMgr := &mockAuthManager{}
 
+	// Set up auth manager mock expectations
+	authMgr.On("GetCredentials", "jira").Return("Basic dXNlcjpwYXNz", nil)
+
 	factory := NewClientFactory(logger, config, authMgr, nil)
 
 	tests := []struct {
@@ -111,7 +114,7 @@ func TestClientFactory_CreatePlugin(t *testing.T) {
 			name:          "unsupported provider",
 			provider:      "unsupported",
 			expectError:   true,
-			errorContains: "unsupported provider",
+			errorContains: "provider configuration not found",
 		},
 	}
 
@@ -139,6 +142,9 @@ func TestClientFactory_GetPlugin(t *testing.T) {
 	config := createTestConfig()
 	authMgr := &mockAuthManager{}
 
+	// Set up auth manager mock expectations
+	authMgr.On("GetCredentials", "jira").Return("Basic dXNlcjpwYXNz", nil)
+
 	factory := NewClientFactory(logger, config, authMgr, nil)
 
 	// Create a plugin first
@@ -161,6 +167,9 @@ func TestClientFactory_ListPlugins(t *testing.T) {
 	logger := logging.NewBasic()
 	config := createTestConfig()
 	authMgr := &mockAuthManager{}
+
+	// Set up auth manager mock expectations
+	authMgr.On("GetCredentials", "jira").Return("Basic dXNlcjpwYXNz", nil)
 
 	factory := NewClientFactory(logger, config, authMgr, nil)
 
@@ -220,6 +229,9 @@ func TestClientFactory_ShutdownPlugin(t *testing.T) {
 	config := createTestConfig()
 	authMgr := &mockAuthManager{}
 
+	// Set up auth manager mock expectations
+	authMgr.On("GetCredentials", "jira").Return("Basic dXNlcjpwYXNz", nil)
+
 	factory := NewClientFactory(logger, config, authMgr, nil)
 
 	// Create a plugin
@@ -241,6 +253,9 @@ func TestClientFactory_ShutdownAll(t *testing.T) {
 	logger := logging.NewBasic()
 	config := createTestConfig()
 	authMgr := &mockAuthManager{}
+
+	// Set up auth manager mock expectations
+	authMgr.On("GetCredentials", "jira").Return("Basic dXNlcjpwYXNz", nil)
 
 	factory := NewClientFactory(logger, config, authMgr, nil)
 
@@ -271,12 +286,15 @@ func TestJiraPluginAdapter_Interface(t *testing.T) {
 		BaseURL: "https://test.atlassian.net",
 		Auth: &plugin.AuthConfig{
 			Type:           plugin.AuthTypeBasic,
-			CredentialsRef: "jira_creds",
+			CredentialsRef: "jira",
 		},
 	}
 
 	logger := logging.NewBasic()
 	authMgr := &mockAuthManager{}
+
+	// Set up auth manager mock expectations
+	authMgr.On("GetCredentials", "jira").Return("Basic dXNlcjpwYXNz", nil)
 
 	adapter := &JiraPluginAdapter{
 		config:  config,
