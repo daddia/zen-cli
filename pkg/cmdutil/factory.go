@@ -165,7 +165,7 @@ func (m *testWorkspaceManager) Root() string {
 }
 
 func (m *testWorkspaceManager) ConfigFile() string {
-	return ".zen/config.yaml"
+	return ".zen/config"
 }
 
 func (m *testWorkspaceManager) ZenDirectory() string {
@@ -197,7 +197,7 @@ func (m *testWorkspaceManager) InitializeWithForce(force bool) error {
 func (m *testWorkspaceManager) Status() (WorkspaceStatus, error) {
 	return WorkspaceStatus{
 		Initialized: m.initialized,
-		ConfigPath:  ".zen/config.yaml",
+		ConfigPath:  ".zen/config",
 		Root:        ".",
 		Project: ProjectInfo{
 			Type:     "test",
