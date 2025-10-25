@@ -109,7 +109,7 @@ func TestLoadDefaults(t *testing.T) {
 	assert.False(t, cfg.CLI.Verbose)
 	assert.Equal(t, "text", cfg.CLI.OutputFormat)
 	assert.Equal(t, ".", cfg.Workspace.Root)
-	assert.Equal(t, "zen.yaml", cfg.Workspace.ConfigFile)
+	assert.Equal(t, "config", cfg.Workspace.ConfigFile)
 	assert.False(t, cfg.Development.Debug)
 	assert.False(t, cfg.Development.Profile)
 
@@ -272,7 +272,7 @@ func TestLoadDefaultsFunction(t *testing.T) {
 	assert.False(t, cfg.CLI.Verbose)
 	assert.Equal(t, "text", cfg.CLI.OutputFormat)
 	assert.Equal(t, ".", cfg.Workspace.Root)
-	assert.Equal(t, "zen.yaml", cfg.Workspace.ConfigFile)
+	assert.Equal(t, "config", cfg.Workspace.ConfigFile)
 	assert.False(t, cfg.Development.Debug)
 	assert.False(t, cfg.Development.Profile)
 

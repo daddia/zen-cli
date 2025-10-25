@@ -583,6 +583,35 @@ func (c *Config) GetLoadedSources() []string {
 	return c.loadedFrom
 }
 
+// SetValue sets a configuration value and writes it to the local config file
+func (c *Config) SetValue(key, value string) error {
+	// Validate the key and value
+	if err := ValidateKey(key); err != nil {
+		return err
+	}
+	if err := ValidateValue(key, value); err != nil {
+		return err
+	}
+
+	// Set the value in Viper
+	c.viper.Set(key, value)
+
+	// Write to local config file (.zen/config)
+	configPath := ".zen/config"
+
+	// Ensure .zen directory exists
+	if err := os.MkdirAll(".zen", 0755); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
+	}
+
+	// Write the configuration
+	if err := c.viper.WriteConfigAs(configPath); err != nil {
+		return fmt.Errorf("failed to write config file: %w", err)
+	}
+
+	return nil
+}
+
 // Redacted returns a copy of the Config with sensitive fields redacted for display
 func (c *Config) Redacted() Config {
 	redacted := *c
