@@ -14,8 +14,9 @@ This target runs all required validation steps in sequence and will fail fast if
 
 Run all validation checks.
 
+**MUST** Run in order.
+
 **MUST** All dependencies must download (`make deps`)
-**MUST** All code must be formatted (`make fmt`)
 **MUST** All linting must pass (`make lint`)
 **MUST** All unit tests must pass (`make test-unit`)
 **MUST** All integration tests must pass (`make test-integration`)
@@ -28,6 +29,7 @@ Run all validation checks.
 **MUST** All builds must pass (`make build`)
 **MUST** All cross-platform builds must pass (`make build-all`)
 **MUST** Go module verification must pass (`go mod verify`)
+**MUST** All code must be formatted (`make fmt`)
 
 ## Alternative Validation Targets
 
