@@ -27,7 +27,7 @@ Current configuration options:
 - `cli.verbose`: Enable verbose output `{true | false}` (default `false`)
 - `cli.output_format`: Set the default output format `{text | json | yaml}` (default `text`)
 - `workspace.root`: Set the workspace root directory (default `.`)
-- `workspace.config_file`: Set the workspace configuration file name (default `zen.yaml`)
+- `workspace.config_file`: Set the workspace configuration file name (default `config`)
 - `development.debug`: Enable development debug mode `{true | false}` (default `false`)
 - `development.profile`: Enable development profiling `{true | false}` (default `false`)
 - `templates.cache_enabled`: Enable template compilation caching `{true | false}` (default `true`)
