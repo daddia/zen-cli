@@ -107,7 +107,7 @@ func TestSetRun(t *testing.T) {
 
 				if tt.checkConfigFile {
 					// Verify config file was created and contains the value
-					configPath := filepath.Join(".zen", "config.yaml")
+					configPath := filepath.Join(".zen", "config")
 					require.FileExists(t, configPath)
 
 					data, err := os.ReadFile(configPath)
@@ -294,7 +294,7 @@ func TestSetRun_ConfigDirectoryCreation(t *testing.T) {
 	assert.DirExists(t, zenDir)
 
 	// Check that config file was created
-	configFile := filepath.Join(zenDir, "config.yaml")
+	configFile := filepath.Join(zenDir, "config")
 	assert.FileExists(t, configFile)
 }
 
@@ -305,7 +305,7 @@ func TestSetRun_ExistingConfigFile(t *testing.T) {
 	zenDir := filepath.Join(tempDir, ".zen")
 	require.NoError(t, os.MkdirAll(zenDir, 0755))
 
-	configFile := filepath.Join(zenDir, "config.yaml")
+	configFile := filepath.Join(zenDir, "config")
 	existingConfig := `log_level: info
 log_format: text
 cli:

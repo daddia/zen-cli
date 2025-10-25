@@ -3,7 +3,6 @@ package set
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -91,28 +90,14 @@ func setRun(opts *SetOptions) error {
 	}
 
 	// Load current configuration to get the config file path
-	cfg, err := opts.Config()
-	if err != nil {
-		return fmt.Errorf("failed to load configuration: %w", err)
-	}
 
-	// Determine config file path
-	configPath := cfg.GetConfigFile()
-	if configPath == "" {
-		// No config file exists, create one in .zen directory
-		zenDir := ".zen"
-		if err := os.MkdirAll(zenDir, 0755); err != nil {
-			// Try user home directory
-			if home, homeErr := os.UserHomeDir(); homeErr == nil {
-				zenDir = filepath.Join(home, ".zen")
-				if err := os.MkdirAll(zenDir, 0755); err != nil {
-					return fmt.Errorf("failed to create config directory: %w", err)
-				}
-			} else {
-				return fmt.Errorf("failed to create config directory: %w", err)
-			}
-		}
-		configPath = filepath.Join(zenDir, "config.yaml")
+	// Always write to local project config (.zen/config)
+	configPath := ".zen/config"
+
+	// Ensure .zen directory exists
+	zenDir := ".zen"
+	if err := os.MkdirAll(zenDir, 0755); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
 	// Load existing config file or create new structure
