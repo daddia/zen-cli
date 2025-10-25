@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -71,14 +72,26 @@ and workspace, helping you troubleshoot issues and understand your environment.`
   zen status --verbose`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Get workspace manager and check if we're in a zen workspace
+			ws, err := f.WorkspaceManager()
+			if err != nil {
+				return fmt.Errorf("failed to get workspace manager: %w", err)
+			}
+
+			wsStatus, err := ws.Status()
+			if err != nil {
+				return fmt.Errorf("failed to get workspace status: %w", err)
+			}
+
+			// If not in a zen workspace, return git-like error message
+			if !wsStatus.Initialized {
+				fmt.Fprintf(f.IOStreams.ErrOut, "%s\n",
+					f.IOStreams.FormatError("Not Initialized: Not a zen workspace (or any of the parent directories): .zen"))
+				return cmdutil.ErrSilent
+			}
+
 			// Get configuration
 			cfg, configErr := f.Config()
-
-			// Get workspace manager
-			var wsStatus cmdutil.WorkspaceStatus
-			if ws, err := f.WorkspaceManager(); err == nil {
-				wsStatus, _ = ws.Status()
-			}
 
 			// Build status
 			status := Status{
@@ -88,7 +101,7 @@ and workspace, helping you troubleshoot issues and understand your environment.`
 					ConfigFile:  wsStatus.ConfigPath,
 				},
 				Configuration: ConfigStatus{
-					Loaded: configErr == nil,
+					Loaded: configErr == nil && isRealConfig(cfg),
 					Source: getConfigSource(cfg),
 					LogLevel: func() string {
 						if cfg != nil {
@@ -143,7 +156,10 @@ func getConfigSource(cfg interface{}) string {
 		return "none"
 	}
 
-	// Check for config file
+	// Check for config files in order of precedence
+	if _, err := os.Stat(".zen/config.yaml"); err == nil {
+		return ".zen/config.yaml"
+	}
 	if _, err := os.Stat("zen.yaml"); err == nil {
 		return "zen.yaml"
 	}
@@ -158,7 +174,57 @@ func getConfigSource(cfg interface{}) string {
 		}
 	}
 
+	// Check for environment variables
+	envVars := []string{
+		"ZEN_LOG_LEVEL", "ZEN_OUTPUT_FORMAT", "ZEN_NO_COLOR",
+		"ZEN_INTEGRATIONS_TASK_SYSTEM", "ZEN_INTEGRATIONS_SYNC_ENABLED",
+	}
+	for _, envVar := range envVars {
+		if os.Getenv(envVar) != "" {
+			return "environment"
+		}
+	}
+
 	return "defaults"
+}
+
+// isRealConfig determines if the config is from a real source vs just defaults
+func isRealConfig(cfg *config.Config) bool {
+	if cfg == nil {
+		return false
+	}
+
+	// Check if config was loaded from any real source (not just defaults)
+	// This checks for actual config files or environment variables
+	if _, err := os.Stat(".zen/config.yaml"); err == nil {
+		return true
+	}
+	if _, err := os.Stat("zen.yaml"); err == nil {
+		return true
+	}
+	if _, err := os.Stat(".zen.yaml"); err == nil {
+		return true
+	}
+
+	// Check home directory
+	if home, err := os.UserHomeDir(); err == nil {
+		if _, err := os.Stat(home + "/.zen/config.yaml"); err == nil {
+			return true
+		}
+	}
+
+	// Check for environment variables
+	envVars := []string{
+		"ZEN_LOG_LEVEL", "ZEN_OUTPUT_FORMAT", "ZEN_NO_COLOR",
+		"ZEN_INTEGRATIONS_TASK_SYSTEM", "ZEN_INTEGRATIONS_SYNC_ENABLED",
+	}
+	for _, envVar := range envVars {
+		if os.Getenv(envVar) != "" {
+			return true
+		}
+	}
+
+	return false
 }
 
 // displayTextStatus displays status in human-readable text format following design guide

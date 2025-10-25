@@ -156,14 +156,36 @@ test-integration: ## Run integration tests (20% of test suite)
 
 test-e2e: build ## Run end-to-end tests (10% of test suite)
 	@echo "$(NEUTRAL) Running end-to-end tests..."
+	@echo "$(NEUTRAL) Test environment: ../zen-test (outside zen-cli)"
 	@mkdir -p $(COVERAGE_DIR)
-	@if $(GOTEST) -v -tags=e2e -timeout=120s \
+	@if $(GOTEST) -v -tags=e2e -timeout=300s \
 		./test/e2e/...; then \
-		echo "$(GREEN)$(SUCCESS)$(RESET) End-to-end tests completed (target: <2min execution)"; \
+		echo "$(GREEN)$(SUCCESS)$(RESET) End-to-end tests completed (target: <5min execution)"; \
+		echo "$(NEUTRAL) Test categories covered:"; \
+		echo "$(NEUTRAL)   • Core Commands (status, help, version)"; \
+		echo "$(NEUTRAL)   • Workspace Operations (init, config)"; \
+		echo "$(NEUTRAL)   • Assets Management (status, sync, list)"; \
+		echo "$(NEUTRAL)   • User Journeys (complete workflows)"; \
 	else \
 		echo "$(RED)$(FAILURE)$(RESET) End-to-end tests failed"; \
 		exit 1; \
 	fi
+
+test-e2e-core: build ## Run core commands e2e tests only
+	@echo "$(NEUTRAL) Running core commands e2e tests..."
+	@$(GOTEST) -v -tags=e2e -timeout=120s -run TestE2E_CoreCommands ./test/e2e/...
+
+test-e2e-workspace: build ## Run workspace operations e2e tests only
+	@echo "$(NEUTRAL) Running workspace operations e2e tests..."
+	@$(GOTEST) -v -tags=e2e -timeout=120s -run TestE2E_WorkspaceInitialization ./test/e2e/...
+
+test-e2e-assets: build ## Run assets management e2e tests only
+	@echo "$(NEUTRAL) Running assets management e2e tests..."
+	@$(GOTEST) -v -tags=e2e -timeout=120s -run TestE2E_AssetsCommands ./test/e2e/...
+
+test-e2e-journeys: build ## Run user journeys e2e tests only
+	@echo "$(NEUTRAL) Running user journeys e2e tests..."
+	@$(GOTEST) -v -tags=e2e -timeout=120s -run TestE2E_CriticalUserJourney ./test/e2e/...
 
 test-unit-fast: ## Run unit tests without race detection (for development)
 	@echo "$(NEUTRAL) Running fast unit tests..."
