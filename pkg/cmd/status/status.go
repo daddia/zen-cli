@@ -3,7 +3,7 @@ package status
 import (
 	"encoding/json"
 	"fmt"
-	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/daddia/zen/internal/config"
@@ -151,38 +151,14 @@ and workspace, helping you troubleshoot issues and understand your environment.`
 }
 
 // getConfigSource determines where configuration was loaded from
-func getConfigSource(cfg interface{}) string {
+func getConfigSource(cfg *config.Config) string {
 	if cfg == nil {
 		return "none"
 	}
 
-	// Check for config files in order of precedence
-	if _, err := os.Stat(".zen/config.yaml"); err == nil {
-		return ".zen/config.yaml"
-	}
-	if _, err := os.Stat("zen.yaml"); err == nil {
-		return "zen.yaml"
-	}
-	if _, err := os.Stat(".zen.yaml"); err == nil {
-		return ".zen.yaml"
-	}
-
-	// Check home directory
-	if home, err := os.UserHomeDir(); err == nil {
-		if _, err := os.Stat(home + "/.zen/config.yaml"); err == nil {
-			return "~/.zen/config.yaml"
-		}
-	}
-
-	// Check for environment variables
-	envVars := []string{
-		"ZEN_LOG_LEVEL", "ZEN_OUTPUT_FORMAT", "ZEN_NO_COLOR",
-		"ZEN_INTEGRATIONS_TASK_SYSTEM", "ZEN_INTEGRATIONS_SYNC_ENABLED",
-	}
-	for _, envVar := range envVars {
-		if os.Getenv(envVar) != "" {
-			return "environment"
-		}
+	// Use the actual config file that was loaded
+	if configFile := cfg.GetConfigFile(); configFile != "" {
+		return filepath.Base(configFile)
 	}
 
 	return "defaults"
@@ -195,35 +171,12 @@ func isRealConfig(cfg *config.Config) bool {
 	}
 
 	// Check if config was loaded from any real source (not just defaults)
-	// This checks for actual config files or environment variables
-	if _, err := os.Stat(".zen/config.yaml"); err == nil {
-		return true
-	}
-	if _, err := os.Stat("zen.yaml"); err == nil {
-		return true
-	}
-	if _, err := os.Stat(".zen.yaml"); err == nil {
-		return true
-	}
-
-	// Check home directory
-	if home, err := os.UserHomeDir(); err == nil {
-		if _, err := os.Stat(home + "/.zen/config.yaml"); err == nil {
+	sources := cfg.GetLoadedSources()
+	for _, source := range sources {
+		if source != "defaults" {
 			return true
 		}
 	}
-
-	// Check for environment variables
-	envVars := []string{
-		"ZEN_LOG_LEVEL", "ZEN_OUTPUT_FORMAT", "ZEN_NO_COLOR",
-		"ZEN_INTEGRATIONS_TASK_SYSTEM", "ZEN_INTEGRATIONS_SYNC_ENABLED",
-	}
-	for _, envVar := range envVars {
-		if os.Getenv(envVar) != "" {
-			return true
-		}
-	}
-
 	return false
 }
 

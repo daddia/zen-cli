@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/pkg/cmd/factory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -136,36 +137,24 @@ func TestDisplayTextStatus_NotInitialized(t *testing.T) {
 func TestGetConfigSource(t *testing.T) {
 	tests := []struct {
 		name     string
-		setup    func() func()
+		cfg      *config.Config
 		expected string
 	}{
 		{
-			name: "nil config",
-			setup: func() func() {
-				return func() {}
-			},
+			name:     "nil config",
+			cfg:      nil,
 			expected: "none",
 		},
 		{
-			name: "non-nil config",
-			setup: func() func() {
-				return func() {}
-			},
+			name:     "config with no file",
+			cfg:      config.LoadDefaults(),
 			expected: "defaults",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cleanup := tt.setup()
-			defer cleanup()
-
-			var cfg interface{}
-			if tt.name != "nil config" {
-				cfg = map[string]interface{}{}
-			}
-
-			result := getConfigSource(cfg)
+			result := getConfigSource(tt.cfg)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
