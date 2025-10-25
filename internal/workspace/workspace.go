@@ -10,7 +10,6 @@ import (
 
 	"github.com/daddia/zen/internal/logging"
 	"github.com/daddia/zen/pkg/fs"
-	"gopkg.in/yaml.v3"
 )
 
 // Manager implements workspace operations
@@ -23,12 +22,10 @@ type Manager struct {
 
 // New creates a new workspace manager
 func New(root, configFile string, logger logging.Logger) *Manager {
-	// Ensure config file is always in .zen directory
-	if configFile == "" || configFile == "zen.yaml" {
-		configFile = filepath.Join(root, ".zen", "config.yaml")
-	} else if !strings.Contains(configFile, ".zen") {
-		// If a custom path is provided but not in .zen, put it in .zen
-		configFile = filepath.Join(root, ".zen", filepath.Base(configFile))
+	// Use the config file path provided by the Config module
+	// If none provided, use default
+	if configFile == "" {
+		configFile = filepath.Join(root, ".zen", "config")
 	}
 
 	return &Manager{
@@ -150,7 +147,7 @@ func (m *Manager) DetectProject() ProjectInfo {
 	if nodeInfo := m.detectNodeJS(); nodeInfo != nil {
 		detectedTypes = append(detectedTypes, ProjectTypeNodeJS)
 		info.Type = ProjectTypeNodeJS
-		info.Language = nodeInfo.Language // Use detected language from nodeInfo
+		info.Language = nodeInfo.Language
 		if nodeInfo.Name != "" {
 			info.Name = nodeInfo.Name
 		}
@@ -276,27 +273,18 @@ func (m *Manager) Initialize(force bool) error {
 		"force": force,
 	})
 
-	// Check if already initialized
-	configExists := false
-	if _, err := os.Stat(m.configFile); err == nil {
-		configExists = true
+	// Check if .zen directory already exists
+	zenDirExists := false
+	if _, err := os.Stat(m.ZenDirectory()); err == nil {
+		zenDirExists = true
 	}
 
 	// If already initialized and not forcing, just reinitialize (idempotent behavior)
-	if configExists && !force {
+	if zenDirExists && !force {
 		m.logger.Debug("Workspace already initialized, reinitializing", map[string]interface{}{
-			"config_file": m.configFile,
+			"zen_directory": m.ZenDirectory(),
 		})
 		// Don't return an error - just proceed with reinitialization
-	}
-
-	// Create backup if overwriting
-	if force {
-		if err := m.createBackup(); err != nil {
-			m.logger.Warn("Failed to create backup", map[string]interface{}{
-				"error": err.Error(),
-			})
-		}
 	}
 
 	// Create .zen directory structure
@@ -306,14 +294,6 @@ func (m *Manager) Initialize(force bool) error {
 
 	// Detect project information
 	projectInfo := m.DetectProject()
-
-	// Create workspace configuration
-	config := m.createDefaultConfig(projectInfo)
-
-	// Write configuration file
-	if err := m.writeConfig(config); err != nil {
-		return fmt.Errorf("failed to write configuration: %w", err)
-	}
 
 	// Update .gitignore if it exists
 	if err := m.updateGitignore(); err != nil {
@@ -339,14 +319,9 @@ func (m *Manager) Status() (Status, error) {
 		ZenDirectory: m.ZenDirectory(),
 	}
 
-	// Check if configuration file exists
-	if _, err := os.Stat(m.configFile); err == nil {
-		status.Initialized = true
-	}
-
-	// Check if .zen directory exists
+	// Check if .zen directory exists (workspace initialization is based on directory, not config file)
 	if _, err := os.Stat(m.ZenDirectory()); err == nil {
-		// Directory exists, workspace is properly initialized
+		status.Initialized = true
 	} else {
 		status.Initialized = false
 	}
@@ -427,83 +402,6 @@ func (m *Manager) GetWorkTypeDirectories() []string {
 		dirs = append(dirs, dirSpec.Name)
 	}
 	return dirs
-}
-
-// createDefaultConfig creates a default workspace configuration
-func (m *Manager) createDefaultConfig(projectInfo ProjectInfo) WorkspaceConfig {
-	now := time.Now()
-
-	return WorkspaceConfig{
-		Version: "1.0",
-		Workspace: Workspace{
-			Root:        m.root,
-			Name:        projectInfo.Name,
-			Description: projectInfo.Description,
-			CreatedAt:   now,
-			UpdatedAt:   now,
-		},
-		Project: projectInfo,
-		Logging: LogConfig{
-			Level:  "info",
-			Format: "text",
-		},
-		CLI: CLIConfig{
-			OutputFormat: "text",
-			NoColor:      false,
-		},
-	}
-}
-
-// writeConfig writes the configuration to file
-func (m *Manager) writeConfig(config WorkspaceConfig) error {
-	// Create directory if it doesn't exist
-	configDir := filepath.Dir(m.configFile)
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return err
-	}
-
-	// Marshal to YAML
-	data, err := yaml.Marshal(config)
-	if err != nil {
-		return err
-	}
-
-	// Add header comment
-	header := fmt.Sprintf(`# Zen Workspace Configuration
-# Generated on %s
-# Project: %s (%s)
-#
-# For more information, visit: https://github.com/daddia/zen
-
-`, time.Now().Format(time.RFC3339), config.Project.Name, config.Project.Type)
-
-	content := append([]byte(header), data...)
-
-	// Write file with secure permissions
-	return os.WriteFile(m.configFile, content, 0644)
-}
-
-// createBackup creates a backup of existing configuration
-func (m *Manager) createBackup() error {
-	if _, err := os.Stat(m.configFile); os.IsNotExist(err) {
-		return nil // No file to backup
-	}
-
-	backupDir := filepath.Join(m.ZenDirectory(), "backups")
-	if err := os.MkdirAll(backupDir, 0755); err != nil {
-		return err
-	}
-
-	timestamp := time.Now().Format("20060102-150405")
-	backupFile := filepath.Join(backupDir, fmt.Sprintf("zen.yaml.%s", timestamp))
-
-	// Copy file
-	data, err := os.ReadFile(m.configFile)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(backupFile, data, 0644)
 }
 
 // updateGitignore adds .zen directory to .gitignore if it exists

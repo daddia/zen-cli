@@ -9,7 +9,6 @@ import (
 	"github.com/daddia/zen/internal/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 )
 
 func TestNew(t *testing.T) {
@@ -17,7 +16,7 @@ func TestNew(t *testing.T) {
 	manager := New("/test/root", "zen.yaml", logger)
 
 	assert.Equal(t, "/test/root", manager.Root())
-	assert.Equal(t, "/test/root/.zen/config.yaml", filepath.ToSlash(manager.ConfigFile()))
+	assert.Equal(t, "zen.yaml", manager.ConfigFile())
 	assert.Equal(t, "/test/root/.zen", filepath.ToSlash(manager.ZenDirectory()))
 }
 
@@ -202,37 +201,19 @@ func TestInitialize_NewWorkspace(t *testing.T) {
 	zenDir := filepath.Join(tempDir, ".zen")
 	assert.DirExists(t, zenDir)
 
-	// Check essential directories exist
+	// Check essential directories exist (only library and work per new requirements)
 	assert.DirExists(t, filepath.Join(zenDir, "library"))
-	assert.DirExists(t, filepath.Join(zenDir, "cache"))
-	assert.DirExists(t, filepath.Join(zenDir, "logs"))
 	assert.DirExists(t, filepath.Join(zenDir, "work"))
-	assert.DirExists(t, filepath.Join(zenDir, "metadata"))
 
-	// Check that old directories are not created
+	// Check that removed directories are NOT created
+	assert.NoDirExists(t, filepath.Join(zenDir, "cache"))     // Removed per requirements
+	assert.NoDirExists(t, filepath.Join(zenDir, "logs"))      // Removed per requirements
+	assert.NoDirExists(t, filepath.Join(zenDir, "metadata"))  // Removed per requirements
 	assert.NoDirExists(t, filepath.Join(zenDir, "tasks"))     // Now under work/
 	assert.NoDirExists(t, filepath.Join(zenDir, "templates")) // Not created by default
 	assert.NoDirExists(t, filepath.Join(zenDir, "scripts"))   // Not created by default
 
-	// Check config file was created
-	configFile := manager.ConfigFile()
-	assert.FileExists(t, configFile)
-
-	// Parse and validate config
-	data, err := os.ReadFile(configFile)
-	require.NoError(t, err)
-
-	var config WorkspaceConfig
-	err = yaml.Unmarshal(data, &config)
-	require.NoError(t, err)
-
-	assert.Equal(t, "1.0", config.Version)
-	assert.Equal(t, tempDir, config.Workspace.Root)
-	assert.Equal(t, filepath.Base(tempDir), config.Workspace.Name)
-	assert.Equal(t, "info", config.Logging.Level)
-	assert.Equal(t, "text", config.Logging.Format)
-	assert.Equal(t, "text", config.CLI.OutputFormat)
-	assert.False(t, config.CLI.NoColor)
+	// Config file creation is handled by config module, not workspace
 }
 
 func TestInitialize_ExistingWorkspace_NoForce(t *testing.T) {
@@ -240,19 +221,17 @@ func TestInitialize_ExistingWorkspace_NoForce(t *testing.T) {
 	logger := logging.NewBasic()
 	manager := New(tempDir, "", logger)
 
-	// Create .zen directory and existing config file
+	// Create .zen directory first
 	zenDir := filepath.Join(tempDir, ".zen")
 	require.NoError(t, os.MkdirAll(zenDir, 0755))
-	configFile := manager.ConfigFile()
-	require.NoError(t, os.WriteFile(configFile, []byte("existing"), 0644))
 
+	// Initialize should succeed (idempotent behavior)
 	err := manager.Initialize(false)
-	require.NoError(t, err) // Should succeed (idempotent behavior)
-
-	// Check that config file was reinitialized with new content
-	data, err := os.ReadFile(configFile)
 	require.NoError(t, err)
-	assert.Contains(t, string(data), "version: \"1.0\"") // New config should be written
+
+	// Directory structure should be maintained
+	assert.DirExists(t, filepath.Join(zenDir, "library"))
+	assert.DirExists(t, filepath.Join(zenDir, "work"))
 }
 
 func TestInitialize_ExistingWorkspace_WithForce(t *testing.T) {
@@ -264,36 +243,13 @@ func TestInitialize_ExistingWorkspace_WithForce(t *testing.T) {
 	zenDir := filepath.Join(tempDir, ".zen")
 	require.NoError(t, os.MkdirAll(zenDir, 0755))
 
-	// Create existing config file
-	configFile := manager.ConfigFile()
-	existingConfig := "version: 0.9\nold: config"
-	require.NoError(t, os.WriteFile(configFile, []byte(existingConfig), 0644))
-
+	// Initialize with force should succeed
 	err := manager.Initialize(true)
 	require.NoError(t, err)
 
-	// Check backup was created
-	backupsDir := filepath.Join(zenDir, "backups")
-	entries, err := os.ReadDir(backupsDir)
-	require.NoError(t, err)
-
-	var backupFound bool
-	for _, entry := range entries {
-		if entry.Name() != ".gitkeep" {
-			backupFound = true
-			// Check backup content
-			backupPath := filepath.Join(backupsDir, entry.Name())
-			backupData, err := os.ReadFile(backupPath)
-			require.NoError(t, err)
-			assert.Equal(t, existingConfig, string(backupData))
-		}
-	}
-	assert.True(t, backupFound, "Backup file should be created")
-
-	// Check new config file was created
-	data, err := os.ReadFile(configFile)
-	require.NoError(t, err)
-	assert.Contains(t, string(data), "version: \"1.0\"")
+	// Directory structure should be created/maintained
+	assert.DirExists(t, filepath.Join(zenDir, "library"))
+	assert.DirExists(t, filepath.Join(zenDir, "work"))
 }
 
 func TestInitialize_WithGitIgnore(t *testing.T) {
@@ -393,36 +349,7 @@ go 1.21`
 	assert.Equal(t, "go", status.Project.Language)
 }
 
-func TestCreateDefaultConfig(t *testing.T) {
-	tempDir := t.TempDir()
-	logger := logging.NewBasic()
-	manager := New(tempDir, "zen.yaml", logger)
-
-	projectInfo := ProjectInfo{
-		Type:        ProjectTypeGo,
-		Name:        "test-project",
-		Description: "A test project",
-		Language:    "go",
-		Version:     "1.21",
-	}
-
-	config := manager.createDefaultConfig(projectInfo)
-
-	assert.Equal(t, "1.0", config.Version)
-	assert.Equal(t, tempDir, config.Workspace.Root)
-	assert.Equal(t, "test-project", config.Workspace.Name)
-	assert.Equal(t, "A test project", config.Workspace.Description)
-	assert.Equal(t, projectInfo, config.Project)
-	assert.Equal(t, "info", config.Logging.Level)
-	assert.Equal(t, "text", config.Logging.Format)
-	assert.Equal(t, "text", config.CLI.OutputFormat)
-	assert.False(t, config.CLI.NoColor)
-
-	// Check timestamps are set
-	assert.False(t, config.Workspace.CreatedAt.IsZero())
-	assert.False(t, config.Workspace.UpdatedAt.IsZero())
-	assert.True(t, config.Workspace.CreatedAt.Equal(config.Workspace.UpdatedAt))
-}
+// TestCreateDefaultConfig removed - config creation is now handled by config module
 
 func TestProjectTypePriority(t *testing.T) {
 	tempDir := t.TempDir()

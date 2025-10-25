@@ -47,9 +47,9 @@ func TestE2E_WorkspaceInitialization(t *testing.T) {
 		require.NoError(t, err, ".zen directory should be created")
 
 		// Should create config file
-		configFile := filepath.Join(zenDir, "config.yaml")
+		configFile := filepath.Join(zenDir, "config")
 		_, err = os.Stat(configFile)
-		require.NoError(t, err, "config.yaml should be created")
+		require.NoError(t, err, "config should be created")
 
 		// Config file should contain basic structure
 		configContent, err := os.ReadFile(configFile)
@@ -74,11 +74,11 @@ func TestE2E_WorkspaceInitialization(t *testing.T) {
 
 		// Workspace should be ready
 		assert.Contains(t, result.Stdout, "Ready", "Workspace should be ready")
-		assert.Contains(t, result.Stdout, ".zen/config.yaml", "Should show config file path")
+		assert.Contains(t, result.Stdout, ".zen/config", "Should show config file path")
 
 		// Configuration should be loaded from file
 		assert.Contains(t, result.Stdout, "Loaded", "Configuration should be loaded")
-		assert.Contains(t, result.Stdout, ".zen/config.yaml", "Should show config source")
+		assert.Contains(t, result.Stdout, "config", "Should show config source")
 	})
 
 	t.Run("zen_init_already_initialized", func(t *testing.T) {
