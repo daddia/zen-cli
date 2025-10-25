@@ -1,0 +1,13 @@
+version: "1.0"
+workspace:
+  root: .
+  name: minimal-workspace
+project:
+  type: unknown
+  name: minimal-project
+logging:
+  level: info
+  format: text
+cli:
+  output_format: text
+  no_color: false

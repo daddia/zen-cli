@@ -1,0 +1,1 @@
+✗ Not Initialized: Not a zen workspace (or any of the parent directories): .zen

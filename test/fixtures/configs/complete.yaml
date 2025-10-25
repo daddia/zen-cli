@@ -1,0 +1,39 @@
+version: "1.0"
+workspace:
+  root: .
+  name: complete-workspace
+  description: "A complete test workspace"
+project:
+  type: go
+  name: complete-project
+  version: "1.0.0"
+  language: go
+  framework: cobra
+logging:
+  level: debug
+  format: json
+cli:
+  output_format: json
+  no_color: true
+development:
+  debug: true
+  profile: false
+templates:
+  cache_enabled: true
+  cache_ttl: 30m
+  cache_size: 100
+  strict_mode: false
+  enable_ai: false
+assets:
+  repository_url: https://github.com/daddia/zen-assets.git
+  branch: main
+  auth_provider: github
+  cache_path: ~/.zen/library
+  cache_size_mb: 100
+  sync_timeout_seconds: 30
+  integrity_checks_enabled: true
+  prefetch_enabled: true
+integrations:
+  task_system: jira
+  sync_enabled: true
+  sync_frequency: hourly
