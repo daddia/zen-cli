@@ -5,7 +5,7 @@ description: "CLI reference for zen task create"
 section: "CLI Reference"
 man_section: 1
 since: v0.0.0
-date: 2025-09-22
+date: 2025-10-25
 keywords:
   - zen
   - cli
@@ -25,6 +25,11 @@ This command creates a complete task structure in .zen/work/tasks/<task-id>/ inc
 - manifest.yaml: Machine-readable metadata for automation
 - .taskrc.yaml: Task-specific configuration
 - Work-type directories: research/, spikes/, design/, execution/, outcomes/
+
+Source detection (in priority order):
+1. --from flag (jira, github, linear, local)
+2. config work.tasks.source setting
+3. local mode (no external sync)
 
 The task follows the seven-stage Zenflow workflow:
 1. Align: Define success criteria and stakeholder alignment
@@ -49,32 +54,29 @@ zen task create <task-id> [flags]
 ### Examples
 
 ```
-# Create a user story (type defaults to story)
+# Create a user story (uses config work.tasks.source or local)
 zen task create USER-123 --title "User login with SSO"
 
-# Create a bug fix task
+# Create a bug fix task (auto-detects source from config)
 zen task create BUG-456 --type bug --title "Fix memory leak in auth service"
 
-# Create an epic for large initiative
-zen task create EPIC-789 --type epic --title "Implement new payment system"
-
-# Create a research spike
-zen task create SPIKE-101 --type spike --title "Evaluate GraphQL vs REST"
-
-# Create with additional metadata
-zen task create PROJ-200 --title "Dashboard redesign" --owner "jane.doe" --team "frontend"
-
-# Create task from existing external source (type and details fetched from source)
+# Create task from specific external source
 zen task create ZEN-123 --from jira
 zen task create GH-456 --from github
 zen task create LIN-789 --from linear
+
+# Create local task (no external sync)
+zen task create LOCAL-123 --from local
+
+# Create with additional metadata
+zen task create PROJ-200 --title "Dashboard redesign" --owner "jane.doe" --team "frontend"
 
 ```
 
 ### Options
 
 ```
-      --from string       Fetch task details from external source system (jira, github, linear, etc.)
+      --from string       Fetch task details from external source system (jira, github, linear, local) or use config work.tasks.source
   -h, --help              help for create
       --owner string      Task owner (optional, defaults to current user)
       --priority string   Task priority (P0|P1|P2|P3) (default "P2")

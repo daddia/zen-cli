@@ -5,7 +5,7 @@ description: "CLI reference for zen"
 section: "CLI Reference"
 man_section: 1
 since: v0.0.0
-date: 2025-09-22
+date: 2025-10-25
 keywords:
   - zen
   - cli
