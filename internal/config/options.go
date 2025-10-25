@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 )
@@ -290,129 +289,179 @@ func (opt ConfigOption) GetCurrentValue(cfg *Config) string {
 	return value
 }
 
-// getValueFromConfig extracts the value from the config struct using reflection
+// getValueFromConfig extracts the value from the config struct using simple field access
 func (opt ConfigOption) getValueFromConfig(cfg *Config) string {
 	parts := strings.Split(opt.Key, ".")
 
-	current := reflect.ValueOf(cfg).Elem()
-
-	for i, part := range parts {
-		// Handle nested structs
-		switch part {
-		case "cli":
-			current = current.FieldByName("CLI")
-		case "workspace":
-			current = current.FieldByName("Workspace")
-		case "assets":
-			current = current.FieldByName("Assets")
-		case "templates":
-			current = current.FieldByName("Templates")
-		case "development":
-			current = current.FieldByName("Development")
-		case "work":
-			current = current.FieldByName("Work")
-		case "providers":
-			current = current.FieldByName("Providers")
+	// Handle top-level fields
+	if len(parts) == 1 {
+		switch parts[0] {
+		case "log_level":
+			return cfg.LogLevel
+		case "log_format":
+			return cfg.LogFormat
 		default:
-			// Convert snake_case to PascalCase for struct field names
-			fieldName := toPascalCase(part)
-			if i == 0 {
-				// Top-level fields
-				switch part {
-				case "log_level":
-					current = current.FieldByName("LogLevel")
-				case "log_format":
-					current = current.FieldByName("LogFormat")
-				default:
-					current = current.FieldByName(fieldName)
-				}
-			} else {
-				// Nested fields
-				switch part {
-				// CLI fields
-				case "no_color":
-					current = current.FieldByName("NoColor")
-				case "output_format":
-					current = current.FieldByName("OutputFormat")
-				// Workspace fields
-				case "config_file":
-					current = current.FieldByName("ConfigFile")
-				case "repository_url":
-					current = current.FieldByName("RepositoryURL")
-				case "auth_provider":
-					current = current.FieldByName("AuthProvider")
-				case "cache_path":
-					current = current.FieldByName("CachePath")
-				case "cache_size_mb":
-					current = current.FieldByName("CacheSizeMB")
-				case "sync_timeout_seconds":
-					current = current.FieldByName("SyncTimeoutSeconds")
-				case "integrity_checks_enabled":
-					current = current.FieldByName("IntegrityChecksEnabled")
-				case "prefetch_enabled":
-					current = current.FieldByName("PrefetchEnabled")
-				case "cache_enabled":
-					current = current.FieldByName("CacheEnabled")
-				case "cache_ttl":
-					current = current.FieldByName("CacheTTL")
-				case "cache_size":
-					current = current.FieldByName("CacheSize")
-				case "strict_mode":
-					current = current.FieldByName("StrictMode")
-				case "enable_ai":
-					current = current.FieldByName("EnableAI")
-				case "left_delim":
-					current = current.FieldByName("LeftDelim")
-				case "right_delim":
-					current = current.FieldByName("RightDelim")
-				// Work fields
-				case "tasks":
-					current = current.FieldByName("Tasks")
-				case "project_key":
-					current = current.FieldByName("ProjectKey")
-				default:
-					// Handle provider map access (providers.jira.type -> access map key "jira")
-					if current.Kind() == reflect.Map && i > 0 {
-						// This is a map access, get the key
-						mapKey := reflect.ValueOf(part)
-						current = current.MapIndex(mapKey)
-						if !current.IsValid() {
-							return ""
-						}
-					} else {
-						current = current.FieldByName(fieldName)
-					}
-				}
+			return ""
+		}
+	}
+
+	// Handle nested fields
+	if len(parts) == 2 {
+		switch parts[0] {
+		case "cli":
+			return opt.getCLIValue(cfg, parts[1])
+		case "workspace":
+			return opt.getWorkspaceValue(cfg, parts[1])
+		case "assets":
+			return opt.getAssetsValue(cfg, parts[1])
+		case "templates":
+			return opt.getTemplatesValue(cfg, parts[1])
+		case "development":
+			return opt.getDevelopmentValue(cfg, parts[1])
+		default:
+			return ""
+		}
+	}
+
+	// Handle deeper nesting (work.tasks.*, providers.*.*, etc.)
+	if len(parts) == 3 {
+		switch parts[0] {
+		case "work":
+			if parts[1] == "tasks" {
+				return opt.getTasksValue(cfg, parts[2])
 			}
-		}
-
-		if !current.IsValid() {
-			return ""
+		case "providers":
+			return opt.getProviderValue(cfg, parts[1], parts[2])
 		}
 	}
 
-	// Handle pointer types (used for optional bool fields)
-	if current.Kind() == reflect.Ptr {
-		if current.IsNil() {
-			return ""
-		}
-		current = current.Elem()
-	}
+	return ""
+}
 
-	// Convert the value to string
-	switch current.Kind() {
-	case reflect.String:
-		return current.String()
-	case reflect.Bool:
-		return strconv.FormatBool(current.Bool())
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return strconv.FormatInt(current.Int(), 10)
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return strconv.FormatUint(current.Uint(), 10)
-	case reflect.Float32, reflect.Float64:
-		return strconv.FormatFloat(current.Float(), 'f', -1, 64)
+func (opt ConfigOption) getCLIValue(cfg *Config, field string) string {
+	switch field {
+	case "no_color":
+		return strconv.FormatBool(cfg.CLI.NoColor)
+	case "verbose":
+		return strconv.FormatBool(cfg.CLI.Verbose)
+	case "output_format":
+		return cfg.CLI.OutputFormat
 	default:
-		return fmt.Sprintf("%v", current.Interface())
+		return ""
+	}
+}
+
+func (opt ConfigOption) getWorkspaceValue(cfg *Config, field string) string {
+	switch field {
+	case "root":
+		return cfg.Workspace.Root
+	case "zen_path":
+		return cfg.Workspace.ZenPath
+	case "config_file":
+		return cfg.Workspace.ConfigFile
+	default:
+		return ""
+	}
+}
+
+func (opt ConfigOption) getAssetsValue(cfg *Config, field string) string {
+	switch field {
+	case "repository_url":
+		return cfg.Assets.RepositoryURL
+	case "branch":
+		return cfg.Assets.Branch
+	case "auth_provider":
+		return cfg.Assets.AuthProvider
+	case "cache_path":
+		return cfg.Assets.CachePath
+	case "cache_size_mb":
+		return strconv.FormatInt(cfg.Assets.CacheSizeMB, 10)
+	case "sync_timeout_seconds":
+		return strconv.Itoa(cfg.Assets.SyncTimeoutSeconds)
+	case "integrity_checks_enabled":
+		return strconv.FormatBool(cfg.Assets.IntegrityChecksEnabled)
+	case "prefetch_enabled":
+		return strconv.FormatBool(cfg.Assets.PrefetchEnabled)
+	default:
+		return ""
+	}
+}
+
+func (opt ConfigOption) getTemplatesValue(cfg *Config, field string) string {
+	switch field {
+	case "cache_enabled":
+		if cfg.Templates.CacheEnabled != nil {
+			return strconv.FormatBool(*cfg.Templates.CacheEnabled)
+		}
+		return ""
+	case "cache_ttl":
+		return cfg.Templates.CacheTTL
+	case "cache_size":
+		return strconv.Itoa(cfg.Templates.CacheSize)
+	case "strict_mode":
+		if cfg.Templates.StrictMode != nil {
+			return strconv.FormatBool(*cfg.Templates.StrictMode)
+		}
+		return ""
+	case "enable_ai":
+		if cfg.Templates.EnableAI != nil {
+			return strconv.FormatBool(*cfg.Templates.EnableAI)
+		}
+		return ""
+	case "left_delim":
+		return cfg.Templates.LeftDelim
+	case "right_delim":
+		return cfg.Templates.RightDelim
+	default:
+		return ""
+	}
+}
+
+func (opt ConfigOption) getDevelopmentValue(cfg *Config, field string) string {
+	switch field {
+	case "debug":
+		return strconv.FormatBool(cfg.Development.Debug)
+	case "profile":
+		return strconv.FormatBool(cfg.Development.Profile)
+	default:
+		return ""
+	}
+}
+
+func (opt ConfigOption) getTasksValue(cfg *Config, field string) string {
+	switch field {
+	case "source":
+		return cfg.Work.Tasks.Source
+	case "sync":
+		return cfg.Work.Tasks.Sync
+	case "project_key":
+		return cfg.Work.Tasks.ProjectKey
+	default:
+		return ""
+	}
+}
+
+func (opt ConfigOption) getProviderValue(cfg *Config, provider, field string) string {
+	if cfg.Providers == nil {
+		return ""
+	}
+
+	providerConfig, exists := cfg.Providers[provider]
+	if !exists {
+		return ""
+	}
+
+	switch field {
+	case "type":
+		return providerConfig.Type
+	case "url":
+		return providerConfig.URL
+	case "email":
+		return providerConfig.Email
+	case "api_token":
+		return providerConfig.APIToken
+	default:
+		return ""
 	}
 }
 

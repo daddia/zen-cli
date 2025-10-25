@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -296,19 +297,18 @@ type LoadOptions struct {
 	ConfigFile string
 }
 
-// LoadWithOptions loads configuration with the provided options
+// LoadWithOptions loads configuration with the provided options using Viper as core engine
 func LoadWithOptions(opts LoadOptions) (*Config, error) {
 	start := time.Now()
 	v := viper.New()
 
-	// Set configuration defaults
+	// Set configuration defaults from Options
 	setDefaults(v)
 
-	// Configure file discovery
-	configureFileDiscovery(v, opts.ConfigFile)
+	// Configure the 3 fixed file paths (Git-like hierarchy)
+	configureSimpleFileDiscovery(v, opts.ConfigFile)
 
-	// Configure environment variables
-	configureEnvironment(v)
+	// NO environment variables - eliminated per refactor plan
 
 	// Bind CLI flags if command is provided
 	if opts.Command != nil {
@@ -321,7 +321,7 @@ func LoadWithOptions(opts LoadOptions) (*Config, error) {
 	var loadedFrom []string
 	configFile := ""
 
-	// Read configuration file (optional)
+	// Read configuration file (optional) - Viper handles the precedence
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			return nil, errors.Wrap(err, "failed to read config file")
@@ -333,17 +333,14 @@ func LoadWithOptions(opts LoadOptions) (*Config, error) {
 		loadedFrom = append(loadedFrom, fmt.Sprintf("file:%s", configFile))
 	}
 
-	// Check for environment variables
-	if hasEnvVars() {
-		loadedFrom = append(loadedFrom, "environment")
-	}
+	// NO environment variables - eliminated per refactor plan
 
 	// Check for CLI flags
 	if opts.Command != nil && hasFlagOverrides(opts.Command) {
 		loadedFrom = append(loadedFrom, "flags")
 	}
 
-	// Unmarshal configuration
+	// Unmarshal configuration using Viper
 	var config Config
 	if err := v.Unmarshal(&config); err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal config")
@@ -371,7 +368,7 @@ func LoadWithOptions(opts LoadOptions) (*Config, error) {
 	return &config, nil
 }
 
-// setDefaults sets default configuration values from Options
+// setDefaults sets default configuration values from Options using Viper
 func setDefaults(v *viper.Viper) {
 	// Use Options as single source of truth for defaults
 	for _, opt := range Options {
@@ -393,8 +390,8 @@ func setDefaults(v *viper.Viper) {
 	}
 }
 
-// configureFileDiscovery sets up configuration file discovery paths
-func configureFileDiscovery(v *viper.Viper, configFile string) {
+// configureSimpleFileDiscovery sets up the 3 fixed configuration file paths (Git-like hierarchy)
+func configureSimpleFileDiscovery(v *viper.Viper, configFile string) {
 	// If specific config file is provided, use it
 	if configFile != "" {
 		v.SetConfigFile(configFile)
@@ -405,39 +402,23 @@ func configureFileDiscovery(v *viper.Viper, configFile string) {
 	v.SetConfigName("config")
 	v.SetConfigType("yaml")
 
-	// Add configuration paths in precedence order
-	// 1. Current directory .zen/config.yaml
+	// Add EXACTLY 3 fixed configuration paths per refactor plan:
+	// 1. Local/Project configuration (.zen/config)
 	v.AddConfigPath("./.zen")
 
-	// 2. User home directory ~/.zen/config.yaml
+	// 2. Global/User configuration (~/.zen/config) - PRIMARY LOCATION ONLY
 	if home, err := os.UserHomeDir(); err == nil {
 		v.AddConfigPath(filepath.Join(home, ".zen"))
 	}
 
-	// 3. XDG config directory (Linux/macOS)
-	if xdgConfig := os.Getenv("XDG_CONFIG_HOME"); xdgConfig != "" {
-		v.AddConfigPath(filepath.Join(xdgConfig, "zen"))
-	} else if home, err := os.UserHomeDir(); err == nil {
-		v.AddConfigPath(filepath.Join(home, ".config", "zen"))
+	// 3. System configuration (/etc/zen/config or C:\ProgramData\zen\config)
+	if runtime.GOOS == "windows" {
+		if programData := os.Getenv("ProgramData"); programData != "" {
+			v.AddConfigPath(filepath.Join(programData, "zen"))
+		}
+	} else {
+		v.AddConfigPath("/etc/zen")
 	}
-
-	// 4. System config directory (Unix)
-	v.AddConfigPath("/etc/zen")
-
-	// 5. Backwards compatibility
-	v.AddConfigPath("./configs")
-}
-
-// configureEnvironment sets up environment variable handling
-func configureEnvironment(v *viper.Viper) {
-	// Set environment prefix
-	v.SetEnvPrefix("ZEN")
-
-	// Replace dots with underscores for nested config
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-
-	// Enable automatic environment variable reading
-	v.AutomaticEnv()
 }
 
 // bindFlags binds CLI flags to Viper configuration
@@ -468,16 +449,6 @@ func bindFlags(v *viper.Viper, cmd *cobra.Command) error {
 	}
 
 	return nil
-}
-
-// hasEnvVars checks if any ZEN_ environment variables are set
-func hasEnvVars() bool {
-	for _, env := range os.Environ() {
-		if strings.HasPrefix(env, "ZEN_") {
-			return true
-		}
-	}
-	return false
 }
 
 // hasFlagOverrides checks if any CLI flags are set
@@ -664,6 +635,7 @@ func LoadDefaults() *Config {
 		panic(fmt.Sprintf("failed to unmarshal default configuration: %v", err))
 	}
 
+	cfg.viper = v
 	cfg.loadedFrom = []string{"defaults"}
 	return &cfg
 }

@@ -79,6 +79,15 @@ func TestLoadDefaults(t *testing.T) {
 	// Create a temporary directory with no config file
 	tempDir := t.TempDir()
 
+	// Temporarily unset NO_COLOR to test pure defaults
+	oldNoColor := os.Getenv("NO_COLOR")
+	require.NoError(t, os.Unsetenv("NO_COLOR"))
+	defer func() {
+		if oldNoColor != "" {
+			require.NoError(t, os.Setenv("NO_COLOR", oldNoColor))
+		}
+	}()
+
 	// Change to temp directory
 	oldWd, err := os.Getwd()
 	require.NoError(t, err)
@@ -676,7 +685,7 @@ func TestEnvironmentVariableIntegration(t *testing.T) {
 	}()
 	require.NoError(t, os.Chdir(tempDir))
 
-	// Set environment variables
+	// Set environment variables (these should be IGNORED per refactor plan)
 	envVars := map[string]string{
 		"ZEN_LOG_LEVEL":         "debug",
 		"ZEN_CLI_VERBOSE":       "true",
@@ -696,14 +705,14 @@ func TestEnvironmentVariableIntegration(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	// Environment variables should be applied
-	assert.Equal(t, "debug", cfg.LogLevel)
-	assert.True(t, cfg.CLI.Verbose)
-	assert.Equal(t, "json", cfg.CLI.OutputFormat)
-	assert.Equal(t, ".", cfg.Workspace.Root)
+	// Environment variables should be IGNORED - should use defaults
+	assert.Equal(t, "info", cfg.LogLevel)         // default, not "debug"
+	assert.False(t, cfg.CLI.Verbose)              // default, not true
+	assert.Equal(t, "text", cfg.CLI.OutputFormat) // default, not "json"
+	assert.Equal(t, ".", cfg.Workspace.Root)      // default
 
-	// Should track that environment was used
-	assert.Contains(t, cfg.GetLoadedSources(), "environment")
+	// Should NOT track environment as a source
+	assert.NotContains(t, cfg.GetLoadedSources(), "environment")
 }
 
 func TestConfigurationPrecedence(t *testing.T) {
@@ -730,7 +739,7 @@ cli:
 	}()
 	require.NoError(t, os.Chdir(tempDir))
 
-	// Set environment variables (should override config file)
+	// Set environment variables (these should be IGNORED per refactor plan)
 	require.NoError(t, os.Setenv("ZEN_LOG_LEVEL", "warn"))
 	require.NoError(t, os.Setenv("ZEN_CLI_VERBOSE", "true"))
 	defer func() {
@@ -738,7 +747,7 @@ cli:
 		require.NoError(t, os.Unsetenv("ZEN_CLI_VERBOSE"))
 	}()
 
-	// Create command with flags (should override environment)
+	// Create command with flags (should override file)
 	cmd := &cobra.Command{Use: "test"}
 	cmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose output")
 	cmd.PersistentFlags().Bool("no-color", false, "Disable colored output")
@@ -750,12 +759,12 @@ cli:
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	// Test precedence: flags > env > file > defaults
-	assert.Equal(t, "warn", cfg.LogLevel)         // env overrides file
-	assert.True(t, cfg.CLI.Verbose)               // env overrides file
-	assert.Equal(t, "yaml", cfg.CLI.OutputFormat) // flag overrides env/file
+	// Test precedence: flags > file > defaults (NO environment variables)
+	assert.Equal(t, "info", cfg.LogLevel)         // from file (env ignored)
+	assert.False(t, cfg.CLI.Verbose)              // from file (env ignored)
+	assert.Equal(t, "yaml", cfg.CLI.OutputFormat) // flag overrides file
 
-	// Should track all sources
+	// Should track only file and flags sources
 	sources := cfg.GetLoadedSources()
 	// Check that file source exists (may have full path)
 	hasFileSource := false
@@ -766,7 +775,7 @@ cli:
 		}
 	}
 	assert.True(t, hasFileSource, "Should have a file source")
-	assert.Contains(t, sources, "environment")
+	assert.NotContains(t, sources, "environment") // NO environment support
 	assert.Contains(t, sources, "flags")
 }
 

@@ -285,7 +285,7 @@ func createRun(opts *CreateOptions) error {
 
 	// Show final success message
 	fmt.Fprintf(opts.IO.Out, "%s\n",
-		opts.IO.FormatSuccess("Initial artefacts created"))
+		opts.IO.FormatSuccess("Initial artifacts created"))
 	fmt.Fprintf(opts.IO.Out, "\nStart flowing: %s\n",
 		opts.IO.ColorNeutral(fmt.Sprintf("`zen %s start`", createdTask.ID)))
 

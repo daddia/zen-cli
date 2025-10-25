@@ -300,13 +300,13 @@ func TestCLIIntegration_ConfigurationPrecedence(t *testing.T) {
 	err = zencmd.Execute(ctx, []string{"init"}, streams)
 	require.NoError(t, err)
 
-	// Set environment variable
+	// Set environment variable (should be IGNORED per refactor plan)
 	require.NoError(t, os.Setenv("ZEN_LOG_LEVEL", "warn"))
 	defer func() {
 		require.NoError(t, os.Unsetenv("ZEN_LOG_LEVEL"))
 	}()
 
-	// Test that environment variable overrides config file
+	// Test that environment variable is IGNORED - should use config file value
 	var stdout bytes.Buffer
 	streams.Out = &stdout
 
@@ -314,7 +314,7 @@ func TestCLIIntegration_ConfigurationPrecedence(t *testing.T) {
 	require.NoError(t, err)
 
 	output := stdout.String()
-	assert.Contains(t, output, "warn")
+	assert.Contains(t, output, "info") // Should use config file value, not env var
 
 	// Test that CLI flag overrides environment variable
 	stdout.Reset()
