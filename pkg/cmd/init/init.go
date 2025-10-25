@@ -134,7 +134,13 @@ If GitHub authentication is configured, zen init will automatically:
 				fmt.Fprintf(f.IOStreams.Out, "Initialized empty Zen workspace in %s/.zen/\n", cwd)
 			}
 
-			// Enhanced: Set up library infrastructure
+			// Create initial config file if it doesn't exist
+			if err := createInitialConfig(f); err != nil {
+				// Don't fail init if config creation fails - just warn
+				fmt.Fprintf(f.IOStreams.ErrOut, "! Warning: Failed to create initial config: %v\n", err)
+			}
+
+			// Set up library infrastructure
 			if err := setupLibraryInfrastructure(f, wasInitialized); err != nil {
 				// Don't fail init if library setup fails - just warn
 				fmt.Fprintf(f.IOStreams.ErrOut, "! Warning: Failed to set up library infrastructure: %v\n", err)
@@ -149,6 +155,25 @@ If GitHub authentication is configured, zen init will automatically:
 	cmd.Flags().StringVarP(&configFile, "config", "c", "", "Path to configuration file (default: zen.yaml)")
 
 	return cmd
+}
+
+// createInitialConfig creates an initial config file through the config module
+func createInitialConfig(f *cmdutil.Factory) error {
+	// Load current config (will use defaults if no file exists)
+	cfg, err := f.Config()
+	if err != nil {
+		return fmt.Errorf("failed to load configuration: %w", err)
+	}
+
+	// If no config file was loaded, create one with default values
+	if cfg.GetConfigFile() == "" {
+		// Set a basic initial value to create the file
+		if err := cfg.SetValue("log_level", "info"); err != nil {
+			return fmt.Errorf("failed to create initial config: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // setupLibraryInfrastructure sets up the library infrastructure during workspace initialization
