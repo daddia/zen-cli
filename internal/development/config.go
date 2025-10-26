@@ -44,12 +44,12 @@ type ConfigParser struct{}
 func (p ConfigParser) Parse(raw map[string]interface{}) (Config, error) {
 	// Start with defaults to ensure all fields are properly initialized
 	cfg := DefaultConfig()
-	
+
 	// If raw data is empty, return defaults
 	if len(raw) == 0 {
 		return cfg, nil
 	}
-	
+
 	// Use mapstructure to decode the raw map into our config struct
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		Result:           &cfg,
@@ -58,11 +58,11 @@ func (p ConfigParser) Parse(raw map[string]interface{}) (Config, error) {
 	if err != nil {
 		return cfg, fmt.Errorf("failed to create decoder: %w", err)
 	}
-	
+
 	if err := decoder.Decode(raw); err != nil {
 		return cfg, fmt.Errorf("failed to decode development config: %w", err)
 	}
-	
+
 	return cfg, nil
 }
 
