@@ -3,6 +3,8 @@ package root
 import (
 	"fmt"
 
+	internalconfig "github.com/daddia/zen/internal/config"
+	"github.com/daddia/zen/pkg/cli"
 	"github.com/daddia/zen/pkg/cmd/assets"
 	"github.com/daddia/zen/pkg/cmd/auth"
 	"github.com/daddia/zen/pkg/cmd/config"
@@ -62,11 +64,18 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 			return fmt.Errorf("failed to load configuration: %w", err)
 		}
 
+		// Get CLI configuration using standard API
+		cliConfig, err := internalconfig.GetConfig(cfg, cli.ConfigParser{})
+		if err != nil {
+			f.Logger.Warn("failed to load CLI config, using defaults", "error", err)
+			cliConfig = cli.DefaultConfig()
+		}
+
 		// Apply configuration-based updates
-		if cfg.CLI.Verbose || verbose {
+		if cliConfig.Verbose || verbose {
 			f.Logger = f.Logger.WithLevel("debug")
 		}
-		if cfg.CLI.NoColor || noColor {
+		if cliConfig.NoColor || noColor {
 			f.IOStreams.SetColorEnabled(false)
 		}
 		if dryRun {
@@ -74,7 +83,7 @@ func NewCmdRoot(f *cmdutil.Factory) (*cobra.Command, error) {
 		}
 
 		// Log configuration sources for debugging
-		if cfg.CLI.Verbose {
+		if cliConfig.Verbose {
 			sources := cfg.GetLoadedSources()
 			if len(sources) > 0 {
 				f.Logger.Debug("configuration loaded from sources", "sources", sources)
