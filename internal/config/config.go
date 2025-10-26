@@ -362,27 +362,59 @@ func SetConfig[T Configurable](c *Config, parser ConfigParser[T], config T) erro
 	}
 
 	// Convert config to map for Viper
-	// This is a simple approach - in production, you might want more sophisticated serialization
 	sectionKey := parser.Section()
 
 	// Set the entire section in Viper
 	c.viper.Set(sectionKey, config)
 
 	// Write to local config file (.zen/config)
-	configPath := ".zen/config"
+	// Use absolute path to ensure we write to the correct location
+	workingDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get working directory: %w", err)
+	}
 
-	// Ensure .zen directory exists
-	if err := os.MkdirAll(".zen", 0755); err != nil {
+	// Find the project root by looking for go.mod
+	projectRoot := workingDir
+	for {
+		if _, err := os.Stat(filepath.Join(projectRoot, "go.mod")); err == nil {
+			break
+		}
+		parent := filepath.Dir(projectRoot)
+		if parent == projectRoot {
+			// Reached filesystem root, use current directory
+			projectRoot = workingDir
+			break
+		}
+		projectRoot = parent
+	}
+
+	configDir := filepath.Join(projectRoot, ".zen")
+	configPath := filepath.Join(configDir, "config")
+
+	// Ensure .zen directory exists with secure permissions
+	if err := os.MkdirAll(configDir, 0700); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
-	// Set config type for Viper
-	c.viper.SetConfigType("yaml")
-
-	// Write the configuration
+	// Write the configuration directly to the file
 	if err := c.viper.WriteConfigAs(configPath); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
+
+	// Create a fresh Viper instance to reload the configuration
+	// This avoids issues with cached state in the existing instance
+	freshViper := viper.New()
+	freshViper.SetConfigName("config")
+	freshViper.SetConfigType("yaml")
+	freshViper.AddConfigPath(configDir)
+
+	if err := freshViper.ReadInConfig(); err != nil {
+		return fmt.Errorf("failed to reload config after write: %w", err)
+	}
+
+	// Replace the existing Viper instance with the fresh one
+	c.viper = freshViper
 
 	return nil
 }
@@ -395,6 +427,11 @@ func (c *Config) GetConfigFile() string {
 // GetLoadedSources returns the sources from which configuration was loaded
 func (c *Config) GetLoadedSources() []string {
 	return c.loadedFrom
+}
+
+// GetViper returns the underlying Viper instance for debugging
+func (c *Config) GetViper() *viper.Viper {
+	return c.viper
 }
 
 // SetValue sets a configuration value and writes it to the local config file
@@ -411,14 +448,39 @@ func (c *Config) SetValue(key, value string) error {
 	c.viper.Set(key, value)
 
 	// Write to local config file (.zen/config)
-	configPath := ".zen/config"
+	// Use absolute path to ensure we write to the correct location
+	workingDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get working directory: %w", err)
+	}
 
-	// Ensure .zen directory exists
-	if err := os.MkdirAll(".zen", 0755); err != nil {
+	// Find the project root by looking for go.mod
+	projectRoot := workingDir
+	for {
+		if _, err := os.Stat(filepath.Join(projectRoot, "go.mod")); err == nil {
+			break
+		}
+		parent := filepath.Dir(projectRoot)
+		if parent == projectRoot {
+			// Reached filesystem root, use current directory
+			projectRoot = workingDir
+			break
+		}
+		projectRoot = parent
+	}
+
+	configDir := filepath.Join(projectRoot, ".zen")
+	configPath := filepath.Join(configDir, "config")
+
+	// Ensure .zen directory exists with secure permissions
+	if err := os.MkdirAll(configDir, 0700); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
-	// Write the configuration
+	// Set config type before writing
+	c.viper.SetConfigType("yaml")
+
+	// Write the configuration directly to the file
 	if err := c.viper.WriteConfigAs(configPath); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
