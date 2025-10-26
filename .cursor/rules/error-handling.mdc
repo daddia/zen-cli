@@ -1,0 +1,185 @@
+---
+globs: "*.go"
+description: "Comprehensive error handling patterns and typed errors"
+---
+
+# Error Handling Standards
+
+## Core Principles
+- **Never ignore errors** without explicit justification
+- **Wrap errors with context** using `fmt.Errorf` or `pkg/errors`
+- **Use typed errors** from [pkg/types/common.go](mdc:pkg/types/common.go)
+- **Provide actionable error messages** for users
+- **Log errors appropriately** without exposing sensitive data
+
+## Error Types & Classification
+
+### System Errors
+Use typed errors for consistent error handling:
+```go
+// From pkg/types/common.go
+var (
+    ErrInvalidInput = errors.New("invalid input")
+    ErrNotFound     = errors.New("resource not found")
+    ErrUnauthorized = errors.New("unauthorized access")
+    ErrInternal     = errors.New("internal error")
+)
+```
+
+### Error Codes
+Implement error codes for programmatic handling:
+```go
+type ErrorCode string
+
+const (
+    CodeInvalidInput ErrorCode = "INVALID_INPUT"
+    CodeNotFound     ErrorCode = "NOT_FOUND"
+    CodeUnauthorized ErrorCode = "UNAUTHORIZED"
+    CodeInternal     ErrorCode = "INTERNAL_ERROR"
+)
+```
+
+## Error Wrapping & Context
+
+### Standard Wrapping
+```go
+// Wrap errors with context
+if err != nil {
+    return fmt.Errorf("failed to process config: %w", err)
+}
+
+// Add operation context
+if err := validateInput(data); err != nil {
+    return fmt.Errorf("validation failed for %s: %w", operation, err)
+}
+```
+
+### Structured Error Context
+```go
+// Include relevant context without sensitive data
+return &ConfigError{
+    Operation: "load",
+    Path:      configPath,
+    Cause:     err,
+}
+```
+
+## CLI Error Handling
+
+### User-Facing Errors
+```go
+// Provide helpful suggestions
+if errors.Is(err, ErrNotFound) {
+    return fmt.Errorf("config file not found at %s\n\nTry running: zen init", path)
+}
+
+// Use appropriate exit codes
+func handleError(err error) {
+    if errors.Is(err, ErrInvalidInput) {
+        os.Exit(2) // Invalid usage
+    }
+    os.Exit(1) // General error
+}
+```
+
+### Error Formatting
+Use [pkg/iostreams/colors.go](mdc:pkg/iostreams/colors.go) for consistent error display:
+```go
+fmt.Fprintf(os.Stderr, "%s %s\n",
+    colors.FormatError("✗"),
+    colors.FormatError(err.Error()))
+```
+
+## Logging Errors
+
+### Structured Logging
+```go
+// Log with context but sanitize sensitive data
+logger.WithFields(logrus.Fields{
+    "operation": "auth",
+    "user_id":   userID,
+    "error":     err.Error(),
+}).Error("authentication failed")
+```
+
+### Security Considerations
+```go
+// DON'T log sensitive data
+logger.Error("auth failed", "token", token) // BAD
+
+// DO sanitize and provide context
+logger.Error("auth failed", "user", sanitizeUserID(userID)) // GOOD
+```
+
+## Error Recovery & Resilience
+
+### Retry Patterns
+```go
+// Implement exponential backoff for transient errors
+func retryWithBackoff(operation func() error, maxRetries int) error {
+    for i := 0; i < maxRetries; i++ {
+        if err := operation(); err != nil {
+            if !isRetryable(err) {
+                return err
+            }
+            time.Sleep(time.Duration(1<<i) * time.Second)
+            continue
+        }
+        return nil
+    }
+    return fmt.Errorf("operation failed after %d retries", maxRetries)
+}
+```
+
+### Circuit Breaker Pattern
+```go
+// Fail fast for repeated failures
+type CircuitBreaker struct {
+    failures    int
+    maxFailures int
+    timeout     time.Duration
+    lastFailure time.Time
+}
+```
+
+## Testing Error Conditions
+
+### Error Path Testing
+```go
+func TestConfigLoad_FileNotFound(t *testing.T) {
+    _, err := LoadConfig("nonexistent.yaml")
+
+    require.Error(t, err)
+    assert.True(t, errors.Is(err, ErrNotFound))
+    assert.Contains(t, err.Error(), "nonexistent.yaml")
+}
+```
+
+### Mock Error Scenarios
+```go
+// Test error propagation
+mockClient.On("Get").Return(nil, ErrUnauthorized)
+result, err := service.FetchData()
+
+require.Error(t, err)
+assert.True(t, errors.Is(err, ErrUnauthorized))
+```
+
+## Error Documentation
+
+### Function Documentation
+```go
+// LoadConfig loads configuration from the specified path.
+// Returns ErrNotFound if file doesn't exist.
+// Returns ErrInvalidInput if file format is invalid.
+func LoadConfig(path string) (*Config, error) {
+    // Implementation
+}
+```
+
+### Error Catalog
+Maintain error catalog in documentation:
+- Error codes and meanings
+- Common causes and solutions
+- Troubleshooting guides
+- Recovery procedures

@@ -1,0 +1,396 @@
+---
+globs: "internal/integration/*.go,pkg/integration/**/*.go,internal/providers/**/*.go"
+description: "Integration patterns for external systems and services"
+---
+
+# Integration Patterns
+
+## Core Architecture
+Integration layer in [internal/integration/](mdc:internal/integration/) and [pkg/integration/](mdc:pkg/integration/) provides consistent patterns for external system connectivity.
+
+## Integration Principles
+- **Resilience First**: Implement circuit breakers, retries, and timeouts
+- **Security by Default**: Secure authentication and data handling
+- **Observability**: Comprehensive logging and metrics
+- **Testability**: Mock-friendly interfaces and dependency injection
+- **Configurability**: Environment-specific settings
+
+## Client Interface Pattern
+
+### Standard Client Interface
+```go
+// Define consistent interface for all integrations
+type Client interface {
+    Connect(ctx context.Context) error
+    Disconnect(ctx context.Context) error
+    Health(ctx context.Context) error
+
+    // Service-specific methods
+    Get(ctx context.Context, id string) (*Resource, error)
+    List(ctx context.Context, opts ListOptions) ([]*Resource, error)
+    Create(ctx context.Context, resource *Resource) error
+    Update(ctx context.Context, resource *Resource) error
+    Delete(ctx context.Context, id string) error
+}
+```
+
+### Client Implementation
+```go
+type client struct {
+    httpClient *http.Client
+    baseURL    string
+    auth       auth.Provider
+    logger     *logrus.Logger
+    metrics    metrics.Collector
+}
+
+func NewClient(config Config, auth auth.Provider) Client {
+    return &client{
+        httpClient: &http.Client{
+            Timeout: config.Timeout,
+            Transport: &http.Transport{
+                MaxIdleConns:        100,
+                MaxIdleConnsPerHost: 10,
+                IdleConnTimeout:     90 * time.Second,
+            },
+        },
+        baseURL: config.BaseURL,
+        auth:    auth,
+        logger:  logging.GetLogger("integration"),
+        metrics: metrics.NewCollector("integration"),
+    }
+}
+```
+
+## Authentication Patterns
+
+### Unified Auth Manager
+Use [pkg/auth/unified_manager.go](mdc:pkg/auth/unified_manager.go) for consistent authentication:
+```go
+type AuthProvider interface {
+    Authenticate(ctx context.Context) (*Token, error)
+    Refresh(ctx context.Context, token *Token) (*Token, error)
+    Revoke(ctx context.Context, token *Token) error
+}
+
+// OAuth2 implementation
+type OAuth2Provider struct {
+    config oauth2.Config
+    store  auth.Storage
+}
+
+// API Key implementation
+type APIKeyProvider struct {
+    key    string
+    header string
+}
+```
+
+### Token Management
+```go
+func (c *client) ensureAuthenticated(ctx context.Context) error {
+    token, err := c.auth.GetToken(ctx)
+    if err != nil {
+        return fmt.Errorf("failed to get auth token: %w", err)
+    }
+
+    if token.IsExpired() {
+        token, err = c.auth.Refresh(ctx, token)
+        if err != nil {
+            return fmt.Errorf("failed to refresh token: %w", err)
+        }
+    }
+
+    c.currentToken = token
+    return nil
+}
+```
+
+## Resilience Patterns
+
+### Circuit Breaker
+```go
+type CircuitBreaker struct {
+    maxFailures int
+    timeout     time.Duration
+    state       State
+    failures    int
+    lastFailure time.Time
+    mutex       sync.RWMutex
+}
+
+func (cb *CircuitBreaker) Execute(operation func() error) error {
+    if !cb.canExecute() {
+        return ErrCircuitOpen
+    }
+
+    err := operation()
+    cb.recordResult(err)
+    return err
+}
+```
+
+### Retry with Exponential Backoff
+```go
+func (c *client) retryWithBackoff(ctx context.Context, operation func() error) error {
+    backoff := &exponential.Backoff{
+        InitialInterval:     100 * time.Millisecond,
+        RandomizationFactor: 0.5,
+        Multiplier:          2.0,
+        MaxInterval:         30 * time.Second,
+        MaxElapsedTime:      5 * time.Minute,
+    }
+
+    return retry.Do(ctx, backoff, func() error {
+        if err := operation(); err != nil {
+            if !isRetryable(err) {
+                return retry.Stop(err)
+            }
+            return err
+        }
+        return nil
+    })
+}
+```
+
+### Timeout Management
+```go
+func (c *client) withTimeout(ctx context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
+    if deadline, ok := ctx.Deadline(); ok {
+        if time.Until(deadline) < timeout {
+            return ctx, func() {}
+        }
+    }
+    return context.WithTimeout(ctx, timeout)
+}
+```
+
+## HTTP Client Patterns
+
+### Secure HTTP Client
+```go
+func newHTTPClient(config HTTPConfig) *http.Client {
+    transport := &http.Transport{
+        TLSClientConfig: &tls.Config{
+            MinVersion: tls.VersionTLS12,
+            CipherSuites: []uint16{
+                tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+                tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+            },
+        },
+        MaxIdleConns:        100,
+        MaxIdleConnsPerHost: 10,
+        IdleConnTimeout:     90 * time.Second,
+        DisableCompression:  false,
+    }
+
+    return &http.Client{
+        Transport: transport,
+        Timeout:   config.Timeout,
+    }
+}
+```
+
+### Request/Response Handling
+```go
+func (c *client) doRequest(ctx context.Context, req *http.Request) (*http.Response, error) {
+    // Add authentication
+    if err := c.auth.SignRequest(req); err != nil {
+        return nil, fmt.Errorf("failed to sign request: %w", err)
+    }
+
+    // Add tracing headers
+    req.Header.Set("X-Request-ID", requestID(ctx))
+    req.Header.Set("User-Agent", c.userAgent)
+
+    // Execute request
+    resp, err := c.httpClient.Do(req.WithContext(ctx))
+    if err != nil {
+        return nil, fmt.Errorf("request failed: %w", err)
+    }
+
+    // Handle common HTTP errors
+    if err := c.handleHTTPError(resp); err != nil {
+        resp.Body.Close()
+        return nil, err
+    }
+
+    return resp, nil
+}
+```
+
+## Data Mapping & Transformation
+
+### Mapper Pattern
+```go
+type Mapper interface {
+    ToInternal(external interface{}) (interface{}, error)
+    ToExternal(internal interface{}) (interface{}, error)
+}
+
+// Example: JIRA to internal task mapping
+type JIRAMapper struct{}
+
+func (m *JIRAMapper) ToInternal(jiraIssue *jira.Issue) (*task.Task, error) {
+    return &task.Task{
+        ID:          jiraIssue.Key,
+        Title:       jiraIssue.Fields.Summary,
+        Description: jiraIssue.Fields.Description,
+        Status:      mapJIRAStatus(jiraIssue.Fields.Status.Name),
+        Priority:    mapJIRAPriority(jiraIssue.Fields.Priority.Name),
+        CreatedAt:   jiraIssue.Fields.Created,
+        UpdatedAt:   jiraIssue.Fields.Updated,
+    }, nil
+}
+```
+
+### Field Validation & Sanitization
+```go
+func sanitizeInput(input string) string {
+    // Remove potentially dangerous characters
+    input = strings.ReplaceAll(input, "\x00", "")
+    input = strings.TrimSpace(input)
+
+    // Limit length
+    if len(input) > maxFieldLength {
+        input = input[:maxFieldLength]
+    }
+
+    return input
+}
+```
+
+## Provider-Specific Patterns
+
+### GitHub Integration
+Located in [internal/providers/github/](mdc:internal/providers/github/):
+```go
+type GitHubClient struct {
+    client *github.Client
+    auth   auth.Provider
+}
+
+func (c *GitHubClient) ListRepositories(ctx context.Context) ([]*Repository, error) {
+    repos, _, err := c.client.Repositories.List(ctx, "", &github.RepositoryListOptions{
+        Type: "owner",
+        ListOptions: github.ListOptions{PerPage: 100},
+    })
+    if err != nil {
+        return nil, fmt.Errorf("failed to list repositories: %w", err)
+    }
+
+    return c.mapper.MapRepositories(repos), nil
+}
+```
+
+### JIRA Integration
+Located in [internal/providers/jira/](mdc:internal/providers/jira/):
+```go
+type JIRAClient struct {
+    client *jira.Client
+    auth   auth.Provider
+    mapper *JIRAMapper
+}
+
+func (c *JIRAClient) GetIssue(ctx context.Context, key string) (*task.Task, error) {
+    issue, _, err := c.client.Issue.Get(key, nil)
+    if err != nil {
+        return nil, fmt.Errorf("failed to get JIRA issue %s: %w", key, err)
+    }
+
+    return c.mapper.ToInternal(issue)
+}
+```
+
+## Testing Integration Code
+
+### Mock Interfaces
+```go
+type MockClient struct {
+    mock.Mock
+}
+
+func (m *MockClient) Get(ctx context.Context, id string) (*Resource, error) {
+    args := m.Called(ctx, id)
+    return args.Get(0).(*Resource), args.Error(1)
+}
+
+func TestService_GetResource(t *testing.T) {
+    mockClient := &MockClient{}
+    service := NewService(mockClient)
+
+    expectedResource := &Resource{ID: "123", Name: "test"}
+    mockClient.On("Get", mock.Anything, "123").Return(expectedResource, nil)
+
+    result, err := service.GetResource(context.Background(), "123")
+
+    require.NoError(t, err)
+    assert.Equal(t, expectedResource, result)
+    mockClient.AssertExpectations(t)
+}
+```
+
+### Integration Test Patterns
+```go
+func TestIntegration_RealAPI(t *testing.T) {
+    if testing.Short() {
+        t.Skip("skipping integration test")
+    }
+
+    client := setupTestClient(t)
+    defer client.Cleanup()
+
+    // Test actual API calls
+    resource, err := client.Get(context.Background(), "test-id")
+    require.NoError(t, err)
+    assert.NotNil(t, resource)
+}
+```
+
+## Monitoring & Observability
+
+### Metrics Collection
+```go
+func (c *client) instrumentedRequest(ctx context.Context, operation string, fn func() error) error {
+    start := time.Now()
+    defer func() {
+        duration := time.Since(start)
+        c.metrics.RecordDuration(operation, duration)
+    }()
+
+    err := fn()
+    if err != nil {
+        c.metrics.IncrementCounter(operation + "_errors")
+        c.logger.WithError(err).Error("operation failed", "operation", operation)
+    } else {
+        c.metrics.IncrementCounter(operation + "_success")
+    }
+
+    return err
+}
+```
+
+### Health Checks
+```go
+func (c *client) Health(ctx context.Context) error {
+    ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+    defer cancel()
+
+    req, err := http.NewRequestWithContext(ctx, "GET", c.baseURL+"/health", nil)
+    if err != nil {
+        return fmt.Errorf("failed to create health check request: %w", err)
+    }
+
+    resp, err := c.httpClient.Do(req)
+    if err != nil {
+        return fmt.Errorf("health check failed: %w", err)
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        return fmt.Errorf("health check returned status %d", resp.StatusCode)
+    }
+
+    return nil
+}
+```

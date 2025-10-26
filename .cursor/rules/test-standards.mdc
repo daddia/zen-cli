@@ -66,3 +66,122 @@ func TestFunctionName(t *testing.T) {
 - Use `testing.B` for benchmark tests
 - Set baseline performance expectations
 - Run benchmarks in CI for regression detection
+
+## CLI-Specific Testing Patterns
+
+### Command Testing
+```go
+func TestCommand_Execute(t *testing.T) {
+    // Setup test environment
+    factory := cmdutil.NewTestFactory()
+    cmd := NewCommand(factory)
+
+    // Capture output
+    var stdout, stderr bytes.Buffer
+    cmd.SetOut(&stdout)
+    cmd.SetErr(&stderr)
+
+    // Set arguments and flags
+    cmd.SetArgs([]string{"--flag", "value", "arg1"})
+
+    // Execute command
+    err := cmd.Execute()
+
+    // Verify results
+    require.NoError(t, err)
+    assert.Contains(t, stdout.String(), "expected output")
+}
+```
+
+### IO Stream Testing
+Use [pkg/iostreams/](mdc:pkg/iostreams/) for testing CLI output:
+```go
+func TestCommand_Output(t *testing.T) {
+    ios, _, stdout, stderr := iostreams.Test()
+    factory := cmdutil.NewTestFactory().WithIOStreams(ios)
+
+    cmd := NewCommand(factory)
+    err := cmd.Execute()
+
+    require.NoError(t, err)
+    assert.Equal(t, "✓ Success message\n", stdout.String())
+    assert.Empty(t, stderr.String())
+}
+```
+
+### Configuration Testing
+```go
+func TestCommand_WithConfig(t *testing.T) {
+    configFile := createTempConfig(t, `
+database:
+  host: test-host
+  port: 5432
+`)
+    defer os.Remove(configFile)
+
+    factory := cmdutil.NewTestFactory().WithConfigFile(configFile)
+    cmd := NewCommand(factory)
+
+    err := cmd.Execute()
+    require.NoError(t, err)
+}
+```
+
+### Environment Variable Testing
+```go
+func TestCommand_EnvironmentVars(t *testing.T) {
+    t.Setenv("ZEN_DATABASE_HOST", "env-host")
+    t.Setenv("ZEN_AUTH_TOKEN", "test-token")
+
+    factory := cmdutil.NewTestFactory()
+    cmd := NewCommand(factory)
+
+    err := cmd.Execute()
+    require.NoError(t, err)
+}
+```
+
+### Error Scenario Testing
+```go
+func TestCommand_ErrorHandling(t *testing.T) {
+    tests := []struct {
+        name        string
+        args        []string
+        expectError bool
+        errorMsg    string
+        exitCode    int
+    }{
+        {
+            name:        "missing required flag",
+            args:        []string{},
+            expectError: true,
+            errorMsg:    "required flag",
+            exitCode:    2,
+        },
+        {
+            name:        "invalid input",
+            args:        []string{"--input", "invalid"},
+            expectError: true,
+            errorMsg:    "invalid input",
+            exitCode:    1,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            factory := cmdutil.NewTestFactory()
+            cmd := NewCommand(factory)
+            cmd.SetArgs(tt.args)
+
+            err := cmd.Execute()
+
+            if tt.expectError {
+                require.Error(t, err)
+                assert.Contains(t, err.Error(), tt.errorMsg)
+            } else {
+                require.NoError(t, err)
+            }
+        })
+    }
+}
+```

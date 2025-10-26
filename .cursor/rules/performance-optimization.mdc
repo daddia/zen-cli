@@ -1,0 +1,498 @@
+---
+globs: "*.go"
+description: "Performance optimization patterns and best practices"
+---
+
+# Performance Optimization Standards
+
+## Core Principles
+- **Measure First**: Profile before optimizing
+- **Optimize Bottlenecks**: Focus on critical paths
+- **Memory Efficiency**: Minimize allocations and GC pressure
+- **Concurrency**: Leverage Go's concurrency primitives effectively
+- **Caching**: Cache expensive operations appropriately
+
+## Profiling & Measurement
+
+### Built-in Profiling
+```go
+import _ "net/http/pprof"
+
+func main() {
+    go func() {
+        log.Println(http.ListenAndServe("localhost:6060", nil))
+    }()
+
+    // Application code
+}
+```
+
+### CPU Profiling
+```go
+func profileCPU() {
+    f, err := os.Create("cpu.prof")
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer f.Close()
+
+    pprof.StartCPUProfile(f)
+    defer pprof.StopCPUProfile()
+
+    // Code to profile
+}
+```
+
+### Memory Profiling
+```go
+func profileMemory() {
+    f, err := os.Create("mem.prof")
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer f.Close()
+
+    runtime.GC()
+    pprof.WriteHeapProfile(f)
+}
+```
+
+### Benchmark Testing
+```go
+func BenchmarkOperation(b *testing.B) {
+    // Setup
+    data := generateTestData()
+
+    b.ResetTimer()
+    for i := 0; i < b.N; i++ {
+        // Operation to benchmark
+        result := processData(data)
+        _ = result // Prevent optimization
+    }
+}
+
+func BenchmarkOperationParallel(b *testing.B) {
+    data := generateTestData()
+
+    b.RunParallel(func(pb *testing.PB) {
+        for pb.Next() {
+            result := processData(data)
+            _ = result
+        }
+    })
+}
+```
+
+## Memory Optimization
+
+### Slice Management
+```go
+// Pre-allocate slices with known capacity
+items := make([]Item, 0, expectedSize)
+
+// Use slices.Grow for efficient growth
+items = slices.Grow(items, additionalCapacity)
+
+// Reset slices for reuse
+items = items[:0]
+
+// Avoid slice leaks
+func processLargeSlice(data []byte) []byte {
+    // BAD: keeps reference to large slice
+    return data[start:end]
+
+    // GOOD: copy to new slice
+    result := make([]byte, end-start)
+    copy(result, data[start:end])
+    return result
+}
+```
+
+### String Operations
+```go
+// Use strings.Builder for concatenation
+var builder strings.Builder
+builder.Grow(estimatedSize) // Pre-allocate
+for _, s := range strings {
+    builder.WriteString(s)
+}
+result := builder.String()
+
+// Avoid string concatenation in loops
+// BAD
+var result string
+for _, s := range strings {
+    result += s
+}
+
+// GOOD
+result := strings.Join(strings, "")
+```
+
+### Object Pooling
+```go
+var bufferPool = sync.Pool{
+    New: func() interface{} {
+        return make([]byte, 0, 1024)
+    },
+}
+
+func processData(data []byte) error {
+    buf := bufferPool.Get().([]byte)
+    defer bufferPool.Put(buf[:0]) // Reset and return
+
+    // Use buf for processing
+    return nil
+}
+```
+
+### Map Optimization
+```go
+// Pre-allocate maps with known size
+m := make(map[string]int, expectedSize)
+
+// Use map literals for small, static maps
+statusCodes := map[string]int{
+    "ok":    200,
+    "error": 500,
+}
+
+// Clear maps efficiently
+for k := range m {
+    delete(m, k)
+}
+// Or use clear() in Go 1.21+
+clear(m)
+```
+
+## Concurrency Patterns
+
+### Worker Pool Pattern
+```go
+type WorkerPool struct {
+    workers   int
+    taskQueue chan Task
+    wg        sync.WaitGroup
+}
+
+func NewWorkerPool(workers int, queueSize int) *WorkerPool {
+    return &WorkerPool{
+        workers:   workers,
+        taskQueue: make(chan Task, queueSize),
+    }
+}
+
+func (p *WorkerPool) Start(ctx context.Context) {
+    for i := 0; i < p.workers; i++ {
+        p.wg.Add(1)
+        go p.worker(ctx)
+    }
+}
+
+func (p *WorkerPool) worker(ctx context.Context) {
+    defer p.wg.Done()
+    for {
+        select {
+        case task := <-p.taskQueue:
+            task.Execute()
+        case <-ctx.Done():
+            return
+        }
+    }
+}
+```
+
+### Pipeline Pattern
+```go
+func pipeline(ctx context.Context, input <-chan Data) <-chan Result {
+    // Stage 1: Transform
+    transformed := make(chan TransformedData, 100)
+    go func() {
+        defer close(transformed)
+        for data := range input {
+            select {
+            case transformed <- transform(data):
+            case <-ctx.Done():
+                return
+            }
+        }
+    }()
+
+    // Stage 2: Process
+    results := make(chan Result, 100)
+    go func() {
+        defer close(results)
+        for data := range transformed {
+            select {
+            case results <- process(data):
+            case <-ctx.Done():
+                return
+            }
+        }
+    }()
+
+    return results
+}
+```
+
+### Fan-out/Fan-in Pattern
+```go
+func fanOut(ctx context.Context, input <-chan Task, workers int) []<-chan Result {
+    outputs := make([]<-chan Result, workers)
+
+    for i := 0; i < workers; i++ {
+        output := make(chan Result)
+        outputs[i] = output
+
+        go func() {
+            defer close(output)
+            for task := range input {
+                select {
+                case output <- processTask(task):
+                case <-ctx.Done():
+                    return
+                }
+            }
+        }()
+    }
+
+    return outputs
+}
+
+func fanIn(ctx context.Context, inputs ...<-chan Result) <-chan Result {
+    output := make(chan Result)
+    var wg sync.WaitGroup
+
+    for _, input := range inputs {
+        wg.Add(1)
+        go func(ch <-chan Result) {
+            defer wg.Done()
+            for result := range ch {
+                select {
+                case output <- result:
+                case <-ctx.Done():
+                    return
+                }
+            }
+        }(input)
+    }
+
+    go func() {
+        wg.Wait()
+        close(output)
+    }()
+
+    return output
+}
+```
+
+## Caching Strategies
+
+### In-Memory Cache
+```go
+type Cache struct {
+    data   map[string]CacheItem
+    mutex  sync.RWMutex
+    ttl    time.Duration
+}
+
+type CacheItem struct {
+    Value     interface{}
+    ExpiresAt time.Time
+}
+
+func (c *Cache) Get(key string) (interface{}, bool) {
+    c.mutex.RLock()
+    defer c.mutex.RUnlock()
+
+    item, exists := c.data[key]
+    if !exists || time.Now().After(item.ExpiresAt) {
+        return nil, false
+    }
+
+    return item.Value, true
+}
+
+func (c *Cache) Set(key string, value interface{}) {
+    c.mutex.Lock()
+    defer c.mutex.Unlock()
+
+    c.data[key] = CacheItem{
+        Value:     value,
+        ExpiresAt: time.Now().Add(c.ttl),
+    }
+}
+```
+
+### LRU Cache
+```go
+type LRUCache struct {
+    capacity int
+    cache    map[string]*list.Element
+    list     *list.List
+    mutex    sync.Mutex
+}
+
+type entry struct {
+    key   string
+    value interface{}
+}
+
+func (c *LRUCache) Get(key string) (interface{}, bool) {
+    c.mutex.Lock()
+    defer c.mutex.Unlock()
+
+    if elem, exists := c.cache[key]; exists {
+        c.list.MoveToFront(elem)
+        return elem.Value.(*entry).value, true
+    }
+
+    return nil, false
+}
+```
+
+## I/O Optimization
+
+### Buffered I/O
+```go
+// Use buffered readers/writers
+func processFile(filename string) error {
+    file, err := os.Open(filename)
+    if err != nil {
+        return err
+    }
+    defer file.Close()
+
+    // Use buffered reader for better performance
+    reader := bufio.NewReader(file)
+    scanner := bufio.NewScanner(reader)
+
+    for scanner.Scan() {
+        line := scanner.Text()
+        // Process line
+    }
+
+    return scanner.Err()
+}
+```
+
+### Batch Operations
+```go
+// Batch database operations
+func batchInsert(db *sql.DB, items []Item) error {
+    tx, err := db.Begin()
+    if err != nil {
+        return err
+    }
+    defer tx.Rollback()
+
+    stmt, err := tx.Prepare("INSERT INTO items (name, value) VALUES (?, ?)")
+    if err != nil {
+        return err
+    }
+    defer stmt.Close()
+
+    for _, item := range items {
+        if _, err := stmt.Exec(item.Name, item.Value); err != nil {
+            return err
+        }
+    }
+
+    return tx.Commit()
+}
+```
+
+## CLI-Specific Optimizations
+
+### Lazy Loading
+```go
+// Load expensive resources only when needed
+type Command struct {
+    client Client // Interface
+}
+
+func (c *Command) getClient() Client {
+    if c.client == nil {
+        c.client = NewClient(c.config)
+    }
+    return c.client
+}
+```
+
+### Output Streaming
+```go
+// Stream large outputs instead of buffering
+func (c *Command) listItems(ctx context.Context) error {
+    items, err := c.client.ListItems(ctx)
+    if err != nil {
+        return err
+    }
+
+    // Stream output as items are processed
+    for _, item := range items {
+        fmt.Fprintf(c.out, "%s\n", formatItem(item))
+    }
+
+    return nil
+}
+```
+
+### Progress Indicators
+```go
+// Show progress for long operations
+func (c *Command) processItems(items []Item) error {
+    bar := progressbar.New(len(items))
+
+    for _, item := range items {
+        if err := c.processItem(item); err != nil {
+            return err
+        }
+        bar.Add(1)
+    }
+
+    return nil
+}
+```
+
+## Performance Testing
+
+### Load Testing
+```go
+func TestCommand_Performance(t *testing.T) {
+    if testing.Short() {
+        t.Skip("skipping performance test")
+    }
+
+    start := time.Now()
+
+    // Execute operation
+    err := command.Execute()
+
+    duration := time.Since(start)
+    require.NoError(t, err)
+
+    // Assert performance requirements
+    assert.Less(t, duration, 5*time.Second, "command should complete within 5 seconds")
+}
+```
+
+### Memory Usage Testing
+```go
+func TestCommand_MemoryUsage(t *testing.T) {
+    var m1, m2 runtime.MemStats
+
+    runtime.GC()
+    runtime.ReadMemStats(&m1)
+
+    // Execute operation
+    err := command.Execute()
+    require.NoError(t, err)
+
+    runtime.GC()
+    runtime.ReadMemStats(&m2)
+
+    // Check memory usage
+    memUsed := m2.Alloc - m1.Alloc
+    assert.Less(t, memUsed, uint64(100*1024*1024), "should use less than 100MB")
+}
+```

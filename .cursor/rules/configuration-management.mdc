@@ -1,0 +1,270 @@
+---
+globs: "internal/config/*.go,pkg/cli/config.go"
+description: "Configuration management with Viper and multi-source config"
+---
+
+# Configuration Management Standards
+
+## Core Architecture
+Configuration system in [internal/config/](mdc:internal/config/) provides multi-source configuration with proper precedence and validation.
+
+## Configuration Sources & Precedence
+1. **Command-line flags** (highest priority)
+2. **Environment variables** (with `ZEN_` prefix)
+3. **Configuration files** (YAML, JSON, TOML)
+4. **Default values** (lowest priority)
+
+## Viper Integration
+
+### Configuration Loading
+```go
+// Standard configuration loading pattern
+func LoadConfig() (*Config, error) {
+    v := viper.New()
+
+    // Set defaults
+    setDefaults(v)
+
+    // Environment variables
+    v.SetEnvPrefix("ZEN")
+    v.AutomaticEnv()
+    v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+
+    // Configuration file
+    v.SetConfigName("config")
+    v.SetConfigType("yaml")
+    v.AddConfigPath(".")
+    v.AddConfigPath("$HOME/.zen")
+
+    if err := v.ReadInConfig(); err != nil {
+        if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
+            return nil, fmt.Errorf("failed to read config: %w", err)
+        }
+    }
+
+    var config Config
+    if err := v.Unmarshal(&config); err != nil {
+        return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+    }
+
+    return &config, nil
+}
+```
+
+### Environment Variable Mapping
+```go
+// Map nested config to environment variables
+// config.database.host -> ZEN_DATABASE_HOST
+// config.auth.token -> ZEN_AUTH_TOKEN
+func setDefaults(v *viper.Viper) {
+    v.SetDefault("database.host", "localhost")
+    v.SetDefault("database.port", 5432)
+    v.SetDefault("auth.timeout", "30s")
+    v.SetDefault("logging.level", "info")
+}
+```
+
+## Configuration Structure
+
+### Typed Configuration
+```go
+type Config struct {
+    Database DatabaseConfig `mapstructure:"database" yaml:"database"`
+    Auth     AuthConfig     `mapstructure:"auth" yaml:"auth"`
+    Logging  LoggingConfig  `mapstructure:"logging" yaml:"logging"`
+    Features FeatureFlags   `mapstructure:"features" yaml:"features"`
+}
+
+type DatabaseConfig struct {
+    Host     string        `mapstructure:"host" yaml:"host"`
+    Port     int           `mapstructure:"port" yaml:"port"`
+    Timeout  time.Duration `mapstructure:"timeout" yaml:"timeout"`
+}
+```
+
+### Validation
+```go
+func (c *Config) Validate() error {
+    if c.Database.Host == "" {
+        return fmt.Errorf("database host is required")
+    }
+
+    if c.Database.Port <= 0 || c.Database.Port > 65535 {
+        return fmt.Errorf("database port must be between 1 and 65535")
+    }
+
+    if c.Auth.Timeout <= 0 {
+        return fmt.Errorf("auth timeout must be positive")
+    }
+
+    return nil
+}
+```
+
+## Configuration Files
+
+### YAML Format (Preferred)
+```yaml
+# ~/.zen/config.yaml
+database:
+  host: localhost
+  port: 5432
+  timeout: 30s
+
+auth:
+  provider: oauth2
+  timeout: 60s
+
+logging:
+  level: info
+  format: json
+
+features:
+  experimental: false
+  beta: true
+```
+
+### File Discovery
+```go
+// Configuration file search paths
+var configPaths = []string{
+    ".",                    // Current directory
+    "$HOME/.zen",          // User config directory
+    "/etc/zen",            // System config directory
+    "$XDG_CONFIG_HOME/zen", // XDG config directory
+}
+```
+
+## CLI Integration
+
+### Flag Binding
+```go
+func bindFlags(cmd *cobra.Command, v *viper.Viper) {
+    cmd.PersistentFlags().String("config", "", "config file path")
+    cmd.PersistentFlags().String("log-level", "info", "logging level")
+    cmd.PersistentFlags().Bool("verbose", false, "verbose output")
+
+    // Bind flags to viper
+    v.BindPFlag("config", cmd.PersistentFlags().Lookup("config"))
+    v.BindPFlag("logging.level", cmd.PersistentFlags().Lookup("log-level"))
+    v.BindPFlag("verbose", cmd.PersistentFlags().Lookup("verbose"))
+}
+```
+
+### Dynamic Configuration
+```go
+// Support runtime configuration changes
+func (c *Config) Watch(callback func(*Config)) error {
+    viper.WatchConfig()
+    viper.OnConfigChange(func(e fsnotify.Event) {
+        newConfig, err := LoadConfig()
+        if err != nil {
+            log.Printf("Failed to reload config: %v", err)
+            return
+        }
+        callback(newConfig)
+    })
+    return nil
+}
+```
+
+## Security Considerations
+
+### Sensitive Data Handling
+```go
+// Never log sensitive configuration values
+func (c *Config) String() string {
+    safe := *c
+    safe.Auth.Token = "[REDACTED]"
+    safe.Database.Password = "[REDACTED]"
+    return fmt.Sprintf("%+v", safe)
+}
+```
+
+### Environment Variable Security
+```go
+// Validate environment variables don't contain secrets
+func validateEnvVars() error {
+    for _, env := range os.Environ() {
+        if strings.Contains(env, "ZEN_") && containsSensitiveData(env) {
+            return fmt.Errorf("sensitive data detected in environment variable")
+        }
+    }
+    return nil
+}
+```
+
+## Testing Configuration
+
+### Test Configuration
+```go
+func TestConfig() *Config {
+    return &Config{
+        Database: DatabaseConfig{
+            Host: "localhost",
+            Port: 5432,
+        },
+        Auth: AuthConfig{
+            Provider: "mock",
+            Timeout:  time.Second * 30,
+        },
+        Logging: LoggingConfig{
+            Level:  "debug",
+            Format: "text",
+        },
+    }
+}
+```
+
+### Configuration Validation Tests
+```go
+func TestConfig_Validate(t *testing.T) {
+    tests := []struct {
+        name    string
+        config  Config
+        wantErr bool
+    }{
+        {
+            name:   "valid config",
+            config: *TestConfig(),
+            wantErr: false,
+        },
+        {
+            name: "invalid port",
+            config: Config{
+                Database: DatabaseConfig{Port: -1},
+            },
+            wantErr: true,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            err := tt.config.Validate()
+            if tt.wantErr {
+                require.Error(t, err)
+            } else {
+                require.NoError(t, err)
+            }
+        })
+    }
+}
+```
+
+## Configuration Commands
+
+### Config Management CLI
+Implement configuration commands in [pkg/cmd/config/](mdc:pkg/cmd/config/):
+- `zen config get <key>` - Get configuration value
+- `zen config set <key> <value>` - Set configuration value
+- `zen config list` - List all configuration
+- `zen config validate` - Validate configuration
+
+### Output Formatting
+Use [pkg/iostreams/colors.go](mdc:pkg/iostreams/colors.go) for consistent formatting:
+```go
+fmt.Printf("%s %s = %s\n",
+    colors.FormatSuccess("✓"),
+    colors.FormatInfo(key),
+    colors.FormatValue(value))
+```

@@ -1,0 +1,488 @@
+---
+globs: "internal/workspace/*.go,pkg/fs/*.go"
+description: "Workspace and file system management patterns"
+---
+
+# Workspace Management Standards
+
+## Core Architecture
+Workspace management in [internal/workspace/](mdc:internal/workspace/) and file system utilities in [pkg/fs/](mdc:pkg/fs/) provide consistent patterns for zenspace (`.zen`) directory management.
+
+## Workspace Structure
+
+### Standard Zenspace Layout
+```
+.zen/
+├── config.yaml          # Workspace configuration
+├── cache/               # Cached data and temporary files
+│   ├── assets/         # Asset cache
+│   └── integrations/   # Integration cache
+├── logs/               # Application logs
+├── templates/          # Custom templates
+└── plugins/            # Workspace-specific plugins
+```
+
+### Workspace Discovery
+```go
+// Find workspace root by looking for .zen directory
+func FindWorkspaceRoot(startPath string) (string, error) {
+    current := startPath
+
+    for {
+        zenPath := filepath.Join(current, ".zen")
+        if info, err := os.Stat(zenPath); err == nil && info.IsDir() {
+            return current, nil
+        }
+
+        parent := filepath.Dir(current)
+        if parent == current {
+            return "", ErrWorkspaceNotFound
+        }
+        current = parent
+    }
+}
+
+// Get or create workspace
+func GetOrCreateWorkspace(path string) (*Workspace, error) {
+    root, err := FindWorkspaceRoot(path)
+    if err != nil {
+        if errors.Is(err, ErrWorkspaceNotFound) {
+            return CreateWorkspace(path)
+        }
+        return nil, err
+    }
+
+    return LoadWorkspace(root)
+}
+```
+
+## File System Operations
+
+### Safe File Operations
+```go
+// Atomic file writes to prevent corruption
+func WriteFileAtomic(filename string, data []byte, perm os.FileMode) error {
+    dir := filepath.Dir(filename)
+    if err := os.MkdirAll(dir, 0755); err != nil {
+        return fmt.Errorf("failed to create directory: %w", err)
+    }
+
+    // Write to temporary file first
+    tmpFile := filename + ".tmp"
+    if err := os.WriteFile(tmpFile, data, perm); err != nil {
+        return fmt.Errorf("failed to write temp file: %w", err)
+    }
+
+    // Atomic rename
+    if err := os.Rename(tmpFile, filename); err != nil {
+        os.Remove(tmpFile) // Cleanup on failure
+        return fmt.Errorf("failed to rename temp file: %w", err)
+    }
+
+    return nil
+}
+
+// Safe directory creation with proper permissions
+func EnsureDir(path string, perm os.FileMode) error {
+    if info, err := os.Stat(path); err == nil {
+        if !info.IsDir() {
+            return fmt.Errorf("path exists but is not a directory: %s", path)
+        }
+        return nil
+    }
+
+    if err := os.MkdirAll(path, perm); err != nil {
+        return fmt.Errorf("failed to create directory %s: %w", path, err)
+    }
+
+    return nil
+}
+```
+
+### Path Validation & Security
+```go
+// Validate and sanitize file paths
+func ValidatePath(path string) error {
+    // Check for directory traversal attempts
+    if strings.Contains(path, "..") {
+        return fmt.Errorf("path contains directory traversal: %s", path)
+    }
+
+    // Check for null bytes
+    if strings.Contains(path, "\x00") {
+        return fmt.Errorf("path contains null byte: %s", path)
+    }
+
+    // Ensure path is within workspace
+    absPath, err := filepath.Abs(path)
+    if err != nil {
+        return fmt.Errorf("failed to resolve absolute path: %w", err)
+    }
+
+    workspaceRoot, err := FindWorkspaceRoot(".")
+    if err != nil {
+        return fmt.Errorf("not in a workspace: %w", err)
+    }
+
+    if !strings.HasPrefix(absPath, workspaceRoot) {
+        return fmt.Errorf("path is outside workspace: %s", path)
+    }
+
+    return nil
+}
+
+// Sanitize filename for cross-platform compatibility
+func SanitizeFilename(filename string) string {
+    // Remove or replace invalid characters
+    invalid := []string{"<", ">", ":", "\"", "|", "?", "*"}
+    sanitized := filename
+
+    for _, char := range invalid {
+        sanitized = strings.ReplaceAll(sanitized, char, "_")
+    }
+
+    // Trim spaces and dots from ends
+    sanitized = strings.Trim(sanitized, " .")
+
+    // Limit length
+    if len(sanitized) > 255 {
+        sanitized = sanitized[:255]
+    }
+
+    return sanitized
+}
+```
+
+## Configuration Management
+
+### Workspace Configuration
+```go
+type WorkspaceConfig struct {
+    Version     string                 `yaml:"version"`
+    Name        string                 `yaml:"name"`
+    Description string                 `yaml:"description,omitempty"`
+    Settings    map[string]interface{} `yaml:"settings,omitempty"`
+
+    // Integration configurations
+    Integrations map[string]IntegrationConfig `yaml:"integrations,omitempty"`
+
+    // Template configurations
+    Templates TemplateConfig `yaml:"templates,omitempty"`
+
+    // Cache settings
+    Cache CacheConfig `yaml:"cache,omitempty"`
+}
+
+type IntegrationConfig struct {
+    Enabled  bool                   `yaml:"enabled"`
+    Settings map[string]interface{} `yaml:"settings,omitempty"`
+}
+
+type CacheConfig struct {
+    TTL     time.Duration `yaml:"ttl"`
+    MaxSize int64         `yaml:"max_size"`
+    Enabled bool          `yaml:"enabled"`
+}
+```
+
+### Configuration Loading & Saving
+```go
+func LoadWorkspaceConfig(workspaceRoot string) (*WorkspaceConfig, error) {
+    configPath := filepath.Join(workspaceRoot, ".zen", "config.yaml")
+
+    data, err := os.ReadFile(configPath)
+    if err != nil {
+        if os.IsNotExist(err) {
+            return DefaultWorkspaceConfig(), nil
+        }
+        return nil, fmt.Errorf("failed to read config: %w", err)
+    }
+
+    var config WorkspaceConfig
+    if err := yaml.Unmarshal(data, &config); err != nil {
+        return nil, fmt.Errorf("failed to parse config: %w", err)
+    }
+
+    if err := config.Validate(); err != nil {
+        return nil, fmt.Errorf("invalid config: %w", err)
+    }
+
+    return &config, nil
+}
+
+func SaveWorkspaceConfig(workspaceRoot string, config *WorkspaceConfig) error {
+    if err := config.Validate(); err != nil {
+        return fmt.Errorf("invalid config: %w", err)
+    }
+
+    data, err := yaml.Marshal(config)
+    if err != nil {
+        return fmt.Errorf("failed to marshal config: %w", err)
+    }
+
+    configPath := filepath.Join(workspaceRoot, ".zen", "config.yaml")
+    return WriteFileAtomic(configPath, data, 0644)
+}
+```
+
+## Cache Management
+
+### File-Based Caching
+```go
+type FileCache struct {
+    baseDir string
+    ttl     time.Duration
+    maxSize int64
+    mutex   sync.RWMutex
+}
+
+func NewFileCache(baseDir string, ttl time.Duration, maxSize int64) *FileCache {
+    return &FileCache{
+        baseDir: baseDir,
+        ttl:     ttl,
+        maxSize: maxSize,
+    }
+}
+
+func (c *FileCache) Get(key string) ([]byte, error) {
+    c.mutex.RLock()
+    defer c.mutex.RUnlock()
+
+    path := c.keyToPath(key)
+
+    info, err := os.Stat(path)
+    if err != nil {
+        if os.IsNotExist(err) {
+            return nil, ErrCacheMiss
+        }
+        return nil, fmt.Errorf("failed to stat cache file: %w", err)
+    }
+
+    // Check TTL
+    if time.Since(info.ModTime()) > c.ttl {
+        os.Remove(path) // Cleanup expired entry
+        return nil, ErrCacheExpired
+    }
+
+    data, err := os.ReadFile(path)
+    if err != nil {
+        return nil, fmt.Errorf("failed to read cache file: %w", err)
+    }
+
+    return data, nil
+}
+
+func (c *FileCache) Set(key string, data []byte) error {
+    c.mutex.Lock()
+    defer c.mutex.Unlock()
+
+    path := c.keyToPath(key)
+    dir := filepath.Dir(path)
+
+    if err := EnsureDir(dir, 0755); err != nil {
+        return err
+    }
+
+    // Check size limits
+    if c.maxSize > 0 && int64(len(data)) > c.maxSize {
+        return fmt.Errorf("data size exceeds cache limit")
+    }
+
+    return WriteFileAtomic(path, data, 0644)
+}
+
+func (c *FileCache) keyToPath(key string) string {
+    // Hash key to avoid filesystem issues
+    hash := sha256.Sum256([]byte(key))
+    hashStr := hex.EncodeToString(hash[:])
+
+    // Create nested directory structure
+    return filepath.Join(c.baseDir, hashStr[:2], hashStr[2:4], hashStr)
+}
+```
+
+### Cache Cleanup
+```go
+func (c *FileCache) Cleanup() error {
+    return filepath.Walk(c.baseDir, func(path string, info os.FileInfo, err error) error {
+        if err != nil {
+            return err
+        }
+
+        if info.IsDir() {
+            return nil
+        }
+
+        // Remove expired files
+        if time.Since(info.ModTime()) > c.ttl {
+            if err := os.Remove(path); err != nil {
+                logger.WithError(err).Warn("failed to remove expired cache file", "path", path)
+            }
+        }
+
+        return nil
+    })
+}
+```
+
+## Template Management
+
+### Template Discovery
+```go
+func FindTemplates(workspaceRoot string) ([]Template, error) {
+    templateDirs := []string{
+        filepath.Join(workspaceRoot, ".zen", "templates"),
+        getGlobalTemplateDir(),
+    }
+
+    var templates []Template
+
+    for _, dir := range templateDirs {
+        if _, err := os.Stat(dir); os.IsNotExist(err) {
+            continue
+        }
+
+        dirTemplates, err := loadTemplatesFromDir(dir)
+        if err != nil {
+            return nil, fmt.Errorf("failed to load templates from %s: %w", dir, err)
+        }
+
+        templates = append(templates, dirTemplates...)
+    }
+
+    return templates, nil
+}
+
+func loadTemplatesFromDir(dir string) ([]Template, error) {
+    var templates []Template
+
+    err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+        if err != nil {
+            return err
+        }
+
+        if !info.IsDir() && strings.HasSuffix(path, ".tmpl") {
+            template, err := LoadTemplate(path)
+            if err != nil {
+                logger.WithError(err).Warn("failed to load template", "path", path)
+                return nil // Continue processing other templates
+            }
+            templates = append(templates, template)
+        }
+
+        return nil
+    })
+
+    return templates, err
+}
+```
+
+## Backup & Recovery
+
+### Workspace Backup
+```go
+func BackupWorkspace(workspaceRoot string, backupPath string) error {
+    zenDir := filepath.Join(workspaceRoot, ".zen")
+
+    // Create backup archive
+    file, err := os.Create(backupPath)
+    if err != nil {
+        return fmt.Errorf("failed to create backup file: %w", err)
+    }
+    defer file.Close()
+
+    gzWriter := gzip.NewWriter(file)
+    defer gzWriter.Close()
+
+    tarWriter := tar.NewWriter(gzWriter)
+    defer tarWriter.Close()
+
+    // Add files to archive
+    return filepath.Walk(zenDir, func(path string, info os.FileInfo, err error) error {
+        if err != nil {
+            return err
+        }
+
+        // Skip cache directory
+        if strings.Contains(path, "cache") {
+            if info.IsDir() {
+                return filepath.SkipDir
+            }
+            return nil
+        }
+
+        return addToArchive(tarWriter, path, info, zenDir)
+    })
+}
+
+func RestoreWorkspace(backupPath string, workspaceRoot string) error {
+    file, err := os.Open(backupPath)
+    if err != nil {
+        return fmt.Errorf("failed to open backup file: %w", err)
+    }
+    defer file.Close()
+
+    gzReader, err := gzip.NewReader(file)
+    if err != nil {
+        return fmt.Errorf("failed to create gzip reader: %w", err)
+    }
+    defer gzReader.Close()
+
+    tarReader := tar.NewReader(gzReader)
+
+    for {
+        header, err := tarReader.Next()
+        if err == io.EOF {
+            break
+        }
+        if err != nil {
+            return fmt.Errorf("failed to read tar header: %w", err)
+        }
+
+        if err := extractFromArchive(tarReader, header, workspaceRoot); err != nil {
+            return fmt.Errorf("failed to extract file: %w", err)
+        }
+    }
+
+    return nil
+}
+```
+
+## Testing Workspace Operations
+
+### Test Workspace Setup
+```go
+func CreateTestWorkspace(t *testing.T) string {
+    tmpDir := t.TempDir()
+
+    zenDir := filepath.Join(tmpDir, ".zen")
+    require.NoError(t, os.MkdirAll(zenDir, 0755))
+
+    // Create test config
+    config := &WorkspaceConfig{
+        Version: "1.0",
+        Name:    "test-workspace",
+        Settings: map[string]interface{}{
+            "test": true,
+        },
+    }
+
+    require.NoError(t, SaveWorkspaceConfig(tmpDir, config))
+
+    return tmpDir
+}
+
+func TestWorkspaceOperations(t *testing.T) {
+    workspaceRoot := CreateTestWorkspace(t)
+
+    // Test workspace discovery
+    found, err := FindWorkspaceRoot(workspaceRoot)
+    require.NoError(t, err)
+    assert.Equal(t, workspaceRoot, found)
+
+    // Test config loading
+    config, err := LoadWorkspaceConfig(workspaceRoot)
+    require.NoError(t, err)
+    assert.Equal(t, "test-workspace", config.Name)
+}
+```

@@ -9,6 +9,9 @@ description: Go coding standards and patterns
 - Go 1.25+ only
 - Use modern Go idioms and best practices
 - Leverage Go's built-in concurrency patterns
+- Use generic types where appropriate for type safety
+- Utilize structured logging with slog package
+- Implement proper context propagation
 
 ## Dependencies
 Core dependencies only:
@@ -47,6 +50,17 @@ Justify new dependencies in ADR before adding.
 - Avoid premature optimization
 - Profile performance-critical paths
 - Use sync.Pool for object reuse when beneficial
+- Leverage Go 1.25 performance improvements (PGO, improved GC)
+- Use slices.Grow() for efficient slice allocation
+- Implement proper memory management patterns
+
+## Modern Go Features (1.25+)
+- Use `slices` package for slice operations
+- Use `maps` package for map operations
+- Use `cmp.Ordered` for generic comparisons
+- Implement proper generic constraints
+- Use `slog` for structured logging
+- Leverage improved type inference
 
 ## Testing
 - Minimum 80% test coverage

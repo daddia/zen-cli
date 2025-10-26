@@ -1,0 +1,395 @@
+---
+globs: "internal/logging/*.go,*.go"
+description: "Structured logging standards with security and observability"
+---
+
+# Logging Standards
+
+## Core Principles
+- **Structured Logging**: Use consistent structured format
+- **Security First**: Never log sensitive data
+- **Contextual**: Include relevant context and correlation IDs
+- **Performance**: Minimize logging overhead
+- **Observability**: Enable effective monitoring and debugging
+
+## Logging Framework
+Use [internal/logging/](mdc:internal/logging/) with logrus for structured logging:
+
+```go
+import (
+    "github.com/sirupsen/logrus"
+    "github.com/jonathandaddia/zen-cli/internal/logging"
+)
+
+// Get logger instance
+logger := logging.GetLogger("component")
+```
+
+## Log Levels
+
+### Level Guidelines
+- **Debug**: Detailed diagnostic information, disabled in production
+- **Info**: General operational messages, key business events
+- **Warn**: Potentially harmful situations, recoverable errors
+- **Error**: Error conditions that don't stop the application
+- **Fatal**: Severe errors that cause application termination
+
+### Usage Examples
+```go
+// Debug - detailed diagnostic info
+logger.WithFields(logrus.Fields{
+    "user_id": userID,
+    "operation": "validate_input",
+    "duration_ms": duration.Milliseconds(),
+}).Debug("input validation completed")
+
+// Info - key business events
+logger.WithFields(logrus.Fields{
+    "command": "init",
+    "workspace": workspacePath,
+}).Info("workspace initialized successfully")
+
+// Warn - recoverable issues
+logger.WithFields(logrus.Fields{
+    "config_file": configPath,
+    "fallback": "default",
+}).Warn("config file not found, using defaults")
+
+// Error - application errors
+logger.WithFields(logrus.Fields{
+    "operation": "api_call",
+    "endpoint": endpoint,
+    "status_code": resp.StatusCode,
+}).Error("API request failed")
+```
+
+## Security & Privacy
+
+### Sensitive Data Handling
+```go
+// NEVER log sensitive data directly
+logger.Error("authentication failed", "token", token) // BAD
+
+// DO sanitize or omit sensitive fields
+logger.WithFields(logrus.Fields{
+    "user_id": sanitizeUserID(userID),
+    "operation": "authenticate",
+    "error": "invalid credentials",
+}).Error("authentication failed")
+
+// Use redaction for structured data
+type SafeUser struct {
+    ID       string `json:"id"`
+    Username string `json:"username"`
+    Email    string `json:"email,omitempty"` // Omit in logs
+    Token    string `json:"-"`               // Never serialize
+}
+```
+
+### Data Sanitization
+```go
+func sanitizeUserID(userID string) string {
+    if len(userID) < 8 {
+        return "***"
+    }
+    return userID[:4] + "***"
+}
+
+func sanitizeFilePath(path string) string {
+    // Convert to relative path when possible
+    if rel, err := filepath.Rel(workspaceRoot, path); err == nil {
+        return rel
+    }
+    return filepath.Base(path)
+}
+
+func sanitizeURL(url string) string {
+    parsed, err := url.Parse(url)
+    if err != nil {
+        return "[invalid-url]"
+    }
+
+    // Remove query parameters and fragments
+    parsed.RawQuery = ""
+    parsed.Fragment = ""
+
+    return parsed.String()
+}
+```
+
+## Structured Logging Patterns
+
+### Standard Fields
+```go
+// Always include these standard fields
+logger := logrus.WithFields(logrus.Fields{
+    "component":    "auth",           // Component/package name
+    "operation":    "login",          // Specific operation
+    "request_id":   requestID,        // Correlation ID
+    "user_id":      sanitizedUserID,  // User context (sanitized)
+    "duration_ms":  duration.Milliseconds(),
+})
+```
+
+### Error Context
+```go
+// Include rich error context
+func handleError(err error, operation string) {
+    logger.WithFields(logrus.Fields{
+        "operation": operation,
+        "error_type": fmt.Sprintf("%T", err),
+        "error_code": getErrorCode(err),
+        "stack_trace": getStackTrace(err),
+    }).Error("operation failed")
+}
+
+// Wrap errors with context before logging
+if err := processData(data); err != nil {
+    wrappedErr := fmt.Errorf("failed to process data for user %s: %w",
+        sanitizeUserID(userID), err)
+    logger.WithError(wrappedErr).Error("data processing failed")
+}
+```
+
+### Performance Logging
+```go
+// Log performance metrics
+func logPerformance(operation string, duration time.Duration, itemCount int) {
+    logger.WithFields(logrus.Fields{
+        "operation": operation,
+        "duration_ms": duration.Milliseconds(),
+        "items_processed": itemCount,
+        "items_per_second": float64(itemCount) / duration.Seconds(),
+    }).Info("operation completed")
+}
+
+// Use defer for automatic timing
+func processItems(items []Item) error {
+    start := time.Now()
+    defer func() {
+        logPerformance("process_items", time.Since(start), len(items))
+    }()
+
+    // Processing logic
+    return nil
+}
+```
+
+## CLI-Specific Logging
+
+### Command Execution Logging
+```go
+func logCommandStart(cmd *cobra.Command, args []string) {
+    logger.WithFields(logrus.Fields{
+        "command": cmd.Name(),
+        "args": sanitizeArgs(args),
+        "flags": sanitizeFlags(cmd.Flags()),
+    }).Info("command started")
+}
+
+func logCommandComplete(cmd *cobra.Command, duration time.Duration, err error) {
+    fields := logrus.Fields{
+        "command": cmd.Name(),
+        "duration_ms": duration.Milliseconds(),
+    }
+
+    if err != nil {
+        fields["error"] = err.Error()
+        logger.WithFields(fields).Error("command failed")
+    } else {
+        logger.WithFields(fields).Info("command completed")
+    }
+}
+```
+
+### User Action Logging
+```go
+// Log significant user actions for audit
+func logUserAction(action string, resource string, userID string) {
+    logger.WithFields(logrus.Fields{
+        "action": action,
+        "resource": resource,
+        "user_id": sanitizeUserID(userID),
+        "timestamp": time.Now().UTC(),
+    }).Info("user action")
+}
+```
+
+## Configuration & Environment
+
+### Logger Configuration
+```go
+// Configure logger based on environment
+func ConfigureLogger(level string, format string) {
+    logLevel, err := logrus.ParseLevel(level)
+    if err != nil {
+        logLevel = logrus.InfoLevel
+    }
+
+    logrus.SetLevel(logLevel)
+
+    switch format {
+    case "json":
+        logrus.SetFormatter(&logrus.JSONFormatter{
+            TimestampFormat: time.RFC3339,
+            FieldMap: logrus.FieldMap{
+                logrus.FieldKeyTime:  "@timestamp",
+                logrus.FieldKeyLevel: "level",
+                logrus.FieldKeyMsg:   "message",
+            },
+        })
+    default:
+        logrus.SetFormatter(&logrus.TextFormatter{
+            FullTimestamp:   true,
+            TimestampFormat: time.RFC3339,
+        })
+    }
+}
+```
+
+### Environment-Specific Settings
+```go
+// Development vs Production logging
+func init() {
+    if os.Getenv("ZEN_ENV") == "development" {
+        logrus.SetLevel(logrus.DebugLevel)
+        logrus.SetFormatter(&logrus.TextFormatter{
+            ForceColors:     true,
+            FullTimestamp:   true,
+        })
+    } else {
+        logrus.SetLevel(logrus.InfoLevel)
+        logrus.SetFormatter(&logrus.JSONFormatter{})
+    }
+}
+```
+
+## Integration with Monitoring
+
+### Metrics Integration
+```go
+// Log metrics alongside structured logs
+func logWithMetrics(operation string, duration time.Duration, success bool) {
+    fields := logrus.Fields{
+        "operation": operation,
+        "duration_ms": duration.Milliseconds(),
+        "success": success,
+    }
+
+    // Send to metrics system
+    metrics.RecordDuration(operation, duration)
+    if success {
+        metrics.IncrementCounter(operation + "_success")
+    } else {
+        metrics.IncrementCounter(operation + "_error")
+    }
+
+    // Log structured event
+    logger.WithFields(fields).Info("operation completed")
+}
+```
+
+### Health Check Logging
+```go
+func logHealthCheck(service string, healthy bool, responseTime time.Duration) {
+    logger.WithFields(logrus.Fields{
+        "service": service,
+        "healthy": healthy,
+        "response_time_ms": responseTime.Milliseconds(),
+        "check_type": "health",
+    }).Info("health check completed")
+}
+```
+
+## Testing Logging
+
+### Log Testing Utilities
+```go
+// Test helper for capturing logs
+func captureLogOutput(fn func()) []logrus.Entry {
+    var entries []logrus.Entry
+
+    hook := &testHook{entries: &entries}
+    logrus.AddHook(hook)
+    defer logrus.StandardLogger().ReplaceHooks(make(logrus.LevelHooks))
+
+    fn()
+
+    return entries
+}
+
+type testHook struct {
+    entries *[]logrus.Entry
+}
+
+func (h *testHook) Levels() []logrus.Level {
+    return logrus.AllLevels
+}
+
+func (h *testHook) Fire(entry *logrus.Entry) error {
+    *h.entries = append(*h.entries, *entry)
+    return nil
+}
+```
+
+### Log Assertion Testing
+```go
+func TestOperation_Logging(t *testing.T) {
+    entries := captureLogOutput(func() {
+        err := performOperation()
+        require.NoError(t, err)
+    })
+
+    // Verify expected log entries
+    require.Len(t, entries, 2)
+
+    // Check start log
+    assert.Equal(t, logrus.InfoLevel, entries[0].Level)
+    assert.Equal(t, "operation started", entries[0].Message)
+    assert.Equal(t, "test_operation", entries[0].Data["operation"])
+
+    // Check completion log
+    assert.Equal(t, logrus.InfoLevel, entries[1].Level)
+    assert.Equal(t, "operation completed", entries[1].Message)
+    assert.Contains(t, entries[1].Data, "duration_ms")
+}
+```
+
+## Best Practices
+
+### Performance Considerations
+```go
+// Use log levels to avoid expensive operations
+if logger.IsLevelEnabled(logrus.DebugLevel) {
+    logger.WithFields(logrus.Fields{
+        "expensive_data": generateExpensiveDebugData(),
+    }).Debug("debug information")
+}
+
+// Avoid string formatting in hot paths
+// BAD
+logger.Infof("processed %d items in %v", count, duration)
+
+// GOOD
+logger.WithFields(logrus.Fields{
+    "item_count": count,
+    "duration_ms": duration.Milliseconds(),
+}).Info("items processed")
+```
+
+### Error Correlation
+```go
+// Use correlation IDs for request tracing
+func withCorrelationID(ctx context.Context) context.Context {
+    correlationID := generateCorrelationID()
+    return context.WithValue(ctx, "correlation_id", correlationID)
+}
+
+func logWithCorrelation(ctx context.Context, level logrus.Level, msg string, fields logrus.Fields) {
+    if correlationID := ctx.Value("correlation_id"); correlationID != nil {
+        fields["correlation_id"] = correlationID
+    }
+
+    logger.WithFields(fields).Log(level, msg)
+}
+```
