@@ -54,30 +54,30 @@ func TestConfig_Validate(t *testing.T) {
 func TestConfig_Defaults(t *testing.T) {
 	config := Config{}
 	defaults := config.Defaults()
-	
+
 	require.NotNil(t, defaults)
-	
+
 	// Cast to development.Config to check values
 	devDefaults, ok := defaults.(Config)
 	require.True(t, ok)
-	
+
 	assert.Equal(t, false, devDefaults.Debug)
 	assert.Equal(t, false, devDefaults.Profile)
 }
 
 func TestDefaultConfig(t *testing.T) {
 	config := DefaultConfig()
-	
+
 	assert.Equal(t, false, config.Debug)
 	assert.Equal(t, false, config.Profile)
-	
+
 	// Validate defaults
 	require.NoError(t, config.Validate())
 }
 
 func TestConfigParser_Parse(t *testing.T) {
 	parser := ConfigParser{}
-	
+
 	tests := []struct {
 		name     string
 		raw      map[string]interface{}
@@ -108,7 +108,7 @@ func TestConfigParser_Parse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config, err := parser.Parse(tt.raw)
 			require.NoError(t, err)
-			
+
 			assert.Equal(t, tt.expected.Debug, config.Debug)
 			assert.Equal(t, tt.expected.Profile, config.Profile)
 		})

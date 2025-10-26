@@ -61,13 +61,13 @@ func TestConfig_Validate(t *testing.T) {
 func TestConfig_Defaults(t *testing.T) {
 	config := Config{}
 	defaults := config.Defaults()
-	
+
 	require.NotNil(t, defaults)
-	
+
 	// Cast to task.Config to check values
 	taskDefaults, ok := defaults.(Config)
 	require.True(t, ok)
-	
+
 	assert.Equal(t, "local", taskDefaults.Source)
 	assert.Equal(t, "manual", taskDefaults.Sync)
 	assert.Equal(t, "", taskDefaults.ProjectKey)
@@ -75,18 +75,18 @@ func TestConfig_Defaults(t *testing.T) {
 
 func TestDefaultConfig(t *testing.T) {
 	config := DefaultConfig()
-	
+
 	assert.Equal(t, "local", config.Source)
 	assert.Equal(t, "manual", config.Sync)
 	assert.Equal(t, "", config.ProjectKey)
-	
+
 	// Validate defaults
 	require.NoError(t, config.Validate())
 }
 
 func TestConfigParser_Parse(t *testing.T) {
 	parser := ConfigParser{}
-	
+
 	tests := []struct {
 		name     string
 		raw      map[string]interface{}
@@ -120,7 +120,7 @@ func TestConfigParser_Parse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config, err := parser.Parse(tt.raw)
 			require.NoError(t, err)
-			
+
 			assert.Equal(t, tt.expected.Source, config.Source)
 			assert.Equal(t, tt.expected.Sync, config.Sync)
 			assert.Equal(t, tt.expected.ProjectKey, config.ProjectKey)

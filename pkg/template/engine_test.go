@@ -50,7 +50,7 @@ func (m *MockAssetClient) Close() error {
 func TestNewEngine(t *testing.T) {
 	logger := logging.NewBasic()
 	mockAssetClient := &MockAssetClient{}
-	config := EngineConfig{
+	config := Config{
 		CacheEnabled:  true,
 		CacheTTL:      30 * time.Minute,
 		CacheSize:     100,
@@ -76,7 +76,7 @@ func TestNewEngine(t *testing.T) {
 func TestEngine_CompileTemplate(t *testing.T) {
 	logger := logging.NewBasic()
 	mockAssetClient := &MockAssetClient{}
-	config := EngineConfig{
+	config := Config{
 		CacheEnabled:  false, // Disable cache for this test
 		WorkspaceRoot: "/test/workspace",
 	}
@@ -141,7 +141,7 @@ func TestEngine_CompileTemplate(t *testing.T) {
 func TestEngine_RenderTemplate(t *testing.T) {
 	logger := logging.NewBasic()
 	mockAssetClient := &MockAssetClient{}
-	config := EngineConfig{
+	config := Config{
 		CacheEnabled:  false,
 		StrictMode:    false,
 		WorkspaceRoot: "/test/workspace",
@@ -217,7 +217,7 @@ func TestEngine_RenderTemplate(t *testing.T) {
 func TestEngine_LoadTemplate(t *testing.T) {
 	logger := logging.NewBasic()
 	mockAssetClient := &MockAssetClient{}
-	config := EngineConfig{
+	config := Config{
 		CacheEnabled:  true,
 		CacheTTL:      30 * time.Minute,
 		CacheSize:     100,
@@ -267,7 +267,7 @@ func TestEngine_LoadTemplate(t *testing.T) {
 func TestEngine_LoadTemplateWithCache(t *testing.T) {
 	logger := logging.NewBasic()
 	mockAssetClient := &MockAssetClient{}
-	config := EngineConfig{
+	config := Config{
 		CacheEnabled:  true,
 		CacheTTL:      30 * time.Minute,
 		CacheSize:     100,
@@ -313,7 +313,7 @@ func TestEngine_LoadTemplateWithCache(t *testing.T) {
 func TestEngine_ListTemplates(t *testing.T) {
 	logger := logging.NewBasic()
 	mockAssetClient := &MockAssetClient{}
-	config := EngineConfig{
+	config := Config{
 		WorkspaceRoot: "/test/workspace",
 	}
 
@@ -365,7 +365,7 @@ func TestEngine_ListTemplates(t *testing.T) {
 func TestEngine_ValidateVariables(t *testing.T) {
 	logger := logging.NewBasic()
 	mockAssetClient := &MockAssetClient{}
-	config := EngineConfig{
+	config := Config{
 		WorkspaceRoot: "/test/workspace",
 	}
 
@@ -444,7 +444,7 @@ func TestEngine_ValidateVariables(t *testing.T) {
 func TestEngine_GetFunctions(t *testing.T) {
 	logger := logging.NewBasic()
 	mockAssetClient := &MockAssetClient{}
-	config := EngineConfig{
+	config := Config{
 		WorkspaceRoot: "/test/workspace",
 	}
 
@@ -468,8 +468,8 @@ func TestEngine_GetFunctions(t *testing.T) {
 	}
 }
 
-func TestEngineConfig_Defaults(t *testing.T) {
-	config := EngineConfig{}
+func TestConfig_Defaults(t *testing.T) {
+	config := Config{}
 
 	// Test that zero values work as expected
 	assert.False(t, config.CacheEnabled)

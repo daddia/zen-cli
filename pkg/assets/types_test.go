@@ -16,8 +16,8 @@ func TestAssetClientError_Error(t *testing.T) {
 	assert.Equal(t, "asset not found", err.Error())
 }
 
-func TestDefaultAssetConfig(t *testing.T) {
-	config := DefaultAssetConfig()
+func TestDefaultConfig(t *testing.T) {
+	config := DefaultConfig()
 
 	assert.Equal(t, "main", config.Branch)
 	assert.Equal(t, "~/.zen/library", config.CachePath)

@@ -288,6 +288,9 @@ func TestJiraPluginAdapter_Interface(t *testing.T) {
 			Type:           plugin.AuthTypeBasic,
 			CredentialsRef: "jira",
 		},
+		Settings: map[string]interface{}{
+			"project_key": "TEST",
+		},
 	}
 
 	logger := logging.NewBasic()

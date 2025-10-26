@@ -58,30 +58,30 @@ func TestConfig_Validate(t *testing.T) {
 func TestConfig_Defaults(t *testing.T) {
 	config := Config{}
 	defaults := config.Defaults()
-	
+
 	require.NotNil(t, defaults)
-	
+
 	// Cast to workspace.Config to check values
 	workspaceDefaults, ok := defaults.(Config)
 	require.True(t, ok)
-	
+
 	assert.Equal(t, ".", workspaceDefaults.Root)
 	assert.Equal(t, ".zen", workspaceDefaults.ZenPath)
 }
 
 func TestDefaultConfig(t *testing.T) {
 	config := DefaultConfig()
-	
+
 	assert.Equal(t, ".", config.Root)
 	assert.Equal(t, ".zen", config.ZenPath)
-	
+
 	// Validate defaults
 	require.NoError(t, config.Validate())
 }
 
 func TestConfigParser_Parse(t *testing.T) {
 	parser := ConfigParser{}
-	
+
 	tests := []struct {
 		name     string
 		raw      map[string]interface{}
@@ -112,7 +112,7 @@ func TestConfigParser_Parse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config, err := parser.Parse(tt.raw)
 			require.NoError(t, err)
-			
+
 			assert.Equal(t, tt.expected.Root, config.Root)
 			assert.Equal(t, tt.expected.ZenPath, config.ZenPath)
 		})

@@ -92,14 +92,14 @@ func TestConfigSystemIntegration(t *testing.T) {
 			// Get current config
 			assetConfig, err := config.GetConfig(cfg, assets.ConfigParser{})
 			require.NoError(t, err)
-			
+
 			// Modify a field
 			assetConfig.Branch = "test-branch"
-			
+
 			// Set the config back
 			err = config.SetConfig(cfg, assets.ConfigParser{}, assetConfig)
 			require.NoError(t, err)
-			
+
 			// Get the config again and verify
 			updatedConfig, err := config.GetConfig(cfg, assets.ConfigParser{})
 			require.NoError(t, err)
@@ -114,10 +114,10 @@ func TestConfigArchitectureCompliance(t *testing.T) {
 		// This test would ideally use static analysis to verify
 		// that only internal/config package imports viper
 		// For now, we test that the APIs work correctly
-		
+
 		cfg := config.LoadDefaults()
 		require.NotNil(t, cfg)
-		
+
 		// Verify config file operations work
 		assert.NotEmpty(t, cfg.GetLoadedSources())
 	})
@@ -174,15 +174,15 @@ func TestConfigPerformance(t *testing.T) {
 	t.Run("Component Config Parsing Performance", func(t *testing.T) {
 		cfg := config.LoadDefaults()
 		require.NotNil(t, cfg)
-		
+
 		// Test parsing performance for each component
 		for i := 0; i < 100; i++ {
 			_, err := config.GetConfig(cfg, assets.ConfigParser{})
 			require.NoError(t, err)
-			
+
 			_, err = config.GetConfig(cfg, workspace.ConfigParser{})
 			require.NoError(t, err)
-			
+
 			_, err = config.GetConfig(cfg, cli.ConfigParser{})
 			require.NoError(t, err)
 		}

@@ -16,7 +16,7 @@ import (
 func TestNew(t *testing.T) {
 	factory := New()
 	require.NotNil(t, factory)
-	
+
 	// Test that factory has all required components
 	assert.NotNil(t, factory.Config)
 	assert.NotNil(t, factory.IOStreams)
@@ -30,11 +30,11 @@ func TestNew(t *testing.T) {
 func TestConfigFunc(t *testing.T) {
 	configFn := configFunc()
 	require.NotNil(t, configFn)
-	
+
 	cfg, err := configFn()
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
-	
+
 	// Test core config fields
 	assert.NotEmpty(t, cfg.LogLevel)
 	assert.NotEmpty(t, cfg.LogFormat)
@@ -58,13 +58,13 @@ func TestStandardConfigIntegration(t *testing.T) {
 	// Test that factory uses standard config APIs
 	cfg := config.LoadDefaults()
 	require.NotNil(t, cfg)
-	
+
 	// Test assets config
 	assetConfig, err := config.GetConfig(cfg, assets.ConfigParser{})
 	require.NoError(t, err)
 	assert.NotEmpty(t, assetConfig.RepositoryURL)
 	assert.NotEmpty(t, assetConfig.Branch)
-	
+
 	// Test auth config
 	authConfig, err := config.GetConfig(cfg, auth.ConfigParser{})
 	require.NoError(t, err)

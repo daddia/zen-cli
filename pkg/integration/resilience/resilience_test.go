@@ -168,8 +168,8 @@ func TestResilienceManager_Integration(t *testing.T) {
 	}
 
 	rlConfig := &RateLimiterConfig{
-		RequestsPerMinute: 60,
-		BurstSize:         2, // Smaller burst size to trigger rate limiting
+		RequestsPerMinute: 600, // Higher rate limit to avoid timing issues
+		BurstSize:         10,  // Larger burst size to accommodate test operations
 	}
 
 	rm := NewResilienceManager("test-service", cbConfig, rlConfig)

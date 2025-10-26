@@ -119,7 +119,7 @@ func createTestClientWithRealManifest(t *testing.T) (*Client, []AssetMetadata, f
 	manifestContent := loadTestManifest(t)
 
 	// Create client with temp directory
-	config := DefaultAssetConfig()
+	config := DefaultConfig()
 	config.CachePath = filepath.Join(tempDir, ".zen", "cache", "assets")
 
 	logger := logging.NewBasic()
@@ -462,7 +462,7 @@ func createTestClientWithCleanup() (*Client, *mockAuthProvider, *mockCacheManage
 		panic(fmt.Sprintf("Failed to change to temp directory: %v", err))
 	}
 
-	config := DefaultAssetConfig()
+	config := DefaultConfig()
 	// Use temp directory for cache to isolate tests
 	config.CachePath = filepath.Join(tempDir, ".zen", "cache", "assets")
 	logger := logging.NewBasic()
@@ -981,7 +981,7 @@ func TestClient_SyncRepository_WithRealManifest(t *testing.T) {
 	}()
 
 	// Create client with temp directory
-	config := DefaultAssetConfig()
+	config := DefaultConfig()
 	config.CachePath = filepath.Join(tempDir, ".zen", "cache", "assets")
 
 	logger := logging.NewBasic()
@@ -1046,7 +1046,7 @@ func TestClient_ListAssets_LoadsFromDisk(t *testing.T) {
 	}()
 
 	// Create client with temp directory - this will make getManifestPath point to our temp dir
-	config := DefaultAssetConfig()
+	config := DefaultConfig()
 	config.CachePath = filepath.Join(tempDir, ".zen", "cache", "assets")
 
 	logger := logging.NewBasic()

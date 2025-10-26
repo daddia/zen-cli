@@ -51,13 +51,13 @@ func TestConfig_Validate(t *testing.T) {
 func TestConfig_Defaults(t *testing.T) {
 	config := Config{}
 	defaults := config.Defaults()
-	
+
 	require.NotNil(t, defaults)
-	
+
 	// Cast to cli.Config to check values
 	cliDefaults, ok := defaults.(Config)
 	require.True(t, ok)
-	
+
 	assert.Equal(t, false, cliDefaults.NoColor)
 	assert.Equal(t, false, cliDefaults.Verbose)
 	assert.Equal(t, "text", cliDefaults.OutputFormat)
@@ -65,18 +65,18 @@ func TestConfig_Defaults(t *testing.T) {
 
 func TestDefaultConfig(t *testing.T) {
 	config := DefaultConfig()
-	
+
 	assert.Equal(t, false, config.NoColor)
 	assert.Equal(t, false, config.Verbose)
 	assert.Equal(t, "text", config.OutputFormat)
-	
+
 	// Validate defaults
 	require.NoError(t, config.Validate())
 }
 
 func TestConfigParser_Parse(t *testing.T) {
 	parser := ConfigParser{}
-	
+
 	tests := []struct {
 		name     string
 		raw      map[string]interface{}
@@ -110,7 +110,7 @@ func TestConfigParser_Parse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config, err := parser.Parse(tt.raw)
 			require.NoError(t, err)
-			
+
 			assert.Equal(t, tt.expected.NoColor, config.NoColor)
 			assert.Equal(t, tt.expected.Verbose, config.Verbose)
 			assert.Equal(t, tt.expected.OutputFormat, config.OutputFormat)
