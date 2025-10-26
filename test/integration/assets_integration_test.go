@@ -707,7 +707,7 @@ func TestAssetsIntegration_ConfigurationPrecedence(t *testing.T) {
 		streams.Out = &stdout
 
 		// Test that config commands work with assets
-		err := zencmd.Execute(ctx, []string{"config", "get", "assets.repository_url"}, streams)
+		err := zencmd.Execute(ctx, []string{"config", "get", "assets.branch"}, streams)
 		require.NoError(t, err)
 
 		output := stdout.String()
@@ -1031,7 +1031,7 @@ func TestAssetsIntegration_ComprehensiveErrorScenarios(t *testing.T) {
 				err := zencmd.Execute(ctx, tt.args, streams)
 				if tt.expectError {
 					assert.Error(t, err)
-					if tt.errorText != "" {
+					if tt.errorText != "" && err != nil {
 						errorOutput := err.Error() + stderr.String()
 						assert.Contains(t, errorOutput, tt.errorText)
 					}
