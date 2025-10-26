@@ -4,11 +4,22 @@ import (
 	"fmt"
 	"strings"
 
+	"reflect"
+	"strconv"
+	"time"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/daddia/zen/internal/config"
-	configcmd "github.com/daddia/zen/pkg/cmd/config"
+	"github.com/daddia/zen/internal/development"
+	"github.com/daddia/zen/internal/workspace"
+	"github.com/daddia/zen/pkg/assets"
+	"github.com/daddia/zen/pkg/auth"
+	"github.com/daddia/zen/pkg/cache"
+	"github.com/daddia/zen/pkg/cli"
 	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/daddia/zen/pkg/iostreams"
+	"github.com/daddia/zen/pkg/task"
+	"github.com/daddia/zen/pkg/template"
 	"github.com/spf13/cobra"
 )
 
@@ -70,7 +81,7 @@ The configuration is saved to the first available location:
 
 func setRun(opts *SetOptions) error {
 	// Parse the config key to determine component and field
-	component, field, err := configcmd.parseConfigKey(opts.Key)
+	component, field, err := parseConfigKey(opts.Key)
 	if err != nil {
 		return fmt.Errorf("invalid config key %s: %w", opts.Key, err)
 	}
@@ -81,20 +92,17 @@ func setRun(opts *SetOptions) error {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	// Create component registry
-	registry := configcmd.NewComponentRegistry()
-
 	// Handle core config separately
 	if component == "core" {
-		if err := configcmd.setCoreConfigValue(cfg, field, opts.Value); err != nil {
+		if err := setCoreConfigValue(cfg, field, opts.Value); err != nil {
 			return fmt.Errorf("failed to set core config: %w", err)
 		}
-		
+
 		// Write core config using SetValue (legacy method for core config)
 		if err := cfg.SetValue(opts.Key, opts.Value); err != nil {
 			return fmt.Errorf("failed to save core config: %w", err)
 		}
-		
+
 		fmt.Fprintf(opts.IO.Out, "✓ Set %s to %q\n", opts.Key, opts.Value)
 		return nil
 	}
@@ -129,24 +137,187 @@ func setComponentConfig[T config.Configurable](cfg *config.Config, parser config
 	if err != nil {
 		return fmt.Errorf("failed to get %s config: %w", parser.Section(), err)
 	}
-	
+
 	// Update the field
-	updatedConfig, err := configcmd.updateConfigField(componentConfig, field, value)
+	updatedConfig, err := updateConfigField(componentConfig, field, value)
 	if err != nil {
 		return fmt.Errorf("failed to update field %s: %w", field, err)
 	}
-	
+
 	// Cast back to the correct type
 	typedConfig, ok := updatedConfig.(T)
 	if !ok {
 		return fmt.Errorf("failed to cast updated config to correct type")
 	}
-	
+
 	// Set back using central config
 	if err := config.SetConfig(cfg, parser, typedConfig); err != nil {
 		return fmt.Errorf("failed to save %s config: %w", parser.Section(), err)
 	}
-	
+
 	fmt.Fprintf(io.Out, "✓ Set %s.%s to %q\n", parser.Section(), field, value)
 	return nil
+}
+
+// parseConfigKey parses a configuration key into component and field parts
+func parseConfigKey(key string) (component, field string, err error) {
+	if key == "" {
+		return "", "", fmt.Errorf("config key cannot be empty")
+	}
+
+	parts := strings.SplitN(key, ".", 2)
+
+	// Handle core config keys (no component prefix)
+	if len(parts) == 1 {
+		coreKeys := map[string]bool{
+			"log_level":  true,
+			"log_format": true,
+		}
+
+		if coreKeys[key] {
+			return "core", key, nil
+		}
+
+		return "", "", fmt.Errorf("invalid config key: %s (must be component.field or core key)", key)
+	}
+
+	component = parts[0]
+	field = parts[1]
+
+	if component == "" {
+		return "", "", fmt.Errorf("component name cannot be empty in key: %s", key)
+	}
+
+	if field == "" {
+		return "", "", fmt.Errorf("field name cannot be empty in key: %s", key)
+	}
+
+	return component, field, nil
+}
+
+// setCoreConfigValue sets a value in the core config
+func setCoreConfigValue(cfg *config.Config, field, value string) error {
+	switch field {
+	case "log_level":
+		validLevels := []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
+		valid := false
+		for _, level := range validLevels {
+			if value == level {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			return fmt.Errorf("invalid log_level: %s (must be one of: %s)", value, strings.Join(validLevels, ", "))
+		}
+		cfg.LogLevel = value
+	case "log_format":
+		validFormats := []string{"text", "json"}
+		valid := false
+		for _, format := range validFormats {
+			if value == format {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			return fmt.Errorf("invalid log_format: %s (must be one of: %s)", value, strings.Join(validFormats, ", "))
+		}
+		cfg.LogFormat = value
+	default:
+		return fmt.Errorf("unknown core config field: %s", field)
+	}
+
+	return nil
+}
+
+// updateConfigField updates a field in a configuration struct and returns the updated struct
+func updateConfigField(configStruct interface{}, fieldName, value string) (interface{}, error) {
+	// Create a copy of the struct
+	v := reflect.ValueOf(configStruct)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	if v.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("config must be a struct, got %T", configStruct)
+	}
+
+	// Create a new struct of the same type
+	newStruct := reflect.New(v.Type()).Elem()
+	newStruct.Set(v) // Copy all fields
+
+	// Convert field name to struct field name
+	structFieldName := toPascalCase(fieldName)
+
+	field := newStruct.FieldByName(structFieldName)
+	if !field.IsValid() {
+		return nil, fmt.Errorf("field %s not found in config", fieldName)
+	}
+
+	if !field.CanSet() {
+		return nil, fmt.Errorf("field %s cannot be set", fieldName)
+	}
+
+	// Set the field value based on its type
+	if err := setFieldValue(field, value); err != nil {
+		return nil, fmt.Errorf("failed to set field %s: %w", fieldName, err)
+	}
+
+	return newStruct.Interface(), nil
+}
+
+// setFieldValue sets a reflect.Value from a string value
+func setFieldValue(field reflect.Value, value string) error {
+	switch field.Kind() {
+	case reflect.String:
+		field.SetString(value)
+	case reflect.Bool:
+		boolVal, err := strconv.ParseBool(value)
+		if err != nil {
+			return fmt.Errorf("invalid boolean value: %s", value)
+		}
+		field.SetBool(boolVal)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if field.Type() == reflect.TypeOf(time.Duration(0)) {
+			duration, err := time.ParseDuration(value)
+			if err != nil {
+				return fmt.Errorf("invalid duration value: %s", value)
+			}
+			field.SetInt(int64(duration))
+		} else {
+			intVal, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid integer value: %s", value)
+			}
+			field.SetInt(intVal)
+		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		uintVal, err := strconv.ParseUint(value, 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid unsigned integer value: %s", value)
+		}
+		field.SetUint(uintVal)
+	case reflect.Float32, reflect.Float64:
+		floatVal, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return fmt.Errorf("invalid float value: %s", value)
+		}
+		field.SetFloat(floatVal)
+	default:
+		return fmt.Errorf("unsupported field type: %s", field.Kind())
+	}
+
+	return nil
+}
+
+// toPascalCase converts snake_case to PascalCase
+func toPascalCase(s string) string {
+	parts := strings.Split(s, "_")
+	for i, part := range parts {
+		if len(part) > 0 {
+			parts[i] = strings.ToUpper(part[:1]) + strings.ToLower(part[1:])
+		}
+	}
+	return strings.Join(parts, "")
 }
