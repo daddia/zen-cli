@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/daddia/zen/internal/config"
-	"github.com/daddia/zen/internal/logging"
 	"github.com/daddia/zen/pkg/assets"
 	"github.com/daddia/zen/pkg/auth"
 	"github.com/daddia/zen/pkg/cmdutil"
@@ -42,12 +41,7 @@ func TestConfigFunc(t *testing.T) {
 
 func TestAssetClientFunctionality(t *testing.T) {
 	streams := iostreams.Test()
-	f := &cmdutil.Factory{
-		IOStreams: streams,
-		Config:    configFunc(),
-		Logger:    logging.NewBasic(),
-	}
-	f.AuthManager = authFunc(f)
+	f := cmdutil.NewTestFactory(streams)
 
 	client, err := f.AssetClient()
 	require.NoError(t, err)

@@ -34,15 +34,9 @@ func TestNewCmdTask(t *testing.T) {
 	_, _, err = cmd.Find([]string{"sync"})
 	assert.Error(t, err) // Should error because sync command doesn't exist
 
-	// Check flags for direct operations
-	typeFlag := cmd.Flags().Lookup("type")
-	require.NotNil(t, typeFlag)
-
-	fromFlag := cmd.Flags().Lookup("from")
-	require.NotNil(t, fromFlag)
-
-	forceFlag := cmd.Flags().Lookup("force")
-	require.NotNil(t, forceFlag)
+	// Main task command doesn't have flags - they're on subcommands
+	// Check that main command has no flags
+	assert.False(t, cmd.Flags().HasFlags())
 }
 
 func TestTaskCommandHelp(t *testing.T) {
