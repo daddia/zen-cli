@@ -24,14 +24,14 @@ type Engine struct {
 	cache     CacheManager
 
 	// Configuration
-	config EngineConfig
+	config Config
 
 	// Internal state (mutex for concurrent template operations)
 	mu sync.RWMutex //nolint:unused // Used for concurrent safety in template operations
 }
 
-// EngineConfig configures the template engine
-type EngineConfig struct {
+// Config configures the template engine
+type Config struct {
 	CacheEnabled  bool          `json:"cache_enabled" yaml:"cache_enabled"`
 	CacheTTL      time.Duration `json:"cache_ttl" yaml:"cache_ttl"`
 	CacheSize     int           `json:"cache_size" yaml:"cache_size"`
@@ -44,9 +44,9 @@ type EngineConfig struct {
 	WorkspaceRoot string `json:"workspace_root" yaml:"workspace_root"`
 }
 
-// DefaultEngineConfig returns default template engine configuration
-func DefaultEngineConfig() EngineConfig {
-	cfg := EngineConfig{
+// DefaultConfig returns default template engine configuration
+func DefaultConfig() Config {
+	cfg := Config{
 		CacheEnabled:  true,
 		CacheTTL:      30 * time.Minute,
 		CacheSize:     100,
@@ -62,7 +62,7 @@ func DefaultEngineConfig() EngineConfig {
 // Implement config.Configurable interface
 
 // Validate validates the template engine configuration
-func (c EngineConfig) Validate() error {
+func (c Config) Validate() error {
 	if c.CacheSize < 0 {
 		return fmt.Errorf("cache_size must be non-negative")
 	}
@@ -78,18 +78,18 @@ func (c EngineConfig) Validate() error {
 	return nil
 }
 
-// Defaults returns a new EngineConfig with default values
-func (c EngineConfig) Defaults() config.Configurable {
-	return DefaultEngineConfig()
+// Defaults returns a new Config with default values
+func (c Config) Defaults() config.Configurable {
+	return DefaultConfig()
 }
 
-// ConfigParser implements config.ConfigParser[EngineConfig] interface
+// ConfigParser implements config.ConfigParser[Config] interface
 type ConfigParser struct{}
 
-// Parse converts raw configuration data to EngineConfig
-func (p ConfigParser) Parse(raw map[string]interface{}) (EngineConfig, error) {
+// Parse converts raw configuration data to Config
+func (p ConfigParser) Parse(raw map[string]interface{}) (Config, error) {
 	// Start with defaults to ensure all fields are properly initialized
-	cfg := DefaultEngineConfig()
+	cfg := DefaultConfig()
 
 	// If raw data is empty, return defaults
 	if len(raw) == 0 {
@@ -124,7 +124,7 @@ func (p ConfigParser) Section() string {
 func NewEngine(
 	logger logging.Logger,
 	assetClient assets.AssetClientInterface,
-	config EngineConfig,
+	config Config,
 ) *Engine {
 	// Initialize components
 	loader := NewAssetLoader(assetClient, logger)
