@@ -259,8 +259,7 @@ func TestInitialize_ExistingWorkspace_WithForce(t *testing.T) {
 func TestInitialize_WithGitIgnore(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	configFile := filepath.Join(tempDir, "zen.yaml")
-	manager := New(tempDir, configFile, logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	// Create existing .gitignore
 	gitignorePath := filepath.Join(tempDir, ".gitignore")
@@ -283,8 +282,7 @@ func TestInitialize_WithGitIgnore(t *testing.T) {
 func TestInitialize_GitIgnoreAlreadyHasZen(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	configFile := filepath.Join(tempDir, "zen.yaml")
-	manager := New(tempDir, configFile, logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	// Create .gitignore that already has .zen
 	gitignorePath := filepath.Join(tempDir, ".gitignore")
@@ -335,8 +333,7 @@ func TestStatus_Initialized(t *testing.T) {
 func TestStatus_WithProjectDetection(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	configFile := filepath.Join(tempDir, "zen.yaml")
-	manager := New(tempDir, configFile, logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	// Create a Go project
 	goMod := `module github.com/test/project
@@ -412,8 +409,7 @@ func BenchmarkInitialize(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
 		tempDir := b.TempDir()
-		configFile := filepath.Join(tempDir, "zen.yaml")
-		manager := New(tempDir, configFile, logger)
+		manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 		b.StartTimer()
 
 		err := manager.Initialize(false)
