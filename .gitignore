@@ -1,6 +1,6 @@
 # .gitignore
 
-# Zen CLI workspace directory
+# Zen CLI
 .zen/
 
 # Backup files

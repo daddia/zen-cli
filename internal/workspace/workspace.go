@@ -396,19 +396,23 @@ func (m *Manager) GetWorkTypeDirectories() []string {
 	return dirs
 }
 
-// updateGitignore adds .zen directory to .gitignore if it exists
+// updateGitignore adds .zen directory to .gitignore, creating it if necessary
 func (m *Manager) updateGitignore() error {
 	gitignorePath := filepath.Join(m.config.Root, ".gitignore")
 
-	// Check if .gitignore exists
-	if _, err := os.Stat(gitignorePath); os.IsNotExist(err) {
-		return nil // No .gitignore file
-	}
+	var content []byte
 
-	// Read existing .gitignore
-	content, err := os.ReadFile(gitignorePath)
-	if err != nil {
-		return err
+	// Read existing .gitignore or start with empty content
+	if _, err := os.Stat(gitignorePath); os.IsNotExist(err) {
+		// No .gitignore exists, start with empty content
+		content = []byte("")
+	} else {
+		// Read existing .gitignore
+		var err error
+		content, err = os.ReadFile(gitignorePath) // #nosec G304 - reading .gitignore from workspace root
+		if err != nil {
+			return err
+		}
 	}
 
 	contentStr := string(content)
@@ -426,7 +430,13 @@ func (m *Manager) updateGitignore() error {
 	if !strings.HasSuffix(contentStr, "\n") && len(contentStr) > 0 {
 		contentStr += "\n"
 	}
-	contentStr += "\n# Zen CLI workspace directory\n.zen/\n"
+
+	// Add Zen CLI section
+	if len(contentStr) > 0 {
+		contentStr += "\n# Zen CLI workspace directory\n.zen/\n"
+	} else {
+		contentStr = "# Zen CLI workspace directory\n.zen/\n"
+	}
 
 	return os.WriteFile(gitignorePath, []byte(contentStr), 0644)
 }

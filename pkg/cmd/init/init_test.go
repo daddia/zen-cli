@@ -1101,3 +1101,4 @@ func BenchmarkSetupAssetsInfrastructure(b *testing.B) {
 		os.Chdir(oldWd)
 	}
 }
+
