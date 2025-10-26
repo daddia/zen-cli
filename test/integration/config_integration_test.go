@@ -1,7 +1,11 @@
+//go:build integration
+// +build integration
+
 package integration_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/pkg/assets"
@@ -89,16 +93,19 @@ func TestStandardConfigInterfaces(t *testing.T) {
 
 // TestConfigSetAndGet tests setting and getting configuration values
 func TestConfigSetAndGet(t *testing.T) {
-	cfg := config.LoadDefaults()
+	// Use Load() instead of LoadDefaults() to enable file discovery
+	cfg, err := config.Load()
+	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
 	t.Run("Set and Get Asset Config", func(t *testing.T) {
 		// Create a custom asset config
-		customConfig := assets.AssetConfig{
+		customConfig := assets.Config{
 			RepositoryURL:          "https://github.com/test/repo.git",
 			Branch:                 "test-branch",
 			CachePath:              "/tmp/test-cache",
 			CacheSizeMB:            200,
+			DefaultTTL:             time.Hour * 12,
 			AuthProvider:           "github",
 			SyncTimeoutSeconds:     60,
 			MaxConcurrentOps:       5,
@@ -128,7 +135,7 @@ func TestConfigSetAndGet(t *testing.T) {
 // TestConfigValidation tests configuration validation
 func TestConfigValidation(t *testing.T) {
 	t.Run("Invalid Asset Config", func(t *testing.T) {
-		invalidConfig := assets.AssetConfig{
+		invalidConfig := assets.Config{
 			// Missing required fields
 			RepositoryURL: "", // Required field
 			Branch:        "",
