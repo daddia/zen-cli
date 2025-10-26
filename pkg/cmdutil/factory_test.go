@@ -124,7 +124,7 @@ func TestTestWorkspaceManager(t *testing.T) {
 	wm := &testWorkspaceManager{initialized: false, shouldError: false}
 
 	assert.Equal(t, ".", wm.Root())
-	assert.Equal(t, ".zen/config.yaml", wm.ConfigFile())
+	assert.Equal(t, ".zen/config", wm.ConfigFile())
 
 	// Test initialization
 	err := wm.Initialize()
