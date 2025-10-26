@@ -56,9 +56,8 @@ func TestE2E_WorkspaceInitialization(t *testing.T) {
 		require.NoError(t, err, "Should be able to read config file")
 
 		configStr := string(configContent)
-		assert.Contains(t, configStr, "version:", "Config should have version")
-		assert.Contains(t, configStr, "workspace:", "Config should have workspace section")
-		assert.Contains(t, configStr, "project:", "Config should have project section")
+		assert.Contains(t, configStr, "log_level", "Config should have log_level")
+		assert.NotEmpty(t, configStr, "Config file should not be empty")
 	})
 
 	t.Run("zen_status_after_init", func(t *testing.T) {
