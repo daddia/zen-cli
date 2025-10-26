@@ -305,16 +305,6 @@ func IsValidationError(err error) bool {
 	return ok
 }
 
-// contains checks if a slice contains a string
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
-}
-
 // Manager Interface Implementation
 
 // GetConfig retrieves typed configuration for a component using the standard interface
