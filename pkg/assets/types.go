@@ -197,32 +197,32 @@ type ManifestParser interface {
 	Validate(ctx context.Context, content []byte) error
 }
 
-// AssetConfig represents asset client configuration
-type AssetConfig struct {
+// Config represents asset client configuration
+type Config struct {
 	// Repository configuration
-	RepositoryURL string `yaml:"repository_url" json:"repository_url"`
-	Branch        string `yaml:"branch" json:"branch"`
+	RepositoryURL string `yaml:"repository_url" json:"repository_url" mapstructure:"repository_url"`
+	Branch        string `yaml:"branch" json:"branch" mapstructure:"branch"`
 
 	// Cache configuration
-	CachePath   string        `yaml:"cache_path" json:"cache_path"`
-	CacheSizeMB int64         `yaml:"cache_size_mb" json:"cache_size_mb"`
-	DefaultTTL  time.Duration `yaml:"default_ttl" json:"default_ttl"`
+	CachePath   string        `yaml:"cache_path" json:"cache_path" mapstructure:"cache_path"`
+	CacheSizeMB int64         `yaml:"cache_size_mb" json:"cache_size_mb" mapstructure:"cache_size_mb"`
+	DefaultTTL  time.Duration `yaml:"default_ttl" json:"default_ttl" mapstructure:"default_ttl"`
 
 	// Authentication configuration
-	AuthProvider string `yaml:"auth_provider" json:"auth_provider"`
+	AuthProvider string `yaml:"auth_provider" json:"auth_provider" mapstructure:"auth_provider"`
 
 	// Performance configuration
-	SyncTimeoutSeconds int `yaml:"sync_timeout_seconds" json:"sync_timeout_seconds"`
-	MaxConcurrentOps   int `yaml:"max_concurrent_ops" json:"max_concurrent_ops"`
+	SyncTimeoutSeconds int `yaml:"sync_timeout_seconds" json:"sync_timeout_seconds" mapstructure:"sync_timeout_seconds"`
+	MaxConcurrentOps   int `yaml:"max_concurrent_ops" json:"max_concurrent_ops" mapstructure:"max_concurrent_ops"`
 
 	// Feature flags
-	IntegrityChecksEnabled bool `yaml:"integrity_checks_enabled" json:"integrity_checks_enabled"`
-	PrefetchEnabled        bool `yaml:"prefetch_enabled" json:"prefetch_enabled"`
+	IntegrityChecksEnabled bool `yaml:"integrity_checks_enabled" json:"integrity_checks_enabled" mapstructure:"integrity_checks_enabled"`
+	PrefetchEnabled        bool `yaml:"prefetch_enabled" json:"prefetch_enabled" mapstructure:"prefetch_enabled"`
 }
 
-// DefaultAssetConfig returns default asset client configuration
-func DefaultAssetConfig() AssetConfig {
-	return AssetConfig{
+// DefaultConfig returns default asset client configuration
+func DefaultConfig() Config {
+	return Config{
 		RepositoryURL:          "https://github.com/daddia/zen-assets.git", // Default official repository
 		Branch:                 "main",
 		CachePath:              "~/.zen/library",
@@ -239,7 +239,7 @@ func DefaultAssetConfig() AssetConfig {
 // Implement config.Configurable interface
 
 // Validate validates the asset configuration
-func (c AssetConfig) Validate() error {
+func (c Config) Validate() error {
 	if c.RepositoryURL == "" {
 		return fmt.Errorf("repository_url is required")
 	}
@@ -261,18 +261,18 @@ func (c AssetConfig) Validate() error {
 	return nil
 }
 
-// Defaults returns a new AssetConfig with default values
-func (c AssetConfig) Defaults() config.Configurable {
-	return DefaultAssetConfig()
+// Defaults returns a new Config with default values
+func (c Config) Defaults() config.Configurable {
+	return DefaultConfig()
 }
 
-// ConfigParser implements config.ConfigParser[AssetConfig] interface
+// ConfigParser implements config.ConfigParser[Config] interface
 type ConfigParser struct{}
 
-// Parse converts raw configuration data to AssetConfig
-func (p ConfigParser) Parse(raw map[string]interface{}) (AssetConfig, error) {
+// Parse converts raw configuration data to Config
+func (p ConfigParser) Parse(raw map[string]interface{}) (Config, error) {
 	// Start with defaults to ensure all fields are properly initialized
-	cfg := DefaultAssetConfig()
+	cfg := DefaultConfig()
 
 	// If raw data is empty, return defaults
 	if len(raw) == 0 {

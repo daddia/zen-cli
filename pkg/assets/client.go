@@ -17,7 +17,7 @@ import (
 
 // Client implements AssetClientInterface
 type Client struct {
-	config AssetConfig
+	config Config
 	logger logging.Logger
 	auth   AuthProvider
 	cache  CacheManager
@@ -40,7 +40,7 @@ type Client struct {
 }
 
 // NewClient creates a new asset client
-func NewClient(config AssetConfig, logger logging.Logger, auth AuthProvider, cache CacheManager, gitRepo git.Repository, parser ManifestParser) *Client {
+func NewClient(config Config, logger logging.Logger, auth AuthProvider, cache CacheManager, gitRepo git.Repository, parser ManifestParser) *Client {
 	return &Client{
 		config: config,
 		logger: logger,
@@ -52,7 +52,7 @@ func NewClient(config AssetConfig, logger logging.Logger, auth AuthProvider, cac
 }
 
 // NewClientWithHTTP creates a new asset client with HTTP-based file fetching
-func NewClientWithHTTP(config AssetConfig, logger logging.Logger, auth AuthProvider, cache CacheManager, httpClient *HTTPManifestClient, parser ManifestParser) *Client {
+func NewClientWithHTTP(config Config, logger logging.Logger, auth AuthProvider, cache CacheManager, httpClient *HTTPManifestClient, parser ManifestParser) *Client {
 	return &Client{
 		config: config,
 		logger: logger,
