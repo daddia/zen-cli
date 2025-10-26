@@ -116,8 +116,10 @@ func statusRun(opts *StatusOptions) error {
 		return displayStatusJSON(opts, status)
 	case "yaml":
 		return displayStatusYAML(opts, status)
-	default:
+	case "text", "":
 		return displayStatusText(opts, status)
+	default:
+		return fmt.Errorf("invalid output format '%s': supported formats are text, json, yaml", opts.OutputFormat)
 	}
 }
 
