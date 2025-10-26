@@ -11,7 +11,7 @@ graph TB
     subgraph "Command Layer Components"
         Factory[Factory<br/>Dependency Injection]
         RootCmd[Root Command<br/>Global Config]
-        SubCmds[Subcommands<br/>version, init, config, status]
+        SubCmds[Subcommands<br/>init, config, status, version, auth, assets, task, draft]
         IOStreams[IO Streams<br/>Input/Output Abstraction]
     end
     
@@ -50,53 +50,85 @@ graph TB
 
 #### Factory Component
 ```go
-type Factory interface {
-    IOStreams() *iostreams.IOStreams
-    Config() (*config.Config, error)
-    Logger() logging.Logger
-    WorkspaceManager() (WorkspaceManager, error)
-    AgentManager() (AgentManager, error)
+type Factory struct {
+    IOStreams        *iostreams.IOStreams
+    Config          func() (*config.Config, error)
+    Logger          logging.Logger
+    WorkspaceManager func() (WorkspaceManager, error)
+    TemplateEngine   func() (TemplateEngine, error)
+    Verbose         bool
+    ConfigFile      string
+    DryRun          bool
 }
 ```
-- **Pattern**: Abstract Factory
-- **Purpose**: Centralized dependency injection
+- **Pattern**: Concrete Factory with Dependency Injection
+- **Purpose**: Centralized dependency management and configuration
 - **Benefits**: Testability, lazy initialization, clean dependencies
 
 #### Command Components
-- **Root Command**: Global flags, help system, subcommand routing
+
+**Core Commands** (Fully Implemented):
+- **Root Command**: Global flags, help system, subcommand routing with command groups
+- **Init Command**: Workspace setup, configuration initialization, project detection
+- **Config Command**: Configuration management (get, set, list) with typed configuration
+- **Status Command**: System health, integration status, workspace validation
 - **Version Command**: Build info, dependencies, platform details
-- **Init Command**: Workspace setup, configuration initialization
-- **Config Command**: Configuration management (get, set, list)
-- **Status Command**: System health, integration status
+- **Completion Command**: Shell completion script generation
+
+**Integration Commands** (Implemented):
+- **Auth Command**: Authentication management for external systems
+- **Assets Command**: Asset library management (auth, info, list, status, sync)
+- **Task Command**: Task management with Zenflow workflow (create subcommand)
+
+**Utility Commands** (Implemented):
+- **Draft Command**: Content generation utilities using template engine
+
+#### Command Architecture
+```go
+// Factory pattern for dependency injection
+type Factory struct {
+    IOStreams        *iostreams.IOStreams
+    Config          func() (*config.Config, error)
+    Logger          logging.Logger
+    WorkspaceManager func() (WorkspaceManager, error)
+    TemplateEngine   func() (TemplateEngine, error)
+    Verbose         bool
+    ConfigFile      string
+    DryRun          bool
+}
+```
 
 ### Core Services (`internal/`)
 
 #### Configuration Components
 ```mermaid
 classDiagram
-    class ConfigLoader {
-        +Load() Config
-        +Validate() error
-        -loadFromFile()
-        -loadFromEnv()
-        -loadFromFlags()
-    }
-    
-    class ConfigValidator {
-        +Validate(config) error
-        +ValidateField(field) error
-        -rules map
-    }
-    
     class Config {
         +LogLevel string
         +LogFormat string
-        +CLI CLIConfig
-        +Workspace WorkspaceConfig
+        +Integrations IntegrationsConfig
+        +Work WorkConfig
+        +viper *viper.Viper
+        +Load() *Config
+        +LoadWithCommand(cmd) *Config
+        +GetConfig[T](parser) T
+        +SetConfig[T](parser, config) error
     }
     
-    ConfigLoader --> Config
-    ConfigLoader --> ConfigValidator
+    class Configurable {
+        <<interface>>
+        +Validate() error
+        +Defaults() Configurable
+    }
+    
+    class ConfigParser {
+        <<interface>>
+        +Parse(raw) T
+        +Section() string
+    }
+    
+    Config --> Configurable
+    Config --> ConfigParser
 ```
 
 #### Logging Components
@@ -105,145 +137,153 @@ classDiagram
 - **Formatters**: Text and JSON output formatters
 - **Hooks**: Custom log processing hooks
 
-### AI Agent System (`internal/agents/`)
+### AI Agent System (Future Implementation)
 
-#### Agent Manager
-```mermaid
-stateDiagram-v2
-    [*] --> Initialize
-    Initialize --> SelectProvider
-    SelectProvider --> LoadPrompt
-    LoadPrompt --> ExecuteRequest
-    ExecuteRequest --> ProcessResponse
-    ProcessResponse --> FormatOutput
-    FormatOutput --> [*]
-    
-    ExecuteRequest --> HandleError: Error
-    HandleError --> RetryLogic
-    RetryLogic --> ExecuteRequest: Retry
-    RetryLogic --> FormatOutput: Max Retries
+**Status**: Planned for future implementation
+
+The AI Agent System is designed to provide LLM orchestration and management capabilities. This system is referenced in the architecture but not yet implemented in the current codebase.
+
+#### Planned Components
+- **Agent Manager**: LLM orchestration and lifecycle management
+- **Provider Factory**: Multi-provider AI support (OpenAI, Anthropic, Azure)
+- **Prompt Engine**: Template management for AI interactions
+- **Context Manager**: Conversation state and token management
+- **Token Counter**: Usage tracking and optimization
+
+#### Implementation Status
+- **Current**: Configuration placeholders exist in config system
+- **Next Phase**: Core agent infrastructure and provider interfaces
+- **Future**: Advanced features like context management and prompt optimization
+
+### Zenflow Engine (Conceptual Implementation)
+
+**Status**: Conceptual framework implemented through task management
+
+The Zenflow Engine represents Zen's 7-stage unified workflow methodology. Currently implemented through the task management system with structured directories and templates.
+
+#### Current Implementation
+- **Task Structure**: Organized directories for each workflow stage
+- **Task Types**: Different workflows optimized for story, bug, epic, spike, task
+- **Template System**: Stage-specific templates and documentation
+- **Metadata Management**: YAML-based task configuration and state
+
+#### Zenflow Stages (Implemented via Task Structure)
+1. **Align**: Define success criteria and stakeholder alignment
+2. **Discover**: Gather evidence and validate assumptions  
+3. **Prioritize**: Rank work by value vs effort
+4. **Design**: Specify implementation approach
+5. **Build**: Deliver working software increment
+6. **Ship**: Deploy safely to production
+7. **Learn**: Measure outcomes and iterate
+
+#### Task Directory Structure
+```
+.zen/work/tasks/<task-id>/
+├── index.md              # Human-readable overview
+├── manifest.yaml         # Machine-readable metadata
+├── .taskrc.yaml         # Task-specific configuration
+├── research/            # Stage 1-2: Align & Discover
+├── spikes/              # Stage 2-3: Discover & Prioritize
+├── design/              # Stage 4: Design
+├── execution/           # Stage 5: Build
+└── outcomes/            # Stage 6-7: Ship & Learn
 ```
 
-#### Provider Components
-- **Provider Interface**: Common LLM interface
-- **OpenAI Provider**: OpenAI API implementation
-- **Anthropic Provider**: Claude API implementation  
-- **Azure Provider**: Azure OpenAI implementation
-- **Local Provider**: Local model support
+#### Integration with External Systems
+- **Jira Integration**: Sync task metadata and status
+- **GitHub Integration**: Link with issues and pull requests
+- **Template Engine**: Generate stage-specific content
 
-#### Context Management
-```go
-type ContextManager struct {
-    conversations map[string]*Conversation
-    maxTokens     int
-    windowSize    int
-}
+### Integration Components (`internal/integration/`, `pkg/clients/`)
 
-type Conversation struct {
-    ID       string
-    Messages []Message
-    Tokens   int
-    Metadata map[string]interface{}
-}
-```
+#### Current Implementation
 
-### Zenflow Engine (`internal/workflow/`)
+**Integration Service** (`internal/integration/service.go`):
+- Centralized integration management
+- Provider registration and lifecycle
+- Data mapping between external systems and Zen format
 
-The Zenflow Engine orchestrates the 7-stage unified workflow that standardizes how teams move from strategy to shipped value. For detailed documentation, see the [Zenflow Guide](../../zen-workflow/).
+**Client Libraries** (`pkg/clients/`):
+- **Jira Client**: Task synchronization, metadata management, connection validation
+- **Git Client**: Repository operations and version control integration
+- **HTTP Client**: Generic HTTP client for API interactions
 
-```mermaid
-graph LR
-    subgraph "Zenflow Components"
-        StateMachine[State Machine<br/>Transition Logic]
-        StateStore[State Store<br/>Persistence]
-        Executor[Stage Executor<br/>Stage Processing]
-        Validator[Quality Gates<br/>Stage Validation]
-    end
-    
-    subgraph "Zenflow Stages"
-        S1[1. Align<br/>Define Success]
-        S2[2. Discover<br/>Gather Evidence]
-        S3[3. Prioritize<br/>Rank by Value]
-        S4[4. Design<br/>Specify Solution]
-        S5[5. Build<br/>Implement]
-        S6[6. Ship<br/>Deploy Safely]
-        S7[7. Learn<br/>Measure Outcomes]
-    end
-    
-    StateMachine --> StateStore
-    StateMachine --> Executor
-    Executor --> Validator
-    
-    S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7
-    S7 -.-> S1
-```
-
-#### Key Features
-- **Cross-functional support**: Product managers, designers, engineers, and analysts use the same workflow
-- **Quality gates**: Automated and manual checkpoints ensure standards before progression
-- **Workflow streams**: Specialized implementations (I2D, C2M, D2S) for different work types
-- **State persistence**: Reliable state storage with crash recovery capabilities
-
-### Integration Components (`internal/integrations/`)
-
-#### Plugin Architecture
+#### Integration Architecture
 ```mermaid
 classDiagram
-    class IntegrationPlugin {
+    class IntegrationService {
+        +GetProvider(name) Provider
+        +RegisterProvider(Provider)
+        +IsConfigured() bool
+        +GetTaskSystem() string
+    }
+    
+    class JiraClient {
+        +FetchTask(TaskID) TaskData
+        +CreateMetadataFile(TaskData)
+        +ValidateConnection() error
+        +IsConfigured() bool
+    }
+    
+    class Provider {
         <<interface>>
-        +Name() string
-        +Connect() error
-        +Execute(action) Result
-        +Disconnect() error
+        +ValidateConnection(ctx) error
+        +GetTaskData(ctx, id) ExternalTaskData
+        +MapToZen(ExternalTaskData) ZenTaskData
     }
     
-    class JiraPlugin {
-        +Connect() error
-        +CreateIssue() Issue
-        +UpdateIssue() error
-        +QueryIssues() []Issue
-    }
-    
-    class GitHubPlugin {
-        +Connect() error
-        +CreatePR() PullRequest
-        +ListIssues() []Issue
-        +CreateRelease() Release
-    }
-    
-    class SlackPlugin {
-        +Connect() error
-        +SendMessage() error
-        +PostToChannel() error
-    }
-    
-    IntegrationPlugin <|-- JiraPlugin
-    IntegrationPlugin <|-- GitHubPlugin
-    IntegrationPlugin <|-- SlackPlugin
+    IntegrationService --> Provider
+    JiraClient --> IntegrationService
 ```
 
-### Template Engine (`internal/templates/`)
+#### Supported Integrations
+- **Jira**: Issue tracking and task management
+  - Task fetching and synchronization
+  - Metadata file generation
+  - Status and priority mapping
+- **GitHub**: Repository and issue management (planned)
+- **Git**: Local repository operations
+
+### Template Engine (`pkg/template/`)
+
+#### Current Implementation
+
+**Template Engine** (`pkg/template/engine.go`):
+- Asset-based template loading via Asset Client
+- Go template compilation with custom functions
+- Variable validation and default value application
+- Caching system for compiled templates
+- Configurable delimiters and strict mode
 
 #### Template Components
-- **Template Registry**: Template discovery and management
-- **Parser**: Go template parsing with custom functions
-- **Executor**: Template execution with context
-- **Custom Functions**: Domain-specific template functions
-
 ```go
-type TemplateEngine struct {
-    registry  *TemplateRegistry
-    parser    *template.Template
-    functions template.FuncMap
+type Engine struct {
+    logger    logging.Logger
+    loader    TemplateLoader      // Asset-based template loading
+    validator VariableValidator   // Variable validation and defaults
+    functions FunctionRegistry    // Custom template functions
+    cache     CacheManager       // Template caching
+    config    Config            // Engine configuration
 }
 
 type Template struct {
-    Name     string
-    Content  string
-    Type     TemplateType
-    Metadata map[string]interface{}
+    Name       string
+    Content    string
+    Compiled   *template.Template
+    Metadata   *TemplateMetadata
+    Variables  []VariableSpec
+    CompiledAt time.Time
+    Checksum   string
 }
 ```
+
+#### Key Features
+- **Asset Integration**: Templates loaded from Asset Library
+- **Variable Validation**: Type checking and required field validation
+- **Custom Functions**: Zen-specific template functions (file operations, formatting)
+- **Caching**: Memory-based caching with TTL
+- **Error Handling**: Detailed error reporting with error codes
+- **Concurrent Safety**: Thread-safe template operations
 
 ## Component Interactions
 

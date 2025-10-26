@@ -28,20 +28,22 @@ This command will:
 - Set up default workflow templates
 - Initialize version control integration
 
-### Step 2: Configure AI Provider
+### Step 2: Configure External Integrations (Optional)
 
-Set up your preferred AI provider:
+Set up integrations with external systems:
 
 ```bash
-# Configure OpenAI
-zen config set provider openai
-zen config set openai.api_key "sk-..."
-zen config set openai.model "gpt-4"
+# Configure Jira integration
+zen config set integrations.providers.jira.url "https://company.atlassian.net"
+zen config set integrations.providers.jira.project_key "PROJ"
 
-# Or configure Anthropic
-zen config set provider anthropic
-zen config set anthropic.api_key "sk-ant-..."
-zen config set anthropic.model "claude-3-opus"
+# Authenticate with external systems
+zen auth setup jira
+
+# Configure GitHub integration (if needed)
+zen config set integrations.providers.github.owner "company"
+zen config set integrations.providers.github.repo "project"
+zen auth setup github
 ```
 
 Verify configuration:
@@ -60,58 +62,70 @@ zen status
 
 Expected output:
 ```
-Project: my-project
-Status: Ready
-Provider: openai (configured)
-Workspace: /path/to/my-project
-Templates: 12 available
+Workspace Status
+================
+✓ Configuration: Valid
+  - Log level: info
+  - Output format: text
+
+✓ Assets: Ready
+  - Library: Synced
+  - Cache: 42MB
+
+✓ Integration: Configured
+  - Jira: Connected (PROJ)
+  - GitHub: Not configured
 ```
 
 ## Core Workflows
 
-### Product Development
+### Task Management
 
-Create and manage product features:
+Create and manage tasks with structured workflows:
 
 ```bash
-# Generate a product requirements document
-zen product create "User Authentication System"
+# Create a new task
+zen task create PROJ-123 --title "Implement user authentication" --type story
 
-# Analyze market fit
-zen product analyze --market-fit
+# Create task from external system
+zen task create JIRA-456 --from jira
 
-# Create technical specification
-zen product spec --technical
+# Create with additional metadata
+zen task create FEAT-789 --title "Dashboard redesign" --owner "jane.doe" --team "frontend"
 ```
 
-### Code Generation
+### Asset Library
 
-Generate code with AI assistance:
+Access and manage templates and assets:
 
 ```bash
-# Generate code from description
-zen code generate "REST API endpoint for user login"
+# Authenticate with asset library
+zen assets auth
 
-# Generate with specific framework
-zen code generate "React component for data table" --framework react
+# List available assets
+zen assets list
 
-# Generate tests
-zen code test "src/auth/login.go"
+# Get asset information
+zen assets info template/task-index
+
+# Sync asset library
+zen assets sync
 ```
 
-### Workflow Automation
+### Configuration Management
 
-Run predefined workflows:
+Manage Zen configuration:
 
 ```bash
-# List available workflows
-zen workflow list
+# View current configuration
+zen config list
 
-# Run development workflow
-zen workflow run development
+# Set configuration values
+zen config set log_level debug
+zen config set integrations.providers.jira.url "https://company.atlassian.net"
 
-# Run with specific parameters
-zen workflow run ci-cd --env production
+# Get specific values
+zen config get log_level
 ```
 
 ## Essential Commands

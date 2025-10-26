@@ -8,6 +8,7 @@ New to Zen? Start here:
 
 - **[Installation Guide](getting-started/installation.md)** - Get Zen up and running
 - **[Quick Start](getting-started/quick-start.md)** - Your first 5 minutes with Zen
+- **[User Guide](user-guide/README.md)** - Complete workflows and usage patterns
 - **[Configuration](getting-started/configuration.md)** - Configure Zen for your needs
 
 ## Documentation Sections
@@ -18,8 +19,16 @@ Complete guide for using Zen CLI:
 
 - **[Getting Started Index](getting-started/README.md)** - Full user documentation
 - **[Installation](getting-started/installation.md)** - Installation methods and troubleshooting
-- **[Quick Start](getting-started/quick-start.md)** - Get started quickly
+- **[Quick Start](getting-started/quick-start.md)** - Get up and running in 5 minutes
 - **[Configuration](getting-started/configuration.md)** - Configuration reference
+
+### User Guide
+
+Complete workflows and usage patterns:
+
+- **[User Guide Overview](user-guide/README.md)** - Complete user documentation
+- **[Task Management](user-guide/task-management.md)** - Zenflow methodology and task workflows
+- **[Integration Guide](user-guide/integrations.md)** - Connect with external tools (Jira, GitHub, etc.)
 
 ### Contributing
 
@@ -31,11 +40,20 @@ Want to contribute to Zen?
 - **[Testing Guide](contributing/testing.md)** - Writing and running tests
 - **[Code Review](contributing/code-review.md)** - Pull request process
 
+### API Documentation
+
+Comprehensive API reference for developers:
+
+- **[API Overview](api/README.md)** - Complete API documentation
+- **[Configuration API](api/config.md)** - Type-safe configuration management
+- **[Template Engine API](api/template-engine.md)** - Template compilation and rendering
+
 ### Architecture & Design
 
 Technical architecture and design decisions:
 
-- **[Architecture Overview](architecture/overview.md)** - System design and components
+- **[Architecture Overview](architecture/README.md)** - System design and components
+- **[Component View](architecture/views/components.md)** - Detailed component architecture
 - **[Architecture Decisions](architecture/decisions/register.md)** - ADR register
 
 ### Design System
@@ -43,9 +61,9 @@ Technical architecture and design decisions:
 UI/UX design guidelines:
 
 - **[Design Guide](design/README.md)** - Design principles and patterns
-- **[Foundations](design/foundations/README.md)** - Core design concepts
-- **[Components](design/components/README.md)** - Reusable design patterns
-- **[Getting Started](design/getting-started/README.md)** - Design process
+- **[Foundations](design/foundations/README.md)** - Core design concepts and implementation
+- **[Components](design/components.md)** - Reusable design patterns
+- **[Getting Started](design/getting-started.md)** - Design process
 
 ### Command Reference
 
@@ -75,44 +93,47 @@ Detailed installation instructions:
 
 1. Start with [Installation](getting-started/installation.md)
 2. Follow the [Quick Start](getting-started/quick-start.md) guide
-3. Learn about [Configuration](getting-started/configuration.md)
-4. Explore all [Getting Started](getting-started/README.md) guides
+3. Read the [User Guide](user-guide/README.md) for complete workflows
+4. Master [Task Management](user-guide/task-management.md) with Zenflow
+5. Set up [Integrations](user-guide/integrations.md) with your tools
 
 ### For Developers
 
 1. Read [Contributing Guide](contributing/README.md)
 2. Set up with [Getting Started](contributing/getting-started.md)
-3. Understand [Key Design Patterns](contributing/design-patterns.md)
-4. Review [Development Workflow](contributing/development-workflow.md)
+3. Explore [API Documentation](api/README.md)
+4. Understand [Architecture](architecture/README.md)
+5. Review [Development Workflow](contributing/development-workflow.md)
 
-### For Product Managers
+### For Technical Writers
 
-1. Review [Product Overview](architecture/product-overview.md)
-2. Check the [Roadmap](architecture/roadmap.md)
-3. Understand [Architecture](architecture/overview.md)
+1. Study [Design Foundations](design/foundations/README.md)
+2. Follow [Documentation Standards](contributing/documentation.md)
+3. Use [Template Engine API](api/template-engine.md) for content generation
 
-### For Designers
+### For System Integrators
 
-1. Read [Design Guide](design/README.md)
-2. Study [Foundations](design/foundations/README.md)
-3. Review [Components](design/components/README.md)
+1. Review [Integration Guide](user-guide/integrations.md)
+2. Study [Configuration API](api/config.md)
+3. Understand [Plugin Architecture](architecture/views/components.md#integration-components)
 
 ## Finding Information
 
 ### By Topic
 
-- **Installation & Setup**: [Installation Guide](getting-started/installation.md), [Getting Started](contributing/getting-started.md)
-- **Configuration**: [Configuration Guide](getting-started/configuration.md), [Environment Variables](getting-started/README.md#environment-variables)
-- **Development**: [Development Workflow](contributing/development-workflow.md), [Testing](contributing/testing.md)
-- **Architecture**: [Overview](architecture/overview.md), [ADRs](architecture/decisions/register.md)
+- **Installation & Setup**: [Installation Guide](getting-started/installation.md), [Quick Start](getting-started/quick-start.md)
+- **Task Management**: [Task Management Guide](user-guide/task-management.md), [Zenflow Methodology](zenflow/README.md)
+- **Integrations**: [Integration Guide](user-guide/integrations.md), [Configuration](getting-started/configuration.md)
+- **Development**: [API Documentation](api/README.md), [Architecture](architecture/README.md)
 - **Commands**: [Command Reference](zen/index.md), [Command Syntax](command-line-syntax.md)
 
 ### By Task
 
 - **Install Zen**: [Installation Guide](getting-started/installation.md)
-- **Configure AI Provider**: [Configuration](getting-started/configuration.md#ai-provider-configuration)
-- **Write Tests**: [Testing Guide](contributing/testing.md)
-- **Submit PR**: [Code Review Process](contributing/code-review.md)
+- **Create First Task**: [Quick Start](getting-started/quick-start.md#task-management)
+- **Set up Jira Integration**: [Integration Guide](user-guide/integrations.md#jira-integration)
+- **Configure Templates**: [Template Engine API](api/template-engine.md)
+- **Contribute Code**: [Contributing Guide](contributing/README.md)
 - **Report Bug**: [GitHub Issues](https://github.com/zen-org/zen/issues)
 
 ## Documentation Standards

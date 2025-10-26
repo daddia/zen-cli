@@ -1,23 +1,71 @@
-# Zen User Guide
+# Getting Started with Zen CLI
 
-Welcome to the Zen CLI User Guide. This documentation will help you install, configure, and use Zen effectively.
+Welcome to Zen CLI - the AI-powered productivity suite that unifies product development from strategic planning to production deployment. This guide will help you install, configure, and master Zen's powerful workflow capabilities.
 
-## Getting Started
+## What is Zen CLI?
 
-Start here if you're new to Zen:
+Zen CLI is a comprehensive command-line tool that implements the **Zenflow methodology** - a 7-stage unified workflow that standardizes how teams move from strategy to shipped value. Whether you're a product manager defining requirements, a developer implementing features, or an operations engineer deploying to production, Zen provides the tools and structure to work efficiently and collaboratively.
 
-1. **[Installation](installation.md)** - Install Zen on your system
-2. **[Quick Start](quick-start.md)** - Get up and running in 5 minutes
-3. **[Configuration](configuration.md)** - Configure Zen for your environment
+### Key Features
+
+- **Structured Task Management** - Organize work using the proven Zenflow methodology
+- **External Integrations** - Connect seamlessly with Jira, GitHub, and other tools
+- **Template System** - Generate consistent documentation and code structures
+- **Asset Library** - Access shared templates, workflows, and best practices
+- **Cross-Platform** - Native support for Windows, macOS, and Linux
+
+## Getting Started Path
+
+Follow this path to get up and running with Zen:
+
+### 1. Installation
+**[Installation Guide](installation.md)** - Install Zen on your system
+- Multiple installation methods (binary, package manager, source)
+- Platform-specific instructions
+- Troubleshooting common issues
+
+### 2. First Steps
+**[Quick Start Guide](quick-start.md)** - Get productive in 5 minutes
+- Initialize your first workspace
+- Create your first task
+- Set up basic integrations
+- Essential commands overview
+
+### 3. Configuration
+**[Configuration Guide](configuration.md)** - Customize Zen for your environment
+- Configuration file structure
+- Environment variables
+- Integration setup
+- Team configuration
 
 ## Core Concepts
 
-Understand the fundamentals:
+Understand the fundamentals that make Zen powerful:
 
-- **[Workflows](workflows.md)** - Automated development workflows
-- **[AI Agents](agents.md)** - AI-powered development assistants
-- **[Templates](templates.md)** - Reusable project templates
-- **[Integrations](integrations.md)** - Connect with external tools
+### Zenflow Methodology
+The 7-stage workflow that structures all work in Zen:
+1. **Align** - Define success criteria and stakeholder alignment
+2. **Discover** - Gather evidence and validate assumptions
+3. **Prioritize** - Rank work by value vs effort
+4. **Design** - Specify implementation approach
+5. **Build** - Deliver working software increment
+6. **Ship** - Deploy safely to production
+7. **Learn** - Measure outcomes and iterate
+
+### Workspace Structure
+Every Zen project is organized as a workspace:
+- **`.zen/` directory** - Contains all Zen configuration and data
+- **Task directories** - Structured folders for each work item
+- **Asset library** - Shared templates and resources
+- **Configuration files** - Project and user settings
+
+### Task Types
+Different types of work optimized for specific workflows:
+- **Story** - User-facing features with UX focus
+- **Bug** - Defect fixes with root cause analysis
+- **Epic** - Large initiatives requiring breakdown
+- **Spike** - Research and exploration
+- **Task** - General work items
 
 ## Features
 

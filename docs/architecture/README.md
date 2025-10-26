@@ -121,15 +121,33 @@ graph TB
 
 ```
 zen/
-├── cmd/zen/              # Entry point
+├── cmd/zen/              # Ultra-lightweight entry point
 ├── internal/             # Private implementation
-│   ├── agents/          # AI orchestration
-│   ├── config/          # Configuration
-│   ├── workflow/        # Zenflow engine
-│   └── integrations/    # External systems
-├── pkg/                  # Public APIs
-│   └── cmd/            # Command implementations
-└── plugins/             # Extension system
+│   ├── config/          # Configuration management
+│   ├── development/     # Development-specific config
+│   ├── integration/     # External system integration
+│   ├── logging/         # Structured logging
+│   ├── providers/       # External service providers
+│   ├── workspace/       # Workspace management
+│   └── zencmd/          # Main command orchestration
+├── pkg/                  # Public APIs and shared utilities
+│   ├── assets/          # Asset library management
+│   ├── auth/            # Authentication system
+│   ├── cache/           # Caching infrastructure
+│   ├── cli/             # CLI configuration
+│   ├── clients/         # External API clients
+│   ├── cmd/             # Command implementations
+│   ├── cmdutil/         # Command utilities
+│   ├── errors/          # Error handling
+│   ├── fs/              # File system operations
+│   ├── integration/     # Integration framework
+│   ├── iostreams/       # I/O and formatting
+│   ├── plugin/          # Plugin system
+│   ├── processor/       # Content processors
+│   ├── task/            # Task management
+│   ├── template/        # Template engine
+│   └── types/           # Common types
+└── test/                # Testing infrastructure
 ```
 
 ## Contributing
