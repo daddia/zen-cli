@@ -44,10 +44,45 @@ type Config struct {
 	LogLevel  string `mapstructure:"log_level" validate:"required,oneof=trace debug info warn error fatal panic"`
 	LogFormat string `mapstructure:"log_format" validate:"required,oneof=text json"`
 
+	// Temporary fields - to be removed when components are fully migrated
+	Integrations IntegrationsConfig `mapstructure:"integrations"`
+	Work         WorkConfig         `mapstructure:"work"`
+
 	// Internal fields for configuration management
 	viper      *viper.Viper `mapstructure:"-" json:"-" yaml:"-"`
 	configFile string       `mapstructure:"-" json:"-" yaml:"-"`
 	loadedFrom []string     `mapstructure:"-" json:"-" yaml:"-"`
+}
+
+// Temporary types - to be removed when integration component is created
+type IntegrationsConfig struct {
+	TaskSystem        string                               `mapstructure:"task_system"`
+	SyncEnabled       bool                                 `mapstructure:"sync_enabled"`
+	SyncFrequency     string                               `mapstructure:"sync_frequency"`
+	PluginDirectories []string                             `mapstructure:"plugin_directories"`
+	Providers         map[string]IntegrationProviderConfig `mapstructure:"providers"`
+}
+
+type IntegrationProviderConfig struct {
+	URL           string                 `mapstructure:"url"`
+	ProjectKey    string                 `mapstructure:"project_key"`
+	Type          string                 `mapstructure:"type"`
+	Credentials   string                 `mapstructure:"credentials"`
+	Email         string                 `mapstructure:"email"`
+	APIKey        string                 `mapstructure:"api_key"`
+	FieldMapping  map[string]string      `mapstructure:"field_mapping"`
+	SyncDirection string                 `mapstructure:"sync_direction"`
+	Settings      map[string]interface{} `mapstructure:"settings"`
+}
+
+type WorkConfig struct {
+	Tasks TasksConfig `mapstructure:"tasks"`
+}
+
+type TasksConfig struct {
+	Source     string `mapstructure:"source"`
+	Sync       string `mapstructure:"sync"`
+	ProjectKey string `mapstructure:"project_key"`
 }
 
 // Load loads configuration from various sources with precedence handling
@@ -121,8 +156,8 @@ func LoadWithOptions(opts LoadOptions) (*Config, error) {
 	// Apply environment variable overrides (for non-Viper handled cases)
 	applyEnvOverrides(&config)
 
-	// Validate configuration
-	if err := validate(&config); err != nil {
+	// Validate core configuration
+	if err := validateCore(&config); err != nil {
 		return nil, errors.Wrap(err, "configuration validation failed")
 	}
 
@@ -240,57 +275,12 @@ func hasFlagOverrides(cmd *cobra.Command) bool {
 	return false
 }
 
-// applyEnvOverrides applies environment variable overrides
+// applyEnvOverrides applies environment variable overrides for core config only
 func applyEnvOverrides(config *Config) {
-	// Check NO_COLOR environment variable (standard)
-	if os.Getenv("NO_COLOR") != "" {
-		config.CLI.NoColor = true
-	}
-
-	// Check ZEN_DEBUG for development mode
+	// Check ZEN_DEBUG for development mode (affects core log level)
 	if os.Getenv("ZEN_DEBUG") == "true" {
-		config.Development.Debug = true
 		config.LogLevel = "debug"
 	}
-}
-
-// validate validates the configuration with comprehensive error messages
-func validate(config *Config) error {
-	// Validate log level
-	validLogLevels := []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
-	if !contains(validLogLevels, config.LogLevel) {
-		return &ValidationError{
-			Field:        "log_level",
-			Value:        config.LogLevel,
-			ValidOptions: validLogLevels,
-			Message:      "invalid log level",
-		}
-	}
-
-	// Validate log format
-	validLogFormats := []string{"text", "json"}
-	if !contains(validLogFormats, config.LogFormat) {
-		return &ValidationError{
-			Field:        "log_format",
-			Value:        config.LogFormat,
-			ValidOptions: validLogFormats,
-			Message:      "invalid log format",
-		}
-	}
-
-	// Validate output format
-	validOutputFormats := []string{"text", "json", "yaml"}
-	if !contains(validOutputFormats, config.CLI.OutputFormat) {
-		return &ValidationError{
-			Field:        "cli.output_format",
-			Value:        config.CLI.OutputFormat,
-			ValidOptions: validOutputFormats,
-			Message:      "invalid output format",
-		}
-	}
-
-
-	return nil
 }
 
 // ValidationError represents a configuration validation error with helpful context
@@ -497,4 +487,37 @@ func LoadDefaults() *Config {
 	cfg.viper = v
 	cfg.loadedFrom = []string{"defaults"}
 	return &cfg
+}
+
+// validateCore validates the core configuration fields only
+func validateCore(config *Config) error {
+	// Validate log level
+	validLogLevels := []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
+	valid := false
+	for _, level := range validLogLevels {
+		if config.LogLevel == level {
+			valid = true
+			break
+		}
+	}
+	if !valid {
+		return fmt.Errorf("invalid log_level: %s (must be one of: %s)",
+			config.LogLevel, strings.Join(validLogLevels, ", "))
+	}
+
+	// Validate log format
+	validLogFormats := []string{"text", "json"}
+	valid = false
+	for _, format := range validLogFormats {
+		if config.LogFormat == format {
+			valid = true
+			break
+		}
+	}
+	if !valid {
+		return fmt.Errorf("invalid log_format: %s (must be one of: %s)",
+			config.LogFormat, strings.Join(validLogFormats, ", "))
+	}
+
+	return nil
 }
