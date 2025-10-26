@@ -83,7 +83,7 @@ If GitHub authentication is configured, zen init will automatically:
 				// Check if directory exists
 				configDir := filepath.Dir(configFile)
 				if _, err := os.Stat(configDir); os.IsNotExist(err) {
-					if err := os.MkdirAll(configDir, 0755); err != nil {
+					if err := os.MkdirAll(configDir, 0750); err != nil {
 						return fmt.Errorf("failed to create config directory %s: %w", configDir, err)
 					}
 				}
@@ -180,7 +180,7 @@ func createInitialConfig(f *cmdutil.Factory) error {
 func setupLibraryInfrastructure(f *cmdutil.Factory, wasInitialized bool) error {
 	// 1. Create .zen/library directory
 	libraryDir := filepath.Join(".zen", "library")
-	if err := os.MkdirAll(libraryDir, 0755); err != nil {
+	if err := os.MkdirAll(libraryDir, 0750); err != nil {
 		return fmt.Errorf("failed to create library directory: %w", err)
 	}
 

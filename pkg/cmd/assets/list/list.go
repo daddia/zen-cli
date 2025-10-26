@@ -215,7 +215,9 @@ func displayListText(opts *ListOptions, assetList *assets.AssetList, filter asse
 			asset.Format)
 	}
 
-	w.Flush()
+	if err := w.Flush(); err != nil {
+		return fmt.Errorf("failed to flush output: %w", err)
+	}
 
 	// Summary
 	fmt.Fprintln(opts.IO.Out)

@@ -9,8 +9,8 @@ type ErrorCode string
 
 const (
 	ErrorCodeAuthenticationFailed ErrorCode = "authentication_failed"
-	ErrorCodeInvalidCredentials   ErrorCode = "invalid_credentials"
-	ErrorCodeCredentialNotFound   ErrorCode = "credential_not_found"
+	ErrorCodeInvalidCredentials   ErrorCode = "invalid_credentials"  // #nosec G101 - error code constant, not hardcoded credential
+	ErrorCodeCredentialNotFound   ErrorCode = "credential_not_found" // #nosec G101 - error code constant, not hardcoded credential
 	ErrorCodeProviderNotSupported ErrorCode = "provider_not_supported"
 	ErrorCodeStorageError         ErrorCode = "storage_error"
 	ErrorCodeNetworkError         ErrorCode = "network_error"

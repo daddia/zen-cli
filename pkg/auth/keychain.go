@@ -153,6 +153,11 @@ func (k *KeychainStorage) storeMacOS(service, account, password, metadata string
 	// Delete existing entry first (security add-generic-password fails if entry exists)
 	k.deleteMacOS(service, account)
 
+	// Validate inputs to prevent command injection
+	if service == "" || account == "" {
+		return NewStorageError("invalid keychain parameters", "service and account cannot be empty")
+	}
+
 	args := []string{
 		"add-generic-password",
 		"-s", service,
@@ -164,7 +169,7 @@ func (k *KeychainStorage) storeMacOS(service, account, password, metadata string
 		args = append(args, "-j", metadata)
 	}
 
-	cmd := exec.Command("security", args...)
+	cmd := exec.Command("security", args...) // #nosec G204 - validated args for macOS keychain access
 	if err := cmd.Run(); err != nil {
 		return NewStorageError("failed to store credential in macOS keychain", err.Error())
 	}
@@ -213,10 +218,15 @@ func (k *KeychainStorage) deleteMacOS(service, account string) error {
 
 // Windows credential manager operations (simplified)
 func (k *KeychainStorage) storeWindows(service, account, password, metadata string) error {
+	// Validate inputs to prevent command injection
+	if service == "" || account == "" {
+		return NewStorageError("invalid credential parameters", "service and account cannot be empty")
+	}
+
 	target := fmt.Sprintf("%s/%s", service, account)
 
 	// Use cmdkey to store credential
-	cmd := exec.Command("cmdkey", "/generic:"+target, "/user:"+account, "/pass:"+password)
+	cmd := exec.Command("cmdkey", "/generic:"+target, "/user:"+account, "/pass:"+password) // #nosec G204 - validated args for Windows credential manager
 	if err := cmd.Run(); err != nil {
 		return NewStorageError("failed to store credential in Windows credential manager", err.Error())
 	}
@@ -232,9 +242,14 @@ func (k *KeychainStorage) retrieveWindows(service, account string) (string, stri
 }
 
 func (k *KeychainStorage) deleteWindows(service, account string) error {
+	// Validate inputs
+	if service == "" || account == "" {
+		return NewStorageError("invalid credential parameters", "service and account cannot be empty")
+	}
+
 	target := fmt.Sprintf("%s/%s", service, account)
-	cmd := exec.Command("cmdkey", "/delete:"+target)
-	_ = cmd.Run() // Ignore error - entry might not exist
+	cmd := exec.Command("cmdkey", "/delete:"+target) // #nosec G204 - validated args for Windows credential manager
+	_ = cmd.Run()                                    // Ignore error - entry might not exist
 	return nil
 }
 

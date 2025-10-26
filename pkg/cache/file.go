@@ -195,7 +195,7 @@ func (c *FileManager[T]) Put(ctx context.Context, key string, data T, opts PutOp
 
 	// Ensure cache directory exists
 	contentDir := filepath.Join(c.config.BasePath, "content")
-	if err := os.MkdirAll(contentDir, 0755); err != nil {
+	if err := os.MkdirAll(contentDir, 0750); err != nil {
 		return &Error{
 			Code:    ErrorCodePermission,
 			Message: "failed to create cache directory",
@@ -208,7 +208,7 @@ func (c *FileManager[T]) Put(ctx context.Context, key string, data T, opts PutOp
 	filePath := filepath.Join(contentDir, fileName)
 
 	// Write content to file
-	if err := os.WriteFile(filePath, serializedData, 0644); err != nil {
+	if err := os.WriteFile(filePath, serializedData, 0600); err != nil {
 		return &Error{
 			Code:    ErrorCodePermission,
 			Message: fmt.Sprintf("failed to write cache file for key '%s'", key),
@@ -439,7 +439,7 @@ func (c *FileManager[T]) loadIndex() error {
 
 func (c *FileManager[T]) saveIndex() error {
 	metadataDir := filepath.Join(c.config.BasePath, "metadata")
-	if err := os.MkdirAll(metadataDir, 0755); err != nil {
+	if err := os.MkdirAll(metadataDir, 0750); err != nil {
 		return err
 	}
 
@@ -469,7 +469,7 @@ func (c *FileManager[T]) saveIndex() error {
 		return err
 	}
 
-	return os.WriteFile(indexPath, data, 0644)
+	return os.WriteFile(indexPath, data, 0600)
 }
 
 func (c *FileManager[T]) isExpired(entry *fileEntry) bool {

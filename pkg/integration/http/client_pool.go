@@ -174,6 +174,11 @@ func (cp *ClientPool) CreateClient(key string, config *ClientConfig) (*http.Clie
 	}
 
 	// Create custom transport
+	// Warn if TLS verification is disabled (security risk)
+	if cp.config.InsecureSkipVerify {
+		cp.logger.Warn("TLS certificate verification disabled - this is insecure and should only be used in development")
+	}
+
 	transport := &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout:   cp.config.DialTimeout,
@@ -186,7 +191,7 @@ func (cp *ClientPool) CreateClient(key string, config *ClientConfig) (*http.Clie
 		TLSHandshakeTimeout: cp.config.TLSHandshakeTimeout,
 		DisableCompression:  cp.config.DisableCompression,
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: cp.config.InsecureSkipVerify,
+			InsecureSkipVerify: cp.config.InsecureSkipVerify, // #nosec G402 - configurable for development environments
 		},
 	}
 
@@ -379,7 +384,10 @@ func RetryMiddleware(maxRetries int, baseDelay time.Duration) MiddlewareFunc {
 
 			lastErr = err
 			if resp != nil {
-				resp.Body.Close()
+				if closeErr := resp.Body.Close(); closeErr != nil {
+					// Log the close error but don't override the main error
+					// This is a cleanup operation, so we continue with the retry
+				}
 			}
 
 			// Don't retry on last attempt

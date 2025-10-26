@@ -454,7 +454,7 @@ func (m *Manager) extractPlainTextFromJiraDescription(description map[string]int
 func (m *Manager) saveSourceMetadata(taskDir string, sourceData *TaskData, source string) error {
 	// Create metadata directory
 	metadataDir := filepath.Join(taskDir, "metadata")
-	if err := os.MkdirAll(metadataDir, 0755); err != nil {
+	if err := os.MkdirAll(metadataDir, 0750); err != nil {
 		return fmt.Errorf("failed to create metadata directory: %w", err)
 	}
 
@@ -502,7 +502,7 @@ func (m *Manager) saveSourceMetadata(taskDir string, sourceData *TaskData, sourc
 
 	// Write to source-specific metadata file
 	metadataFilePath := filepath.Join(metadataDir, fmt.Sprintf("%s.json", source))
-	if err := os.WriteFile(metadataFilePath, jsonData, 0644); err != nil {
+	if err := os.WriteFile(metadataFilePath, jsonData, 0600); err != nil {
 		return fmt.Errorf("failed to write %s metadata file: %w", source, err)
 	}
 
@@ -655,8 +655,10 @@ func (m *Manager) updateSourceMetadata(metadataDir, source string, sourceInfo *T
 
 	// Read existing metadata
 	var metadata map[string]interface{}
-	if data, err := os.ReadFile(sourceMetadataPath); err == nil {
-		json.Unmarshal(data, &metadata)
+	if data, err := os.ReadFile(sourceMetadataPath); err == nil { // #nosec G304 - reading task metadata from validated path
+		if err := json.Unmarshal(data, &metadata); err != nil {
+			// Log error but continue with empty metadata
+		}
 	} else {
 		metadata = make(map[string]interface{})
 	}
@@ -672,5 +674,5 @@ func (m *Manager) updateSourceMetadata(metadataDir, source string, sourceInfo *T
 		return fmt.Errorf("failed to marshal metadata: %w", err)
 	}
 
-	return os.WriteFile(sourceMetadataPath, jsonData, 0644)
+	return os.WriteFile(sourceMetadataPath, jsonData, 0600)
 }

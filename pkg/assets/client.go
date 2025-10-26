@@ -621,12 +621,12 @@ func (c *Client) saveManifestToDisk(manifestContent []byte) error {
 	libraryDir := filepath.Dir(manifestPath)
 
 	// Ensure the .zen/library directory exists
-	if err := os.MkdirAll(libraryDir, 0755); err != nil {
+	if err := os.MkdirAll(libraryDir, 0750); err != nil {
 		return errors.Wrap(err, "failed to create library directory")
 	}
 
 	// Write manifest to file
-	if err := os.WriteFile(manifestPath, manifestContent, 0644); err != nil {
+	if err := os.WriteFile(manifestPath, manifestContent, 0600); err != nil {
 		return errors.Wrap(err, "failed to write manifest file")
 	}
 

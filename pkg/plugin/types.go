@@ -136,7 +136,7 @@ const (
 	PermissionTaskRead            PluginPermission = "task.read"
 	PermissionTaskWrite           PluginPermission = "task.write"
 	PermissionTaskReadWrite       PluginPermission = "task.read_write"
-	PermissionCredentialRead      PluginPermission = "credential.read"
+	PermissionCredentialRead      PluginPermission = "credential.read" // #nosec G101 - permission constant, not hardcoded credential
 	PermissionLogging             PluginPermission = "logging"
 	PermissionFileSystemRead      PluginPermission = "filesystem.read"
 	PermissionFileSystemWrite     PluginPermission = "filesystem.write"

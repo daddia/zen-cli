@@ -267,7 +267,7 @@ func (ops *Operations) CreateSourceMetadata(ctx context.Context, taskDir string,
 
 	// Create metadata directory
 	metadataDir := filepath.Join(taskDir, "metadata")
-	if err := os.MkdirAll(metadataDir, 0755); err != nil {
+	if err := os.MkdirAll(metadataDir, 0750); err != nil {
 		return fmt.Errorf("failed to create metadata directory: %w", err)
 	}
 
@@ -310,7 +310,7 @@ func (ops *Operations) CreateSourceMetadata(ctx context.Context, taskDir string,
 
 	// Write to source-specific metadata file
 	metadataFilePath := filepath.Join(metadataDir, fmt.Sprintf("%s.json", taskData.Source))
-	if err := os.WriteFile(metadataFilePath, jsonData, 0644); err != nil {
+	if err := os.WriteFile(metadataFilePath, jsonData, 0600); err != nil {
 		return fmt.Errorf("failed to write %s metadata file: %w", taskData.Source, err)
 	}
 
@@ -354,7 +354,7 @@ func (ops *Operations) GetSourceMetadata(taskDir string, source string) (*Metada
 	}
 
 	// Read and parse metadata file
-	data, err := os.ReadFile(metadataFilePath)
+	data, err := os.ReadFile(metadataFilePath) // #nosec G304 - reading task metadata from validated path
 	if err != nil {
 		return nil, fmt.Errorf("failed to read %s metadata: %w", source, err)
 	}

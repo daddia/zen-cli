@@ -167,14 +167,20 @@ func (r *DefaultFunctionRegistry) registerStandardFunctions() {
 func (r *DefaultFunctionRegistry) generateTaskID(prefix string) string {
 	timestamp := time.Now().Format("060102")
 	randomBytes := make([]byte, 2)
-	rand.Read(randomBytes)
+	if _, err := rand.Read(randomBytes); err != nil {
+		// Fallback to timestamp only if random fails
+		return fmt.Sprintf("%s-%s", prefix, timestamp)
+	}
 	random := hex.EncodeToString(randomBytes)
 	return fmt.Sprintf("%s-%s-%s", prefix, timestamp, strings.ToUpper(random))
 }
 
 func (r *DefaultFunctionRegistry) generateShortTaskID(prefix string) string {
 	randomBytes := make([]byte, 2)
-	rand.Read(randomBytes)
+	if _, err := rand.Read(randomBytes); err != nil {
+		// Fallback to timestamp-based ID if random fails
+		return fmt.Sprintf("%s-%d", prefix, time.Now().Unix()%10000)
+	}
 	random := hex.EncodeToString(randomBytes)
 	return fmt.Sprintf("%s-%s", prefix, strings.ToUpper(random))
 }
@@ -184,7 +190,10 @@ func (r *DefaultFunctionRegistry) generateRandomID(length int) string {
 		length = 8
 	}
 	bytes := make([]byte, (length+1)/2)
-	rand.Read(bytes)
+	if _, err := rand.Read(bytes); err != nil {
+		// Fallback to timestamp-based ID if random fails
+		return fmt.Sprintf("ID%d", time.Now().UnixNano()%1000000)
+	}
 	id := hex.EncodeToString(bytes)
 	if len(id) > length {
 		id = id[:length]
@@ -673,8 +682,9 @@ func (r *DefaultFunctionRegistry) toInt(v interface{}) int {
 	case string:
 		if i, err := fmt.Sscanf(val, "%d", new(int)); err == nil && i == 1 {
 			var result int
-			fmt.Sscanf(val, "%d", &result)
-			return result
+			if _, err := fmt.Sscanf(val, "%d", &result); err == nil {
+				return result
+			}
 		}
 	}
 	return 0
@@ -693,8 +703,9 @@ func (r *DefaultFunctionRegistry) toFloat64(v interface{}) float64 {
 	case string:
 		if f, err := fmt.Sscanf(val, "%f", new(float64)); err == nil && f == 1 {
 			var result float64
-			fmt.Sscanf(val, "%f", &result)
-			return result
+			if _, err := fmt.Sscanf(val, "%f", &result); err == nil {
+				return result
+			}
 		}
 	}
 	return 0

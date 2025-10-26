@@ -130,7 +130,7 @@ func (c *Client) FetchTask(ctx context.Context, opts FetchTaskOptions) (*TaskDat
 func (c *Client) CreateMetadataFile(taskDir string, taskData *TaskData) error {
 	// Create metadata directory
 	metadataDir := filepath.Join(taskDir, "metadata")
-	if err := os.MkdirAll(metadataDir, 0755); err != nil {
+	if err := os.MkdirAll(metadataDir, 0750); err != nil {
 		return fmt.Errorf("failed to create metadata directory: %w", err)
 	}
 
@@ -166,7 +166,7 @@ func (c *Client) CreateMetadataFile(taskDir string, taskData *TaskData) error {
 
 	// Write to jira.json file
 	jiraFilePath := filepath.Join(metadataDir, "jira.json")
-	if err := os.WriteFile(jiraFilePath, jsonData, 0644); err != nil {
+	if err := os.WriteFile(jiraFilePath, jsonData, 0600); err != nil {
 		return fmt.Errorf("failed to write Jira metadata file: %w", err)
 	}
 
