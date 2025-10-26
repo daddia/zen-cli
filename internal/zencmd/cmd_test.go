@@ -38,8 +38,8 @@ func TestExecute(t *testing.T) {
 		{
 			name:           "status command",
 			args:           []string{"status"},
-			expectedOutput: "Zen CLI Status",
-			wantErr:        false,
+			expectedOutput: "Not Initialized: Not a zen workspace",
+			wantErr:        true,
 		},
 		{
 			name:           "invalid command",
@@ -102,13 +102,12 @@ func TestExecuteWithConfig(t *testing.T) {
 	ctx := context.Background()
 	err = Execute(ctx, []string{"status", "--output", "json"}, streams)
 
-	// Should not error
-	require.NoError(t, err)
+	// Should error because workspace is not initialized
+	require.Error(t, err)
 
-	// Should produce JSON output
+	// Should not produce JSON output when workspace is not initialized
 	output := stdout.String()
-	assert.Contains(t, output, `"workspace"`)
-	assert.Contains(t, output, `"configuration"`)
+	assert.Empty(t, output)
 }
 
 func TestExecuteWithVerboseLogging(t *testing.T) {
@@ -120,11 +119,11 @@ func TestExecuteWithVerboseLogging(t *testing.T) {
 	ctx := context.Background()
 	err := Execute(ctx, []string{"--verbose", "status"}, streams)
 
-	require.NoError(t, err)
+	require.Error(t, err)
 
-	// In verbose mode, should see additional logging
+	// In verbose mode with uninitialized workspace, stdout should be empty
 	output := stdout.String()
-	assert.NotEmpty(t, output)
+	assert.Empty(t, output)
 }
 
 func TestExecuteWithInvalidFlags(t *testing.T) {
@@ -148,11 +147,11 @@ func TestExecuteWithDryRun(t *testing.T) {
 	ctx := context.Background()
 	err := Execute(ctx, []string{"--dry-run", "status"}, streams)
 
-	require.NoError(t, err)
+	require.Error(t, err)
 
-	// Should execute successfully in dry-run mode
+	// Should not produce output when workspace is not initialized, even in dry-run mode
 	output := stdout.String()
-	assert.Contains(t, output, "Zen CLI Status")
+	assert.Empty(t, output)
 }
 
 // Benchmark tests for performance validation
@@ -241,7 +240,8 @@ func TestExecuteContextCancellation(t *testing.T) {
 	// Note: This test may pass or fail depending on timing,
 	// but it shouldn't panic or hang
 	if err != nil {
-		assert.Contains(t, err.Error(), "context")
+		// Could be either context cancellation or silent error from uninitialized workspace
+		assert.True(t, err.Error() == "silent error" || strings.Contains(err.Error(), "context"))
 	}
 }
 
@@ -485,7 +485,7 @@ func TestExecute_ErrorPaths(t *testing.T) {
 		{
 			name:        "status command",
 			args:        []string{"status"},
-			expectError: false,
+			expectError: true,
 		},
 		{
 			name:        "invalid command",
