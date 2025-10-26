@@ -164,6 +164,14 @@ func (d *JiraDescription) extractNodeText(node interface{}, text *strings.Builde
 	}
 }
 
+// MarshalJSON converts the description to JSON
+func (d JiraDescription) MarshalJSON() ([]byte, error) {
+	if d.Object != nil {
+		return json.Marshal(d.Object)
+	}
+	return json.Marshal(d.Text)
+}
+
 // String returns the text representation
 func (d JiraDescription) String() string {
 	return d.Text
