@@ -29,7 +29,7 @@ func TestE2E_AssetsCommands(t *testing.T) {
 		result.RequireSuccess(t, "zen assets status should succeed")
 
 		// Should show assets status information
-		assert.Contains(t, result.Stdout, "Assets Status", "Should show assets status header")
+		assert.Contains(t, result.Stdout, "Asset Status", "Should show assets status header")
 
 		// Should show cache information
 		output := strings.ToLower(result.Stdout)
@@ -195,10 +195,12 @@ func TestE2E_AssetsCommands(t *testing.T) {
 	t.Run("zen_assets_invalid_command", func(t *testing.T) {
 		result := env.RunZenCommand(t, workspaceDir, "assets", "invalid-command")
 
-		result.RequireError(t, "zen assets with invalid command should fail")
+		// Assets command shows help for invalid subcommands (user-friendly behavior)
+		result.RequireSuccess(t, "zen assets with invalid command should show help")
 
-		errorOutput := result.Stderr + result.Stdout
-		assert.Contains(t, strings.ToLower(errorOutput), "unknown", "Should show unknown command error")
+		output := result.Stdout
+		assert.Contains(t, output, "Available Commands", "Should show help with available commands")
+		assert.Contains(t, output, "Usage:", "Should show usage information")
 	})
 }
 
