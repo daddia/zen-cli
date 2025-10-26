@@ -559,7 +559,7 @@ func TestBuildTemplateVariables_EdgeCases(t *testing.T) {
 	assert.Equal(t, "MIN-123", variables["TASK_ID"])
 	assert.Equal(t, "", variables["TASK_TITLE"]) // Empty because not set in opts
 	assert.Equal(t, "", variables["PRIORITY"])   // Empty because not set in opts
-	
+
 	// Extended fields are not implemented in stub
 	assert.Nil(t, variables["OWNER_NAME"])
 	assert.Nil(t, variables["TEAM_NAME"])
