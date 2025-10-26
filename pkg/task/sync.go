@@ -658,6 +658,7 @@ func (m *Manager) updateSourceMetadata(metadataDir, source string, sourceInfo *T
 	if data, err := os.ReadFile(sourceMetadataPath); err == nil { // #nosec G304 - reading task metadata from validated path
 		if err := json.Unmarshal(data, &metadata); err != nil {
 			// Log error but continue with empty metadata
+			metadata = make(map[string]interface{})
 		}
 	} else {
 		metadata = make(map[string]interface{})

@@ -387,6 +387,7 @@ func RetryMiddleware(maxRetries int, baseDelay time.Duration) MiddlewareFunc {
 				if closeErr := resp.Body.Close(); closeErr != nil {
 					// Log the close error but don't override the main error
 					// This is a cleanup operation, so we continue with the retry
+					_ = closeErr // Explicitly ignore the error
 				}
 			}
 
