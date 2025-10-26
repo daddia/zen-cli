@@ -13,17 +13,21 @@ import (
 
 func TestNew(t *testing.T) {
 	logger := logging.NewBasic()
-	manager := New("/test/root", "zen.yaml", logger)
+	config := Config{
+		Root:    "/test/root",
+		ZenPath: ".zen",
+	}
+	manager := New(config, logger)
 
 	assert.Equal(t, "/test/root", manager.Root())
-	assert.Equal(t, "zen.yaml", manager.ConfigFile())
+	assert.Equal(t, "/test/root/.zen/config", manager.ConfigFile())
 	assert.Equal(t, "/test/root/.zen", filepath.ToSlash(manager.ZenDirectory()))
 }
 
 func TestDetectProject_Empty(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	manager := New(tempDir, "zen.yaml", logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	info := manager.DetectProject()
 	assert.Equal(t, ProjectTypeUnknown, info.Type)
@@ -33,7 +37,7 @@ func TestDetectProject_Empty(t *testing.T) {
 func TestDetectProject_Git(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	manager := New(tempDir, "zen.yaml", logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	// Create .git directory
 	gitDir := filepath.Join(tempDir, ".git")
@@ -60,7 +64,7 @@ func TestDetectProject_Git(t *testing.T) {
 func TestDetectProject_NodeJS(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	manager := New(tempDir, "zen.yaml", logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	// Create package.json
 	packageJSON := map[string]interface{}{
@@ -93,7 +97,7 @@ func TestDetectProject_NodeJS(t *testing.T) {
 func TestDetectProject_Go(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	manager := New(tempDir, "zen.yaml", logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	// Create go.mod
 	goMod := `module github.com/user/test-project
@@ -119,7 +123,7 @@ require (
 func TestDetectProject_Python(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	manager := New(tempDir, "zen.yaml", logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	// Create pyproject.toml
 	pyprojectToml := `[tool.poetry]
@@ -145,7 +149,7 @@ python = "^3.9"`
 func TestDetectProject_Rust(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	manager := New(tempDir, "zen.yaml", logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	// Create Cargo.toml
 	cargoToml := `[package]
@@ -168,7 +172,7 @@ edition = "2021"`
 func TestDetectProject_Java_Maven(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	manager := New(tempDir, "zen.yaml", logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	// Create pom.xml
 	pomXML := `<?xml version="1.0" encoding="UTF-8"?>
@@ -192,7 +196,7 @@ func TestDetectProject_Java_Maven(t *testing.T) {
 func TestInitialize_NewWorkspace(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	manager := New(tempDir, "", logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	err := manager.Initialize(false)
 	require.NoError(t, err)
@@ -219,7 +223,7 @@ func TestInitialize_NewWorkspace(t *testing.T) {
 func TestInitialize_ExistingWorkspace_NoForce(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	manager := New(tempDir, "", logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	// Create .zen directory first
 	zenDir := filepath.Join(tempDir, ".zen")
@@ -237,7 +241,7 @@ func TestInitialize_ExistingWorkspace_NoForce(t *testing.T) {
 func TestInitialize_ExistingWorkspace_WithForce(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	manager := New(tempDir, "", logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	// Create .zen directory first
 	zenDir := filepath.Join(tempDir, ".zen")
@@ -299,7 +303,7 @@ func TestInitialize_GitIgnoreAlreadyHasZen(t *testing.T) {
 func TestStatus_NotInitialized(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	manager := New(tempDir, "", logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	status, err := manager.Status()
 	require.NoError(t, err)
@@ -314,7 +318,7 @@ func TestStatus_NotInitialized(t *testing.T) {
 func TestStatus_Initialized(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	manager := New(tempDir, "", logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	// Initialize workspace
 	require.NoError(t, manager.Initialize(false))
@@ -354,7 +358,7 @@ go 1.21`
 func TestProjectTypePriority(t *testing.T) {
 	tempDir := t.TempDir()
 	logger := logging.NewBasic()
-	manager := New(tempDir, "zen.yaml", logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	// Create both Git and Go project files
 	gitDir := filepath.Join(tempDir, ".git")
@@ -377,7 +381,7 @@ go 1.21`
 func BenchmarkDetectProject(b *testing.B) {
 	tempDir := b.TempDir()
 	logger := logging.NewBasic()
-	manager := New(tempDir, "zen.yaml", logger)
+	manager := New(Config{Root: tempDir, ZenPath: ".zen"}, logger)
 
 	// Create a complex project with multiple indicators
 	gitDir := filepath.Join(tempDir, ".git")

@@ -8,10 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/internal/logging"
 	"github.com/daddia/zen/pkg/fs"
-	"github.com/go-viper/mapstructure/v2"
 )
 
 // Manager implements workspace operations
@@ -20,7 +18,6 @@ type Manager struct {
 	logger    logging.Logger
 	fsManager *fs.Manager
 }
-
 
 // New creates a new workspace manager with typed configuration
 func New(config Config, logger logging.Logger) *Manager {
@@ -96,29 +93,29 @@ type Status struct {
 
 // Root returns the workspace root directory
 func (m *Manager) Root() string {
-	return m.root
+	return m.config.Root
 }
 
 // ConfigFile returns the configuration file path
 func (m *Manager) ConfigFile() string {
-	return m.configFile
+	return filepath.Join(m.config.Root, m.config.ZenPath, "config")
 }
 
 // ZenDirectory returns the .zen directory path
 func (m *Manager) ZenDirectory() string {
-	return filepath.Join(m.root, ".zen")
+	return filepath.Join(m.config.Root, m.config.ZenPath)
 }
 
 // DetectProject analyzes the current directory to determine project type and details
 func (m *Manager) DetectProject() ProjectInfo {
 	m.logger.Debug("Detecting project type", map[string]interface{}{
-		"root": m.root,
+		"root": m.config.Root,
 	})
 
 	var detectedTypes []ProjectType
 	info := ProjectInfo{
 		Type:     ProjectTypeUnknown,
-		Name:     filepath.Base(m.root),
+		Name:     filepath.Base(m.config.Root),
 		Metadata: make(map[string]string),
 	}
 
@@ -264,7 +261,7 @@ func (m *Manager) DetectProject() ProjectInfo {
 // Initialize creates the workspace structure and configuration
 func (m *Manager) Initialize(force bool) error {
 	m.logger.Debug("Initializing workspace", map[string]interface{}{
-		"root":  m.root,
+		"root":  m.config.Root,
 		"force": force,
 	})
 
@@ -298,7 +295,7 @@ func (m *Manager) Initialize(force bool) error {
 	}
 
 	m.logger.Debug("Workspace initialized successfully", map[string]interface{}{
-		"config_file": m.configFile,
+		"config_file": m.ConfigFile(),
 		"zen_dir":     m.ZenDirectory(),
 		"project":     projectInfo.Type,
 	})
@@ -309,8 +306,8 @@ func (m *Manager) Initialize(force bool) error {
 // Status returns the current workspace status
 func (m *Manager) Status() (Status, error) {
 	status := Status{
-		Root:         m.root,
-		ConfigPath:   m.configFile,
+		Root:         m.config.Root,
+		ConfigPath:   m.ConfigFile(),
 		ZenDirectory: m.ZenDirectory(),
 	}
 
@@ -401,7 +398,7 @@ func (m *Manager) GetWorkTypeDirectories() []string {
 
 // updateGitignore adds .zen directory to .gitignore if it exists
 func (m *Manager) updateGitignore() error {
-	gitignorePath := filepath.Join(m.root, ".gitignore")
+	gitignorePath := filepath.Join(m.config.Root, ".gitignore")
 
 	// Check if .gitignore exists
 	if _, err := os.Stat(gitignorePath); os.IsNotExist(err) {
@@ -437,7 +434,7 @@ func (m *Manager) updateGitignore() error {
 // Helper functions for project detection
 
 func (m *Manager) isGitRepository() bool {
-	gitDir := filepath.Join(m.root, ".git")
+	gitDir := filepath.Join(m.config.Root, ".git")
 	if stat, err := os.Stat(gitDir); err == nil {
 		return stat.IsDir()
 	}
@@ -452,7 +449,7 @@ func (m *Manager) detectGitInfo() *ProjectInfo {
 	}
 
 	// Try to get remote origin URL
-	gitConfigPath := filepath.Join(m.root, ".git", "config")
+	gitConfigPath := filepath.Join(m.config.Root, ".git", "config")
 	if data, err := os.ReadFile(gitConfigPath); err == nil {
 		content := string(data)
 		switch {
@@ -469,7 +466,7 @@ func (m *Manager) detectGitInfo() *ProjectInfo {
 }
 
 func (m *Manager) detectNodeJS() *ProjectInfo {
-	packagePath := filepath.Join(m.root, "package.json")
+	packagePath := filepath.Join(m.config.Root, "package.json")
 	if _, err := os.Stat(packagePath); os.IsNotExist(err) {
 		return nil
 	}
@@ -525,7 +522,7 @@ func (m *Manager) detectNodeJS() *ProjectInfo {
 }
 
 func (m *Manager) detectGo() *ProjectInfo {
-	goModPath := filepath.Join(m.root, "go.mod")
+	goModPath := filepath.Join(m.config.Root, "go.mod")
 	if _, err := os.Stat(goModPath); os.IsNotExist(err) {
 		return nil
 	}
@@ -562,9 +559,9 @@ func (m *Manager) detectPython() *ProjectInfo {
 	files := []string{"setup.py", "pyproject.toml", "requirements.txt", "Pipfile", "poetry.lock"}
 
 	for _, file := range files {
-		if _, err := os.Stat(filepath.Join(m.root, file)); err == nil {
+		if _, err := os.Stat(filepath.Join(m.config.Root, file)); err == nil {
 			info := &ProjectInfo{
-				Name:     filepath.Base(m.root),
+				Name:     filepath.Base(m.config.Root),
 				Metadata: make(map[string]string),
 			}
 			info.Metadata["python_project_file"] = file
@@ -592,7 +589,7 @@ func (m *Manager) detectPython() *ProjectInfo {
 }
 
 func (m *Manager) detectRust() *ProjectInfo {
-	cargoPath := filepath.Join(m.root, "Cargo.toml")
+	cargoPath := filepath.Join(m.config.Root, "Cargo.toml")
 	if _, err := os.Stat(cargoPath); os.IsNotExist(err) {
 		return nil
 	}
@@ -644,9 +641,9 @@ func (m *Manager) detectJava() *ProjectInfo {
 	files := []string{"pom.xml", "build.gradle", "build.gradle.kts"}
 
 	for _, file := range files {
-		if _, err := os.Stat(filepath.Join(m.root, file)); err == nil {
+		if _, err := os.Stat(filepath.Join(m.config.Root, file)); err == nil {
 			info := &ProjectInfo{
-				Name:     filepath.Base(m.root),
+				Name:     filepath.Base(m.config.Root),
 				Metadata: make(map[string]string),
 			}
 
@@ -667,7 +664,7 @@ func (m *Manager) detectJava() *ProjectInfo {
 
 func (m *Manager) parsePyprojectToml() *ProjectInfo {
 	// This is a simplified implementation - in production you'd use a proper TOML parser
-	pyprojectPath := filepath.Join(m.root, "pyproject.toml")
+	pyprojectPath := filepath.Join(m.config.Root, "pyproject.toml")
 	data, err := os.ReadFile(pyprojectPath)
 	if err != nil {
 		return nil
