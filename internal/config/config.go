@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 )
 
 // Standard Configuration Interfaces
@@ -397,9 +398,30 @@ func SetConfig[T Configurable](c *Config, parser ConfigParser[T], config T) erro
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
-	// Write the configuration directly to the file
-	if err := c.viper.WriteConfigAs(configPath); err != nil {
+	// Write configuration atomically using direct YAML marshaling
+	// This avoids Viper's config type detection issues with temporary files
+
+	// Get all current settings from Viper
+	allSettings := c.viper.AllSettings()
+
+	// Marshal to YAML
+	yamlData, err := yaml.Marshal(allSettings)
+	if err != nil {
+		return fmt.Errorf("failed to marshal config to YAML: %w", err)
+	}
+
+	// Write to temporary file first for atomic updates
+	// Use process ID and timestamp to ensure unique temp file names
+	tempPath := filepath.Join(configDir, fmt.Sprintf("config.%d.%d.tmp", os.Getpid(), time.Now().UnixNano()))
+	if err := os.WriteFile(tempPath, yamlData, 0600); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
+	}
+
+	// Atomically replace the config file
+	if err := os.Rename(tempPath, configPath); err != nil {
+		// Clean up temp file on failure
+		os.Remove(tempPath)
+		return fmt.Errorf("failed to update config file: %w", err)
 	}
 
 	// Create a fresh Viper instance to reload the configuration
@@ -477,12 +499,30 @@ func (c *Config) SetValue(key, value string) error {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
-	// Set config type before writing
-	c.viper.SetConfigType("yaml")
+	// Write configuration atomically using direct YAML marshaling
+	// This avoids Viper's config type detection issues with temporary files
 
-	// Write the configuration directly to the file
-	if err := c.viper.WriteConfigAs(configPath); err != nil {
+	// Get all current settings from Viper
+	allSettings := c.viper.AllSettings()
+
+	// Marshal to YAML
+	yamlData, err := yaml.Marshal(allSettings)
+	if err != nil {
+		return fmt.Errorf("failed to marshal config to YAML: %w", err)
+	}
+
+	// Write to temporary file first for atomic updates
+	// Use process ID and timestamp to ensure unique temp file names
+	tempPath := filepath.Join(configDir, fmt.Sprintf("config.%d.%d.tmp", os.Getpid(), time.Now().UnixNano()))
+	if err := os.WriteFile(tempPath, yamlData, 0600); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
+	}
+
+	// Atomically replace the config file
+	if err := os.Rename(tempPath, configPath); err != nil {
+		// Clean up temp file on failure
+		os.Remove(tempPath)
+		return fmt.Errorf("failed to update config file: %w", err)
 	}
 
 	return nil
