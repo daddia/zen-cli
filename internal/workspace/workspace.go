@@ -8,31 +8,26 @@ import (
 	"strings"
 	"time"
 
+	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/internal/logging"
 	"github.com/daddia/zen/pkg/fs"
+	"github.com/go-viper/mapstructure/v2"
 )
 
 // Manager implements workspace operations
 type Manager struct {
-	root       string
-	configFile string
-	logger     logging.Logger
-	fsManager  *fs.Manager
+	config    Config
+	logger    logging.Logger
+	fsManager *fs.Manager
 }
 
-// New creates a new workspace manager
-func New(root, configFile string, logger logging.Logger) *Manager {
-	// Use the config file path provided by the Config module
-	// If none provided, use default
-	if configFile == "" {
-		configFile = filepath.Join(root, ".zen", "config")
-	}
 
+// New creates a new workspace manager with typed configuration
+func New(config Config, logger logging.Logger) *Manager {
 	return &Manager{
-		root:       root,
-		configFile: configFile,
-		logger:     logger,
-		fsManager:  fs.New(logger),
+		config:    config,
+		logger:    logger,
+		fsManager: fs.New(logger),
 	}
 }
 

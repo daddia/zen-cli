@@ -276,15 +276,8 @@ func TestLoadDefaultsFunction(t *testing.T) {
 	assert.False(t, cfg.Development.Debug)
 	assert.False(t, cfg.Development.Profile)
 
-	// Test asset defaults
-	assert.Equal(t, "https://github.com/daddia/zen-assets.git", cfg.Assets.RepositoryURL)
-	assert.Equal(t, "main", cfg.Assets.Branch)
-	assert.Equal(t, "github", cfg.Assets.AuthProvider)
-
-	// Test template defaults
-	assert.True(t, *cfg.Templates.CacheEnabled)
-	assert.Equal(t, "30m", cfg.Templates.CacheTTL)
-	assert.Equal(t, 100, cfg.Templates.CacheSize)
+	// Component-specific defaults are now handled by each component
+	// Core config only contains application-level settings
 
 	// Test that defaults source is loaded
 	assert.Contains(t, cfg.GetLoadedSources(), "defaults")
@@ -294,42 +287,13 @@ func TestLoadDefaultsFunction(t *testing.T) {
 func TestConfigRedacted(t *testing.T) {
 	cfg := &Config{
 		LogLevel: "debug",
-		Assets: AssetsConfig{
-			RepositoryURL: "https://token:secret@github.com/user/repo.git",
-			AuthProvider:  "github",
-		},
 	}
 
 	redacted := cfg.Redacted()
 	require.NotNil(t, redacted)
 
-	// Test that sensitive fields are redacted (actual format includes partial masking)
-	assert.Contains(t, redacted.Assets.RepositoryURL, "*")
-
-	// Test that non-sensitive fields are preserved
+	// Test that core fields are preserved (component-specific redaction is handled by components)
 	assert.Equal(t, "debug", redacted.LogLevel)
-	assert.Equal(t, "github", redacted.Assets.AuthProvider)
-}
-
-func TestAssetsConfigRedacted(t *testing.T) {
-	assets := AssetsConfig{
-		RepositoryURL:          "https://token:secret@github.com/user/repo.git",
-		Branch:                 "main",
-		AuthProvider:           "github",
-		CachePath:              "~/.zen/library",
-		IntegrityChecksEnabled: true,
-	}
-
-	redacted := assets.Redacted()
-
-	// Test that repository URL is redacted (contains credentials)
-	assert.Contains(t, redacted.RepositoryURL, "*")
-
-	// Test that other fields are preserved
-	assert.Equal(t, "main", redacted.Branch)
-	assert.Equal(t, "github", redacted.AuthProvider)
-	assert.Equal(t, "~/.zen/library", redacted.CachePath)
-	assert.True(t, redacted.IntegrityChecksEnabled)
 }
 
 func TestValidateEnhanced(t *testing.T) {
@@ -352,13 +316,6 @@ func TestValidateEnhanced(t *testing.T) {
 				Workspace: WorkspaceConfig{
 					Root:       ".",
 					ConfigFile: "custom.yaml",
-				},
-				Assets: AssetsConfig{
-					RepositoryURL:      "https://github.com/user/repo.git",
-					Branch:             "develop",
-					AuthProvider:       "gitlab",
-					CacheSizeMB:        200,
-					SyncTimeoutSeconds: 60,
 				},
 				Development: DevelopmentConfig{
 					Debug:   true,
@@ -465,22 +422,6 @@ func TestGetValueFromConfigEnhanced(t *testing.T) {
 		Workspace: WorkspaceConfig{
 			Root:       "/workspace/root",
 			ConfigFile: "custom.yaml",
-		},
-		Assets: AssetsConfig{
-			RepositoryURL:          "https://github.com/user/repo.git",
-			Branch:                 "develop",
-			AuthProvider:           "gitlab",
-			CachePath:              "/custom/cache",
-			CacheSizeMB:            150,
-			SyncTimeoutSeconds:     45,
-			IntegrityChecksEnabled: false,
-			PrefetchEnabled:        true,
-		},
-		Templates: TemplatesConfig{
-			CacheTTL:   "1h",
-			CacheSize:  200,
-			LeftDelim:  "<%",
-			RightDelim: "%>",
 		},
 		Development: DevelopmentConfig{
 			Debug:   true,

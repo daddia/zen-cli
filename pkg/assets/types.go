@@ -2,7 +2,11 @@ package assets
 
 import (
 	"context"
+	"fmt"
 	"time"
+
+	"github.com/daddia/zen/internal/config"
+	"github.com/go-viper/mapstructure/v2"
 )
 
 // AssetType represents the type of asset
@@ -219,7 +223,7 @@ type AssetConfig struct {
 // DefaultAssetConfig returns default asset client configuration
 func DefaultAssetConfig() AssetConfig {
 	return AssetConfig{
-		RepositoryURL:          "", // Set by configuration system
+		RepositoryURL:          "https://github.com/daddia/zen-assets.git", // Default official repository
 		Branch:                 "main",
 		CachePath:              "~/.zen/library",
 		CacheSizeMB:            100,
@@ -230,4 +234,71 @@ func DefaultAssetConfig() AssetConfig {
 		IntegrityChecksEnabled: true,
 		PrefetchEnabled:        true,
 	}
+}
+
+// Implement config.Configurable interface
+
+// Validate validates the asset configuration
+func (c AssetConfig) Validate() error {
+	if c.RepositoryURL == "" {
+		return fmt.Errorf("repository_url is required")
+	}
+	if c.Branch == "" {
+		return fmt.Errorf("branch is required")
+	}
+	if c.CachePath == "" {
+		return fmt.Errorf("cache_path is required")
+	}
+	if c.CacheSizeMB <= 0 {
+		return fmt.Errorf("cache_size_mb must be positive")
+	}
+	if c.SyncTimeoutSeconds <= 0 {
+		return fmt.Errorf("sync_timeout_seconds must be positive")
+	}
+	if c.MaxConcurrentOps <= 0 {
+		return fmt.Errorf("max_concurrent_ops must be positive")
+	}
+	return nil
+}
+
+// Defaults returns a new AssetConfig with default values
+func (c AssetConfig) Defaults() config.Configurable {
+	return DefaultAssetConfig()
+}
+
+// ConfigParser implements config.ConfigParser[AssetConfig] interface
+type ConfigParser struct{}
+
+// Parse converts raw configuration data to AssetConfig
+func (p ConfigParser) Parse(raw map[string]interface{}) (AssetConfig, error) {
+	// Start with defaults to ensure all fields are properly initialized
+	cfg := DefaultAssetConfig()
+
+	// If raw data is empty, return defaults
+	if len(raw) == 0 {
+		return cfg, nil
+	}
+
+	// Use mapstructure to decode the raw map into our config struct
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result:           &cfg,
+		WeaklyTypedInput: true,
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(
+			mapstructure.StringToTimeDurationHookFunc(),
+		),
+	})
+	if err != nil {
+		return cfg, fmt.Errorf("failed to create decoder: %w", err)
+	}
+
+	if err := decoder.Decode(raw); err != nil {
+		return cfg, fmt.Errorf("failed to decode asset config: %w", err)
+	}
+
+	return cfg, nil
+}
+
+// Section returns the configuration section name for assets
+func (p ConfigParser) Section() string {
+	return "assets"
 }

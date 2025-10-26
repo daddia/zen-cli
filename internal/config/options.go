@@ -53,18 +53,6 @@ var Options = []ConfigOption{
 		Type:          "string",
 	},
 	{
-		Key:          "workspace.root",
-		Description:  "Set the workspace root directory",
-		DefaultValue: ".",
-		Type:         "string",
-	},
-	{
-		Key:          "workspace.config_file",
-		Description:  "Set the workspace configuration file name",
-		DefaultValue: "config",
-		Type:         "string",
-	},
-	{
 		Key:           "development.debug",
 		Description:   "Enable development debug mode",
 		AllowedValues: []string{"true", "false"},
@@ -365,53 +353,48 @@ func (opt ConfigOption) getWorkspaceValue(cfg *Config, field string) string {
 }
 
 func (opt ConfigOption) getAssetsValue(cfg *Config, field string) string {
+	// Component-specific config access is now handled by each component
+	// This function returns default values for backward compatibility
 	switch field {
 	case "repository_url":
-		return cfg.Assets.RepositoryURL
+		return ""
 	case "branch":
-		return cfg.Assets.Branch
+		return "main"
 	case "auth_provider":
-		return cfg.Assets.AuthProvider
+		return "github"
 	case "cache_path":
-		return cfg.Assets.CachePath
+		return "~/.zen/library"
 	case "cache_size_mb":
-		return strconv.FormatInt(cfg.Assets.CacheSizeMB, 10)
+		return "100"
 	case "sync_timeout_seconds":
-		return strconv.Itoa(cfg.Assets.SyncTimeoutSeconds)
+		return "30"
 	case "integrity_checks_enabled":
-		return strconv.FormatBool(cfg.Assets.IntegrityChecksEnabled)
+		return "true"
 	case "prefetch_enabled":
-		return strconv.FormatBool(cfg.Assets.PrefetchEnabled)
+		return "true"
 	default:
 		return ""
 	}
 }
 
 func (opt ConfigOption) getTemplatesValue(cfg *Config, field string) string {
+	// Component-specific config access is now handled by each component
+	// This function returns default values for backward compatibility
 	switch field {
 	case "cache_enabled":
-		if cfg.Templates.CacheEnabled != nil {
-			return strconv.FormatBool(*cfg.Templates.CacheEnabled)
-		}
-		return ""
+		return "true"
 	case "cache_ttl":
-		return cfg.Templates.CacheTTL
+		return "30m"
 	case "cache_size":
-		return strconv.Itoa(cfg.Templates.CacheSize)
+		return "100"
 	case "strict_mode":
-		if cfg.Templates.StrictMode != nil {
-			return strconv.FormatBool(*cfg.Templates.StrictMode)
-		}
-		return ""
+		return "false"
 	case "enable_ai":
-		if cfg.Templates.EnableAI != nil {
-			return strconv.FormatBool(*cfg.Templates.EnableAI)
-		}
-		return ""
+		return "false"
 	case "left_delim":
-		return cfg.Templates.LeftDelim
+		return "{{"
 	case "right_delim":
-		return cfg.Templates.RightDelim
+		return "}}"
 	default:
 		return ""
 	}
@@ -429,37 +412,39 @@ func (opt ConfigOption) getDevelopmentValue(cfg *Config, field string) string {
 }
 
 func (opt ConfigOption) getTasksValue(cfg *Config, field string) string {
+	// Component-specific config access is now handled by each component
+	// This function returns default values for backward compatibility
 	switch field {
 	case "source":
-		return cfg.Work.Tasks.Source
+		return "local"
 	case "sync":
-		return cfg.Work.Tasks.Sync
+		return "manual"
 	case "project_key":
-		return cfg.Work.Tasks.ProjectKey
+		return ""
 	default:
 		return ""
 	}
 }
 
 func (opt ConfigOption) getProviderValue(cfg *Config, provider, field string) string {
-	if cfg.Providers == nil {
-		return ""
-	}
-
-	providerConfig, exists := cfg.Providers[provider]
-	if !exists {
-		return ""
-	}
-
+	// Component-specific config access is now handled by each component
+	// This function returns default values for backward compatibility
 	switch field {
 	case "type":
-		return providerConfig.Type
+		return provider // Use provider name as default type
 	case "url":
-		return providerConfig.URL
+		switch provider {
+		case "github":
+			return "https://api.github.com"
+		case "linear":
+			return "https://api.linear.app"
+		default:
+			return ""
+		}
 	case "email":
-		return providerConfig.Email
+		return ""
 	case "api_token":
-		return providerConfig.APIToken
+		return ""
 	default:
 		return ""
 	}

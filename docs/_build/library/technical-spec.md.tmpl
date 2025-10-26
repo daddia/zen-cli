@@ -1,0 +1,463 @@
+# Technical Specification - {{ .FEATURE_NAME }}
+
+**Version:** {{ .VERSION }}  
+**Author:** {{ .AUTHOR }}  
+**Date:** {{ .DATE }}  
+**Status:** {{ .STATUS }}
+
+## Executive Summary
+
+{{ .EXECUTIVE_SUMMARY }}
+
+## Goals and Non-Goals
+
+### Goals
+{{ range .GOALS }}
+- {{ . }}
+{{ end }}
+
+### Non-Goals
+{{ range .NON_GOALS }}
+- {{ . }}
+{{ end }}
+
+## Requirements
+
+### Functional Requirements
+{{ range $index, $req := .FUNCTIONAL_REQUIREMENTS }}
+- **FR-{{ $index }}**: {{ .requirement }}
+  - Priority: {{ .priority }}
+  - Acceptance Criteria: {{ .acceptance_criteria }}
+{{ end }}
+
+### Non-Functional Requirements
+{{ range $index, $req := .NON_FUNCTIONAL_REQUIREMENTS }}
+- **NFR-{{ $index }}**: {{ .requirement }}
+  - Category: {{ .category }}
+  - Target: {{ .target }}
+  - Measurement: {{ .measurement }}
+{{ end }}
+
+## System Architecture
+
+### High-Level Design
+{{ .HIGH_LEVEL_DESIGN }}
+
+### Component Architecture
+{{ range .COMPONENTS }}
+#### {{ .name }}
+- **Purpose:** {{ .purpose }}
+- **Technology:** {{ .technology }}
+- **Interfaces:** {{ .interfaces }}
+- **Dependencies:** {{ .dependencies }}
+{{ end }}
+
+### Data Architecture
+
+#### Data Models
+{{ range .DATA_MODELS }}
+##### {{ .entity }}
+```
+{{ .schema }}
+```
+- **Storage:** {{ .storage }}
+- **Indexes:** {{ .indexes }}
+- **Constraints:** {{ .constraints }}
+{{ end }}
+
+#### Data Flow
+{{ .DATA_FLOW_DESCRIPTION }}
+
+### API Design
+
+{{ range .API_ENDPOINTS }}
+#### {{ .method }} {{ .path }}
+- **Purpose:** {{ .purpose }}
+- **Request:**
+  ```json
+  {{ .request_example }}
+  ```
+- **Response:**
+  ```json
+  {{ .response_example }}
+  ```
+- **Error Codes:** {{ .error_codes }}
+- **Rate Limit:** {{ .rate_limit }}
+{{ end }}
+
+## Implementation Details
+
+### Technology Stack
+{{ range .TECH_STACK }}
+- **{{ .layer }}**: {{ .technology }} ({{ .version }})
+  - Justification: {{ .justification }}
+{{ end }}
+
+### Algorithms and Logic
+{{ range .ALGORITHMS }}
+#### {{ .name }}
+- **Purpose:** {{ .purpose }}
+- **Complexity:** {{ .complexity }}
+- **Implementation:**
+  ```{{ .language }}
+  {{ .implementation }}
+  ```
+- **Performance:** {{ .performance }}
+{{ end }}
+
+### Security Design
+{{ range .SECURITY_DESIGN }}
+- **{{ .aspect }}**: {{ .implementation }}
+  - Risk Mitigation: {{ .risk_mitigation }}
+  - Validation: {{ .validation }}
+{{ end }}
+
+### Error Handling Strategy
+{{ .ERROR_HANDLING_STRATEGY }}
+
+#### Error Types
+{{ range .ERROR_TYPES }}
+- **{{ .type }}**: {{ .description }}
+  - Handling: {{ .handling }}
+  - User Message: {{ .user_message }}
+  - Logging: {{ .logging }}
+{{ end }}
+
+## Performance & Scalability
+
+### Performance Requirements
+{{ range .PERFORMANCE_REQUIREMENTS }}
+- **{{ .metric }}**: {{ .target }}
+  - Current: {{ .current }}
+  - Measurement: {{ .measurement }}
+{{ end }}
+
+### Scalability Design
+{{ .SCALABILITY_DESIGN }}
+
+### Load Testing Requirements
+{{ range .LOAD_TESTING }}
+- **{{ .scenario }}**: {{ .description }}
+  - Load: {{ .load }}
+  - Duration: {{ .duration }}
+  - Success Criteria: {{ .success_criteria }}
+{{ end }}
+
+### Caching Strategy
+{{ range .CACHING_STRATEGY }}
+- **{{ .layer }}**: {{ .strategy }}
+  - Technology: {{ .technology }}
+  - TTL: {{ .ttl }}
+  - Invalidation: {{ .invalidation }}
+{{ end }}
+
+## Database Design
+
+### Schema Changes
+{{ range .SCHEMA_CHANGES }}
+#### {{ .table }}
+```sql
+{{ .ddl }}
+```
+- **Purpose:** {{ .purpose }}
+- **Migration Strategy:** {{ .migration }}
+- **Rollback Plan:** {{ .rollback }}
+{{ end }}
+
+### Database Performance
+{{ range .DB_PERFORMANCE }}
+- **{{ .operation }}**: {{ .target }}
+  - Current: {{ .current }}
+  - Optimization: {{ .optimization }}
+{{ end }}
+
+### Data Migration
+{{ if .DATA_MIGRATION }}
+{{ .DATA_MIGRATION.strategy }}
+
+#### Migration Steps
+{{ range $index, $step := .DATA_MIGRATION.steps }}
+{{ add $index 1 }}. {{ .description }}
+   - Script: {{ .script }}
+   - Validation: {{ .validation }}
+   - Rollback: {{ .rollback }}
+{{ end }}
+{{ end }}
+
+## Integration Design
+
+### External Integrations
+{{ range .EXTERNAL_INTEGRATIONS }}
+- **{{ .system }}**: {{ .integration_type }}
+  - Protocol: {{ .protocol }}
+  - Authentication: {{ .authentication }}
+  - Rate Limits: {{ .rate_limits }}
+  - Error Handling: {{ .error_handling }}
+{{ end }}
+
+### Event-Driven Architecture
+{{ if .EVENT_DRIVEN }}
+{{ range .EVENT_DRIVEN.events }}
+- **{{ .event }}**: {{ .description }}
+  - Producer: {{ .producer }}
+  - Consumers: {{ .consumers }}
+  - Schema: {{ .schema }}
+{{ end }}
+{{ end }}
+
+## Testing Strategy
+
+### Test Coverage
+{{ range .TEST_COVERAGE }}
+- **{{ .type }}**: {{ .target }}%
+  - Framework: {{ .framework }}
+  - Strategy: {{ .strategy }}
+{{ end }}
+
+### Test Cases
+{{ range .TEST_CASES }}
+#### {{ .id }}: {{ .description }}
+- **Type:** {{ .type }}
+- **Priority:** {{ .priority }}
+- **Preconditions:** {{ .preconditions }}
+- **Test Steps:** {{ .steps }}
+- **Expected Result:** {{ .expected_result }}
+{{ end }}
+
+### Test Automation
+{{ .TEST_AUTOMATION_STRATEGY }}
+
+### Test Data Management
+{{ range .TEST_DATA_MANAGEMENT }}
+- **{{ .dataset }}**: {{ .description }}
+  - Generation: {{ .generation }}
+  - Privacy: {{ .privacy }}
+  - Lifecycle: {{ .lifecycle }}
+{{ end }}
+
+## Deployment & Operations
+
+### Deployment Strategy
+{{ .DEPLOYMENT_STRATEGY }}
+
+### Environment Configuration
+{{ range .ENVIRONMENTS }}
+- **{{ .environment }}**: {{ .purpose }}
+  - Configuration: {{ .configuration }}
+  - Data: {{ .data }}
+  - Monitoring: {{ .monitoring }}
+{{ end }}
+
+### Feature Flags
+{{ range .FEATURE_FLAGS }}
+- **{{ .flag }}**: {{ .description }}
+  - Default State: {{ .default_state }}
+  - Rollout Strategy: {{ .rollout_strategy }}
+{{ end }}
+
+### Monitoring & Observability
+{{ range .MONITORING }}
+- **{{ .metric }}**: {{ .description }}
+  - Type: {{ .type }}
+  - Alert Threshold: {{ .threshold }}
+  - Dashboard: {{ .dashboard }}
+{{ end }}
+
+### Operational Runbooks
+{{ range .RUNBOOKS }}
+- [{{ .name }}]({{ .link }}): {{ .description }}
+{{ end }}
+
+## Risk Assessment
+
+### Technical Risks
+{{ range .TECHNICAL_RISKS }}
+- **{{ .risk }}**: {{ .description }}
+  - Probability: {{ .probability }}
+  - Impact: {{ .impact }}
+  - Mitigation: {{ .mitigation }}
+{{ end }}
+
+### Performance Risks
+{{ range .PERFORMANCE_RISKS }}
+- **{{ .risk }}**: {{ .description }}
+  - Mitigation: {{ .mitigation }}
+  - Monitoring: {{ .monitoring }}
+{{ end }}
+
+### Security Risks
+{{ range .SECURITY_RISKS }}
+- **{{ .risk }}**: {{ .description }}
+  - Impact: {{ .impact }}
+  - Controls: {{ .controls }}
+{{ end }}
+
+## Dependencies
+
+### Internal Dependencies
+{{ range .INTERNAL_DEPENDENCIES }}
+- **{{ .component }}**: {{ .description }}
+  - Owner: {{ .owner }}
+  - Timeline: {{ .timeline }}
+  - Risk: {{ .risk }}
+{{ end }}
+
+### External Dependencies
+{{ range .EXTERNAL_DEPENDENCIES }}
+- **{{ .service }}**: {{ .description }}
+  - SLA: {{ .sla }}
+  - Fallback: {{ .fallback }}
+  - Contact: {{ .contact }}
+{{ end }}
+
+### Library Dependencies
+{{ range .LIBRARY_DEPENDENCIES }}
+- **{{ .library }}**: {{ .version }}
+  - Purpose: {{ .purpose }}
+  - License: {{ .license }}
+  - Alternatives: {{ .alternatives }}
+{{ end }}
+
+## Migration and Rollback
+
+### Migration Plan
+{{ range $index, $step := .MIGRATION_PLAN }}
+{{ add $index 1 }}. **{{ .name }}**
+   - Description: {{ .description }}
+   - Duration: {{ .duration }}
+   - Validation: {{ .validation }}
+   - Rollback: {{ .rollback }}
+{{ end }}
+
+### Rollback Strategy
+{{ .ROLLBACK_STRATEGY }}
+
+### Compatibility Matrix
+| Component | Current Version | New Version | Compatibility |
+|-----------|----------------|-------------|---------------|
+{{ range .COMPATIBILITY_MATRIX }}
+| {{ .component }} | {{ .current }} | {{ .new }} | {{ .compatibility }} |
+{{ end }}
+
+## Timeline and Milestones
+
+### Implementation Timeline
+| Phase | Duration | Deliverables | Owner |
+|-------|----------|--------------|-------|
+{{ range .IMPLEMENTATION_TIMELINE }}
+| {{ .phase }} | {{ .duration }} | {{ .deliverables }} | {{ .owner }} |
+{{ end }}
+
+### Critical Milestones
+{{ range .CRITICAL_MILESTONES }}
+- **{{ .milestone }}**: {{ .date }}
+  - Success Criteria: {{ .criteria }}
+  - Dependencies: {{ .dependencies }}
+{{ end }}
+
+## Success Criteria
+
+### Technical Success
+{{ range .TECHNICAL_SUCCESS }}
+- **{{ .criterion }}**: {{ .measurement }}
+  - Target: {{ .target }}
+  - Validation: {{ .validation }}
+{{ end }}
+
+### Performance Success
+{{ range .PERFORMANCE_SUCCESS }}
+- **{{ .metric }}**: {{ .target }}
+  - Baseline: {{ .baseline }}
+  - Measurement: {{ .measurement }}
+{{ end }}
+
+### User Success
+{{ range .USER_SUCCESS }}
+- **{{ .metric }}**: {{ .target }}
+  - Method: {{ .method }}
+  - Timeline: {{ .timeline }}
+{{ end }}
+
+## Appendices
+
+### Glossary
+{{ range .GLOSSARY }}
+- **{{ .term }}**: {{ .definition }}
+{{ end }}
+
+### References
+{{ range .REFERENCES }}
+- [{{ .title }}]({{ .url }})
+{{ end }}
+
+### Architecture Decision Records
+{{ range .ADRS }}
+- [{{ .title }}]({{ .url }}) - {{ .summary }}
+{{ end }}
+
+---
+
+**Specification Status:** {{ .SPEC_STATUS }}  
+**Review Status:** {{ .REVIEW_STATUS }}  
+**Approval Date:** {{ .APPROVAL_DATE }}
+
+<!-- Template Variables Reference:
+- FEATURE_NAME: Feature name
+- VERSION: Specification version
+- AUTHOR: Specification author
+- DATE: Creation date
+- STATUS: Specification status
+- EXECUTIVE_SUMMARY: Executive summary
+- GOALS: Array of goals
+- NON_GOALS: Array of non-goals
+- FUNCTIONAL_REQUIREMENTS: Array of functional requirements
+- NON_FUNCTIONAL_REQUIREMENTS: Array of non-functional requirements
+- HIGH_LEVEL_DESIGN: High-level design description
+- COMPONENTS: Array of system components
+- DATA_MODELS: Array of data models
+- DATA_FLOW_DESCRIPTION: Data flow description
+- API_ENDPOINTS: Array of API endpoints
+- TECH_STACK: Array of technology stack components
+- ALGORITHMS: Array of algorithms
+- SECURITY_DESIGN: Array of security design aspects
+- ERROR_HANDLING_STRATEGY: Error handling strategy
+- ERROR_TYPES: Array of error types
+- PERFORMANCE_REQUIREMENTS: Array of performance requirements
+- SCALABILITY_DESIGN: Scalability design description
+- LOAD_TESTING: Array of load testing scenarios
+- CACHING_STRATEGY: Array of caching strategies
+- SCHEMA_CHANGES: Array of database schema changes
+- DB_PERFORMANCE: Array of database performance requirements
+- DATA_MIGRATION: Data migration configuration (optional)
+- EXTERNAL_INTEGRATIONS: Array of external integrations
+- EVENT_DRIVEN: Event-driven architecture configuration (optional)
+- TEST_COVERAGE: Array of test coverage requirements
+- TEST_CASES: Array of test cases
+- TEST_AUTOMATION_STRATEGY: Test automation strategy
+- TEST_DATA_MANAGEMENT: Array of test data management
+- DEPLOYMENT_STRATEGY: Deployment strategy
+- ENVIRONMENTS: Array of environment configurations
+- FEATURE_FLAGS: Array of feature flags
+- MONITORING: Array of monitoring requirements
+- RUNBOOKS: Array of operational runbooks
+- TECHNICAL_RISKS: Array of technical risks
+- PERFORMANCE_RISKS: Array of performance risks
+- SECURITY_RISKS: Array of security risks
+- INTERNAL_DEPENDENCIES: Array of internal dependencies
+- EXTERNAL_DEPENDENCIES: Array of external dependencies
+- LIBRARY_DEPENDENCIES: Array of library dependencies
+- MIGRATION_PLAN: Array of migration plan steps
+- ROLLBACK_STRATEGY: Rollback strategy
+- COMPATIBILITY_MATRIX: Array of compatibility matrix
+- IMPLEMENTATION_TIMELINE: Array of implementation timeline
+- CRITICAL_MILESTONES: Array of critical milestones
+- TECHNICAL_SUCCESS: Array of technical success criteria
+- PERFORMANCE_SUCCESS: Array of performance success criteria
+- USER_SUCCESS: Array of user success criteria
+- GLOSSARY: Array of glossary terms
+- REFERENCES: Array of references
+- ADRS: Array of Architecture Decision Records
+- SPEC_STATUS: Specification status
+- REVIEW_STATUS: Review status
+- APPROVAL_DATE: Approval date
+-->

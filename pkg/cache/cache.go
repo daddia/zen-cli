@@ -2,9 +2,12 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/internal/logging"
+	"github.com/go-viper/mapstructure/v2"
 )
 
 // Manager represents a generic cache interface
@@ -74,6 +77,61 @@ func DefaultConfig() Config {
 		CleanupInterval:   1 * time.Hour,
 		EnableCompression: false,
 	}
+}
+
+// Implement config.Configurable interface
+
+// Validate validates the cache configuration
+func (c Config) Validate() error {
+	if c.BasePath == "" {
+		return fmt.Errorf("base_path is required")
+	}
+	if c.SizeLimitMB <= 0 {
+		return fmt.Errorf("size_limit_mb must be positive")
+	}
+	if c.DefaultTTL <= 0 {
+		return fmt.Errorf("default_ttl must be positive")
+	}
+	if c.CleanupInterval <= 0 {
+		return fmt.Errorf("cleanup_interval must be positive")
+	}
+	return nil
+}
+
+// Defaults returns a new Config with default values
+func (c Config) Defaults() config.Configurable {
+	return DefaultConfig()
+}
+
+// ConfigParser implements config.ConfigParser[Config] interface
+type ConfigParser struct{}
+
+// Parse converts raw configuration data to Config
+func (p ConfigParser) Parse(raw map[string]interface{}) (Config, error) {
+	var cfg Config
+
+	// Use mapstructure to decode the raw map into our config struct
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result:           &cfg,
+		WeaklyTypedInput: true,
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(
+			mapstructure.StringToTimeDurationHookFunc(),
+		),
+	})
+	if err != nil {
+		return cfg, fmt.Errorf("failed to create decoder: %w", err)
+	}
+
+	if err := decoder.Decode(raw); err != nil {
+		return cfg, fmt.Errorf("failed to decode cache config: %w", err)
+	}
+
+	return cfg, nil
+}
+
+// Section returns the configuration section name for cache
+func (p ConfigParser) Section() string {
+	return "cache"
 }
 
 // Error represents cache-specific errors

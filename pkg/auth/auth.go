@@ -2,9 +2,12 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/internal/logging"
+	"github.com/go-viper/mapstructure/v2"
 )
 
 // Manager represents the authentication interface for all providers
@@ -131,6 +134,73 @@ func DefaultConfig() Config {
 			},
 		},
 	}
+}
+
+// Implement config.Configurable interface
+
+// Validate validates the authentication configuration
+func (c Config) Validate() error {
+	validStorageTypes := []string{"keychain", "file", "memory"}
+	validType := false
+	for _, t := range validStorageTypes {
+		if c.StorageType == t {
+			validType = true
+			break
+		}
+	}
+	if !validType {
+		return fmt.Errorf("invalid storage_type: %s (must be one of: keychain, file, memory)", c.StorageType)
+	}
+
+	if c.StorageType == "file" && c.StoragePath == "" {
+		return fmt.Errorf("storage_path is required when storage_type is 'file'")
+	}
+
+	if c.ValidationTimeout <= 0 {
+		return fmt.Errorf("validation_timeout must be positive")
+	}
+
+	if c.CacheTimeout <= 0 {
+		return fmt.Errorf("cache_timeout must be positive")
+	}
+
+	return nil
+}
+
+// Defaults returns a new Config with default values
+func (c Config) Defaults() config.Configurable {
+	return DefaultConfig()
+}
+
+// ConfigParser implements config.ConfigParser[Config] interface
+type ConfigParser struct{}
+
+// Parse converts raw configuration data to Config
+func (p ConfigParser) Parse(raw map[string]interface{}) (Config, error) {
+	var cfg Config
+
+	// Use mapstructure to decode the raw map into our config struct
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result:           &cfg,
+		WeaklyTypedInput: true,
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(
+			mapstructure.StringToTimeDurationHookFunc(),
+		),
+	})
+	if err != nil {
+		return cfg, fmt.Errorf("failed to create decoder: %w", err)
+	}
+
+	if err := decoder.Decode(raw); err != nil {
+		return cfg, fmt.Errorf("failed to decode auth config: %w", err)
+	}
+
+	return cfg, nil
+}
+
+// Section returns the configuration section name for auth
+func (p ConfigParser) Section() string {
+	return "auth"
 }
 
 // NewManager creates a new authentication manager with the specified configuration

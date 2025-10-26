@@ -9,8 +9,10 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/daddia/zen/internal/config"
 	"github.com/daddia/zen/internal/logging"
 	"github.com/daddia/zen/pkg/assets"
+	"github.com/go-viper/mapstructure/v2"
 )
 
 // Engine implements the TemplateEngine interface
@@ -30,16 +32,92 @@ type Engine struct {
 
 // EngineConfig configures the template engine
 type EngineConfig struct {
-	CacheEnabled  bool          `json:"cache_enabled"`
-	CacheTTL      time.Duration `json:"cache_ttl"`
-	CacheSize     int           `json:"cache_size"`
-	StrictMode    bool          `json:"strict_mode"`
-	EnableAI      bool          `json:"enable_ai"`
+	CacheEnabled  bool          `json:"cache_enabled" yaml:"cache_enabled"`
+	CacheTTL      time.Duration `json:"cache_ttl" yaml:"cache_ttl"`
+	CacheSize     int           `json:"cache_size" yaml:"cache_size"`
+	StrictMode    bool          `json:"strict_mode" yaml:"strict_mode"`
+	EnableAI      bool          `json:"enable_ai" yaml:"enable_ai"`
 	DefaultDelims struct {
-		Left  string `json:"left"`
-		Right string `json:"right"`
-	} `json:"default_delims"`
-	WorkspaceRoot string `json:"workspace_root"`
+		Left  string `json:"left" yaml:"left"`
+		Right string `json:"right" yaml:"right"`
+	} `json:"default_delims" yaml:"default_delims"`
+	WorkspaceRoot string `json:"workspace_root" yaml:"workspace_root"`
+}
+
+// DefaultEngineConfig returns default template engine configuration
+func DefaultEngineConfig() EngineConfig {
+	cfg := EngineConfig{
+		CacheEnabled:  true,
+		CacheTTL:      30 * time.Minute,
+		CacheSize:     100,
+		StrictMode:    false,
+		EnableAI:      false,
+		WorkspaceRoot: ".",
+	}
+	cfg.DefaultDelims.Left = "{{"
+	cfg.DefaultDelims.Right = "}}"
+	return cfg
+}
+
+// Implement config.Configurable interface
+
+// Validate validates the template engine configuration
+func (c EngineConfig) Validate() error {
+	if c.CacheSize < 0 {
+		return fmt.Errorf("cache_size must be non-negative")
+	}
+	if c.CacheTTL < 0 {
+		return fmt.Errorf("cache_ttl must be non-negative")
+	}
+	if c.DefaultDelims.Left == "" {
+		return fmt.Errorf("left delimiter cannot be empty")
+	}
+	if c.DefaultDelims.Right == "" {
+		return fmt.Errorf("right delimiter cannot be empty")
+	}
+	return nil
+}
+
+// Defaults returns a new EngineConfig with default values
+func (c EngineConfig) Defaults() config.Configurable {
+	return DefaultEngineConfig()
+}
+
+// ConfigParser implements config.ConfigParser[EngineConfig] interface
+type ConfigParser struct{}
+
+// Parse converts raw configuration data to EngineConfig
+func (p ConfigParser) Parse(raw map[string]interface{}) (EngineConfig, error) {
+	// Start with defaults to ensure all fields are properly initialized
+	cfg := DefaultEngineConfig()
+
+	// If raw data is empty, return defaults
+	if len(raw) == 0 {
+		return cfg, nil
+	}
+
+	// Use mapstructure to decode the raw map into our config struct
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result:           &cfg,
+		WeaklyTypedInput: true,
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(
+			mapstructure.StringToTimeDurationHookFunc(),
+		),
+	})
+	if err != nil {
+		return cfg, fmt.Errorf("failed to create decoder: %w", err)
+	}
+
+	if err := decoder.Decode(raw); err != nil {
+		return cfg, fmt.Errorf("failed to decode template config: %w", err)
+	}
+
+	return cfg, nil
+}
+
+// Section returns the configuration section name for templates
+func (p ConfigParser) Section() string {
+	return "templates"
 }
 
 // NewEngine creates a new template engine with dependencies

@@ -14,269 +14,40 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config represents the application configuration
+// Standard Configuration Interfaces
+
+// Configurable is the standard interface that all configuration types must implement
+type Configurable interface {
+	// Validate validates the configuration and returns an error if invalid
+	Validate() error
+
+	// Defaults returns a new instance with default values
+	Defaults() Configurable
+}
+
+// ConfigParser provides type-safe parsing for configuration sections
+type ConfigParser[T Configurable] interface {
+	// Parse converts raw configuration data to the typed configuration
+	Parse(raw map[string]interface{}) (T, error)
+
+	// Section returns the configuration section name (e.g., "assets", "templates")
+	Section() string
+}
+
+// Manager provides the standard configuration management APIs
+// Note: Generic methods cannot be in interfaces, so Manager is a concrete type alias
+type Manager = Config
+
+// Config represents the core application configuration and implements Manager interface
 type Config struct {
-	// Logging configuration
+	// Core application configuration
 	LogLevel  string `mapstructure:"log_level" validate:"required,oneof=trace debug info warn error fatal panic"`
 	LogFormat string `mapstructure:"log_format" validate:"required,oneof=text json"`
-
-	// CLI configuration
-	CLI CLIConfig `mapstructure:"cli"`
-
-	// Workspace configuration
-	Workspace WorkspaceConfig `mapstructure:"workspace"`
-
-	// Assets configuration
-	Assets AssetsConfig `mapstructure:"assets"`
-
-	// Templates configuration
-	Templates TemplatesConfig `mapstructure:"templates"`
-
-	// Development configuration
-	Development DevelopmentConfig `mapstructure:"development"`
-
-	// Work configuration
-	Work WorkConfig `mapstructure:"work"`
-
-	// Integration configuration
-	Integrations IntegrationsConfig `mapstructure:"integrations"`
-
-	// Provider configurations
-	Providers map[string]ProviderConfig `mapstructure:"providers"`
 
 	// Internal fields for configuration management
 	viper      *viper.Viper `mapstructure:"-" json:"-" yaml:"-"`
 	configFile string       `mapstructure:"-" json:"-" yaml:"-"`
 	loadedFrom []string     `mapstructure:"-" json:"-" yaml:"-"`
-}
-
-// CLIConfig contains CLI-specific configuration
-type CLIConfig struct {
-	// Color output settings
-	NoColor bool `mapstructure:"no_color"`
-
-	// Verbose output
-	Verbose bool `mapstructure:"verbose"`
-
-	// Output format (text, json, yaml)
-	OutputFormat string `mapstructure:"output_format" validate:"required,oneof=text json yaml"`
-}
-
-// WorkspaceConfig contains workspace-specific configuration
-type WorkspaceConfig struct {
-	// Root directory for workspace detection
-	Root string `mapstructure:"root"`
-
-	// Zen directory path relative to workspace root
-	ZenPath string `mapstructure:"zen_path"`
-
-	// Configuration file name
-	ConfigFile string `mapstructure:"config_file"`
-}
-
-// AssetsConfig contains asset repository configuration
-type AssetsConfig struct {
-	// Repository URL (defaults to official zen-assets repository)
-	RepositoryURL string `mapstructure:"repository_url"`
-
-	// Branch to use (defaults to "main")
-	Branch string `mapstructure:"branch"`
-
-	// Authentication provider (github, gitlab)
-	AuthProvider string `mapstructure:"auth_provider"`
-
-	// Cache settings
-	CachePath   string `mapstructure:"cache_path"`
-	CacheSizeMB int64  `mapstructure:"cache_size_mb"`
-
-	// Sync timeout in seconds
-	SyncTimeoutSeconds int `mapstructure:"sync_timeout_seconds"`
-
-	// Feature flags
-	IntegrityChecksEnabled bool `mapstructure:"integrity_checks_enabled"`
-	PrefetchEnabled        bool `mapstructure:"prefetch_enabled"`
-}
-
-// Redacted returns a copy of the AssetsConfig with sensitive fields redacted
-func (a AssetsConfig) Redacted() AssetsConfig {
-	redacted := a
-	redacted.RepositoryURL = RedactSensitiveValue("repository_url", a.RepositoryURL)
-	return redacted
-}
-
-// TemplatesConfig contains template engine configuration
-type TemplatesConfig struct {
-	// Enable template compilation caching
-	CacheEnabled *bool `mapstructure:"cache_enabled"`
-
-	// Cache TTL duration (e.g., "30m", "1h")
-	CacheTTL string `mapstructure:"cache_ttl"`
-
-	// Maximum number of templates to cache
-	CacheSize int `mapstructure:"cache_size"`
-
-	// Enable strict mode (error on missing variables)
-	StrictMode *bool `mapstructure:"strict_mode"`
-
-	// Enable AI enhancement features
-	EnableAI *bool `mapstructure:"enable_ai"`
-
-	// Custom template delimiters
-	LeftDelim  string `mapstructure:"left_delim"`
-	RightDelim string `mapstructure:"right_delim"`
-}
-
-// DevelopmentConfig contains development-specific settings
-type DevelopmentConfig struct {
-	// Enable debug mode
-	Debug bool `mapstructure:"debug"`
-
-	// Enable profiling
-	Profile bool `mapstructure:"profile"`
-}
-
-// WorkConfig contains work-related configuration
-type WorkConfig struct {
-	// Tasks configuration
-	Tasks TasksConfig `mapstructure:"tasks"`
-}
-
-// TasksConfig contains task-specific configuration
-type TasksConfig struct {
-	// Task source system (jira, github, linear, monday, asana, local, none)
-	Source string `mapstructure:"source" validate:"oneof=jira github linear monday asana local none ''"`
-
-	// Sync frequency (hourly, daily, manual, none)
-	Sync string `mapstructure:"sync" validate:"oneof=hourly daily manual none ''"`
-
-	// Project key or identifier for tasks
-	ProjectKey string `mapstructure:"project_key"`
-}
-
-// ProviderConfig contains provider-specific configuration
-type ProviderConfig struct {
-	// Provider type (jira, github, linear, etc.)
-	Type string `mapstructure:"type"`
-
-	// Server URL for the provider
-	URL string `mapstructure:"url"`
-
-	// Email for authentication (if required)
-	Email string `mapstructure:"email"`
-
-	// API key/token for authentication
-	APIToken string `mapstructure:"api_token"`
-
-	// Additional provider-specific settings
-	Settings map[string]interface{} `mapstructure:"settings"`
-}
-
-// IntegrationsConfig contains external integration configuration
-type IntegrationsConfig struct {
-	// Task system of record (jira, github, monday, asana, none)
-	TaskSystem string `mapstructure:"task_system" validate:"oneof=jira github monday asana none ''"`
-
-	// Enable synchronization
-	SyncEnabled bool `mapstructure:"sync_enabled"`
-
-	// Sync frequency (hourly, daily, manual)
-	SyncFrequency string `mapstructure:"sync_frequency" validate:"oneof=hourly daily manual ''"`
-
-	// Plugin directories for discovery
-	PluginDirectories []string `mapstructure:"plugin_directories"`
-
-	// Provider-specific configurations
-	Providers map[string]IntegrationProviderConfig `mapstructure:"providers"`
-}
-
-// IntegrationProviderConfig contains provider-specific integration settings
-type IntegrationProviderConfig struct {
-	// Server URL for the integration
-	URL string `mapstructure:"url"`
-
-	// Project key or identifier
-	ProjectKey string `mapstructure:"project_key"`
-
-	// Authentication type (basic, oauth2, token)
-	Type string `mapstructure:"type" validate:"oneof=basic oauth2 token ''"`
-
-	// Credentials reference for auth system
-	Credentials string `mapstructure:"credentials"`
-
-	// Email for authentication (if required)
-	Email string `mapstructure:"email"`
-
-	// API key/token for authentication
-	APIKey string `mapstructure:"api_key"`
-
-	// Field mappings for data synchronization
-	FieldMapping map[string]string `mapstructure:"field_mapping"`
-
-	// Sync direction (pull, push, bidirectional)
-	SyncDirection string `mapstructure:"sync_direction" validate:"oneof=pull push bidirectional ''"`
-
-	// Additional provider-specific settings
-	Settings map[string]interface{} `mapstructure:"settings"`
-}
-
-// DefaultWorkConfig returns default work configuration
-func DefaultWorkConfig() WorkConfig {
-	return WorkConfig{
-		Tasks: TasksConfig{
-			Source:     "local",
-			Sync:       "manual",
-			ProjectKey: "",
-		},
-	}
-}
-
-// DefaultProvidersConfig returns default providers configuration
-func DefaultProvidersConfig() map[string]ProviderConfig {
-	return map[string]ProviderConfig{
-		"jira": {
-			Type: "jira",
-			URL:  "",
-		},
-		"github": {
-			Type: "github",
-			URL:  "https://api.github.com",
-		},
-		"linear": {
-			Type: "linear",
-			URL:  "https://api.linear.app",
-		},
-	}
-}
-
-// DefaultIntegrationsConfig returns default integration configuration
-func DefaultIntegrationsConfig() IntegrationsConfig {
-	return IntegrationsConfig{
-		TaskSystem:    "",
-		SyncEnabled:   false,
-		SyncFrequency: "manual",
-		PluginDirectories: []string{
-			"~/.zen/plugins",
-			".zen/plugins",
-		},
-		Providers: map[string]IntegrationProviderConfig{
-			"jira": {
-				Type:          "token",
-				Credentials:   "jira",
-				SyncDirection: "bidirectional",
-				FieldMapping: map[string]string{
-					"task_id":     "key",
-					"title":       "summary",
-					"status":      "status.name",
-					"priority":    "priority.name",
-					"assignee":    "assignee.displayName",
-					"created":     "created",
-					"updated":     "updated",
-					"description": "description",
-				},
-				Settings: make(map[string]interface{}),
-			},
-		},
-	}
 }
 
 // Load loads configuration from various sources with precedence handling
@@ -518,25 +289,6 @@ func validate(config *Config) error {
 		}
 	}
 
-	// Validate workspace root exists and is accessible (only for non-default values)
-	if config.Workspace.Root != "" && config.Workspace.Root != "." {
-		if info, err := os.Stat(config.Workspace.Root); err != nil {
-			if os.IsNotExist(err) {
-				return &ValidationError{
-					Field:   "workspace.root",
-					Value:   config.Workspace.Root,
-					Message: "workspace root directory does not exist",
-				}
-			}
-			return errors.Wrap(err, "failed to access workspace root")
-		} else if !info.IsDir() {
-			return &ValidationError{
-				Field:   "workspace.root",
-				Value:   config.Workspace.Root,
-				Message: "workspace root must be a directory",
-			}
-		}
-	}
 
 	return nil
 }
@@ -571,6 +323,88 @@ func contains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+
+// Manager Interface Implementation
+
+// GetConfig retrieves typed configuration for a component using the standard interface
+func GetConfig[T Configurable](c *Config, parser ConfigParser[T]) (T, error) {
+	// Extract the raw configuration section
+	sectionData := c.viper.GetStringMap(parser.Section())
+
+	// If section doesn't exist or is empty, return defaults
+	if len(sectionData) == 0 {
+		// Parse empty data to get a zero value, then get its defaults
+		config, err := parser.Parse(map[string]interface{}{})
+		if err != nil {
+			// If parsing empty data fails, create zero value and get defaults
+			var zero T
+			defaults := zero.Defaults()
+			if typed, ok := defaults.(T); ok {
+				return typed, nil
+			}
+			return zero, fmt.Errorf("failed to get defaults for section %s", parser.Section())
+		}
+
+		// Get defaults from the parsed (empty) config
+		defaults := config.Defaults()
+		if typed, ok := defaults.(T); ok {
+			return typed, nil
+		}
+		return config, fmt.Errorf("failed to get defaults for section %s", parser.Section())
+	}
+
+	// Parse the raw data using the component's parser
+	config, err := parser.Parse(sectionData)
+	if err != nil {
+		// On parse error, return defaults
+		var zero T
+		defaults := zero.Defaults()
+		if typed, ok := defaults.(T); ok {
+			return typed, fmt.Errorf("failed to parse config section %s: %w", parser.Section(), err)
+		}
+		return zero, fmt.Errorf("failed to parse config section %s: %w", parser.Section(), err)
+	}
+
+	// Validate the parsed configuration
+	if err := config.Validate(); err != nil {
+		return config, fmt.Errorf("config validation failed for section %s: %w", parser.Section(), err)
+	}
+
+	return config, nil
+}
+
+// SetConfig updates typed configuration for a component using the standard interface
+func SetConfig[T Configurable](c *Config, parser ConfigParser[T], config T) error {
+	// Validate the configuration before setting
+	if err := config.Validate(); err != nil {
+		return fmt.Errorf("config validation failed for section %s: %w", parser.Section(), err)
+	}
+
+	// Convert config to map for Viper
+	// This is a simple approach - in production, you might want more sophisticated serialization
+	sectionKey := parser.Section()
+
+	// Set the entire section in Viper
+	c.viper.Set(sectionKey, config)
+
+	// Write to local config file (.zen/config)
+	configPath := ".zen/config"
+
+	// Ensure .zen directory exists
+	if err := os.MkdirAll(".zen", 0755); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
+	}
+
+	// Set config type for Viper
+	c.viper.SetConfigType("yaml")
+
+	// Write the configuration
+	if err := c.viper.WriteConfigAs(configPath); err != nil {
+		return fmt.Errorf("failed to write config file: %w", err)
+	}
+
+	return nil
 }
 
 // GetConfigFile returns the path to the configuration file that was loaded
@@ -615,7 +449,7 @@ func (c *Config) SetValue(key, value string) error {
 // Redacted returns a copy of the Config with sensitive fields redacted for display
 func (c *Config) Redacted() Config {
 	redacted := *c
-	redacted.Assets = c.Assets.Redacted()
+	// Note: Component-specific redaction is now handled by each component's config
 	return redacted
 }
 

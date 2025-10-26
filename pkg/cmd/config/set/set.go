@@ -2,15 +2,14 @@ package set
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/daddia/zen/internal/config"
+	configcmd "github.com/daddia/zen/pkg/cmd/config"
 	"github.com/daddia/zen/pkg/cmdutil"
 	"github.com/daddia/zen/pkg/iostreams"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
 // SetOptions contains options for the set command
@@ -70,107 +69,84 @@ The configuration is saved to the first available location:
 }
 
 func setRun(opts *SetOptions) error {
-	// Validate key
-	if err := config.ValidateKey(opts.Key); err != nil {
-		warning := opts.IO.FormatWarning("warning:")
-		fmt.Fprintf(opts.IO.ErrOut, "%s %s\n", warning, err.Error())
-	}
-
-	// Validate value
-	if err := config.ValidateValue(opts.Key, opts.Value); err != nil {
-		if invalidValueErr, ok := err.(*config.InvalidValueError); ok {
-			var values []string
-			for _, v := range invalidValueErr.ValidValues {
-				values = append(values, fmt.Sprintf("'%s'", v))
-			}
-			return fmt.Errorf("failed to set %q to %q: valid values are %s",
-				opts.Key, opts.Value, strings.Join(values, ", "))
-		}
-		return fmt.Errorf("failed to validate value: %w", err)
-	}
-
-	// Load current configuration to get the config file path
-
-	// Always write to local project config (.zen/config)
-	configPath := ".zen/config"
-
-	// Ensure .zen directory exists
-	zenDir := ".zen"
-	if err := os.MkdirAll(zenDir, 0755); err != nil {
-		return fmt.Errorf("failed to create config directory: %w", err)
-	}
-
-	// Load existing config file or create new structure
-	var configData map[string]interface{}
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		configData = make(map[string]interface{})
-	} else {
-		data, err := os.ReadFile(configPath)
-		if err != nil {
-			return fmt.Errorf("failed to read config file: %w", err)
-		}
-		if err := yaml.Unmarshal(data, &configData); err != nil {
-			return fmt.Errorf("failed to parse config file: %w", err)
-		}
-	}
-
-	// Set the value in the config data
-	if err := setNestedValue(configData, opts.Key, opts.Value); err != nil {
-		return fmt.Errorf("failed to set configuration value: %w", err)
-	}
-
-	// Write the updated configuration
-	data, err := yaml.Marshal(configData)
+	// Parse the config key to determine component and field
+	component, field, err := configcmd.parseConfigKey(opts.Key)
 	if err != nil {
-		return fmt.Errorf("failed to marshal config: %w", err)
+		return fmt.Errorf("invalid config key %s: %w", opts.Key, err)
 	}
 
-	if err := os.WriteFile(configPath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write config file: %w", err)
+	// Get central config manager
+	cfg, err := opts.Config()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	fmt.Fprintf(opts.IO.Out, "✓ Set %s to %q\n", opts.Key, opts.Value)
-	fmt.Fprintf(opts.IO.Out, "Configuration saved to %s\n", configPath)
+	// Create component registry
+	registry := configcmd.NewComponentRegistry()
 
-	return nil
+	// Handle core config separately
+	if component == "core" {
+		if err := configcmd.setCoreConfigValue(cfg, field, opts.Value); err != nil {
+			return fmt.Errorf("failed to set core config: %w", err)
+		}
+		
+		// Write core config using SetValue (legacy method for core config)
+		if err := cfg.SetValue(opts.Key, opts.Value); err != nil {
+			return fmt.Errorf("failed to save core config: %w", err)
+		}
+		
+		fmt.Fprintf(opts.IO.Out, "✓ Set %s to %q\n", opts.Key, opts.Value)
+		return nil
+	}
+
+	// Handle component config using standard APIs
+	switch component {
+	case "assets":
+		return setComponentConfig(cfg, assets.ConfigParser{}, field, opts.Value, opts.IO)
+	case "auth":
+		return setComponentConfig(cfg, auth.ConfigParser{}, field, opts.Value, opts.IO)
+	case "cache":
+		return setComponentConfig(cfg, cache.ConfigParser{}, field, opts.Value, opts.IO)
+	case "cli":
+		return setComponentConfig(cfg, cli.ConfigParser{}, field, opts.Value, opts.IO)
+	case "development":
+		return setComponentConfig(cfg, development.ConfigParser{}, field, opts.Value, opts.IO)
+	case "task":
+		return setComponentConfig(cfg, task.ConfigParser{}, field, opts.Value, opts.IO)
+	case "templates":
+		return setComponentConfig(cfg, template.ConfigParser{}, field, opts.Value, opts.IO)
+	case "workspace":
+		return setComponentConfig(cfg, workspace.ConfigParser{}, field, opts.Value, opts.IO)
+	default:
+		return fmt.Errorf("unknown component: %s", component)
+	}
 }
 
-// setNestedValue sets a value in nested map structure using dot notation
-func setNestedValue(data map[string]interface{}, key, value string) error {
-	parts := strings.Split(key, ".")
-	current := data
-
-	// Navigate to the parent of the target key
-	for i, part := range parts[:len(parts)-1] {
-		if _, exists := current[part]; !exists {
-			current[part] = make(map[string]interface{})
-		}
-
-		nested, ok := current[part].(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("configuration key path %q conflicts with existing non-object value at %q",
-				key, strings.Join(parts[:i+1], "."))
-		}
-		current = nested
+// setComponentConfig sets a field in a component configuration using the standard API
+func setComponentConfig[T config.Configurable](cfg *config.Config, parser config.ConfigParser[T], field, value string, io *iostreams.IOStreams) error {
+	// Get current component config
+	componentConfig, err := config.GetConfig(cfg, parser)
+	if err != nil {
+		return fmt.Errorf("failed to get %s config: %w", parser.Section(), err)
 	}
-
-	// Set the final value
-	finalKey := parts[len(parts)-1]
-
-	// Convert string values to appropriate types
-	opt, found := config.FindOption(key)
-	if found && opt.Type == "bool" {
-		switch strings.ToLower(value) {
-		case "true", "yes", "1":
-			current[finalKey] = true
-		case "false", "no", "0":
-			current[finalKey] = false
-		default:
-			return fmt.Errorf("invalid boolean value %q for key %q", value, key)
-		}
-	} else {
-		current[finalKey] = value
+	
+	// Update the field
+	updatedConfig, err := configcmd.updateConfigField(componentConfig, field, value)
+	if err != nil {
+		return fmt.Errorf("failed to update field %s: %w", field, err)
 	}
-
+	
+	// Cast back to the correct type
+	typedConfig, ok := updatedConfig.(T)
+	if !ok {
+		return fmt.Errorf("failed to cast updated config to correct type")
+	}
+	
+	// Set back using central config
+	if err := config.SetConfig(cfg, parser, typedConfig); err != nil {
+		return fmt.Errorf("failed to save %s config: %w", parser.Section(), err)
+	}
+	
+	fmt.Fprintf(io.Out, "✓ Set %s.%s to %q\n", parser.Section(), field, value)
 	return nil
 }
