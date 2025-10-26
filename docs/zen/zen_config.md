@@ -5,7 +5,7 @@ description: "CLI reference for zen config"
 section: "CLI Reference"
 man_section: 1
 since: v0.0.0
-date: 2025-10-25
+date: 2025-10-26
 keywords:
   - zen
   - cli
@@ -23,42 +23,6 @@ Display or change configuration settings for Zen CLI.
 Current configuration options:
 - `log_level`: Set the logging level `{trace | debug | info | warn | error | fatal | panic}` (default `info`)
 - `log_format`: Set the logging format `{text | json}` (default `text`)
-- `cli.no_color`: Disable colored output `{true | false}` (default `false`)
-- `cli.verbose`: Enable verbose output `{true | false}` (default `false`)
-- `cli.output_format`: Set the default output format `{text | json | yaml}` (default `text`)
-- `workspace.root`: Set the workspace root directory (default `.`)
-- `workspace.config_file`: Set the workspace configuration file name (default `config`)
-- `development.debug`: Enable development debug mode `{true | false}` (default `false`)
-- `development.profile`: Enable development profiling `{true | false}` (default `false`)
-- `templates.cache_enabled`: Enable template compilation caching `{true | false}` (default `true`)
-- `templates.cache_ttl`: Template cache TTL duration (default `30m`)
-- `templates.cache_size`: Maximum number of templates to cache (default `100`)
-- `templates.strict_mode`: Enable strict mode (error on missing variables) `{true | false}` (default `false`)
-- `templates.enable_ai`: Enable AI enhancement features `{true | false}` (default `false`)
-- `templates.left_delim`: Left template delimiter (default `{{`)
-- `templates.right_delim`: Right template delimiter (default `}}`)
-- `assets.repository_url`: Asset repository URL (default `https://github.com/daddia/zen-assets.git`)
-- `assets.branch`: Asset repository branch (default `main`)
-- `assets.auth_provider`: Authentication provider for assets `{github | gitlab}` (default `github`)
-- `assets.cache_path`: Local cache path for assets (default `~/.zen/library`)
-- `assets.cache_size_mb`: Maximum cache size in MB (default `100`)
-- `assets.sync_timeout_seconds`: Sync timeout in seconds (default `30`)
-- `assets.integrity_checks_enabled`: Enable integrity checks for assets `{true | false}` (default `true`)
-- `assets.prefetch_enabled`: Enable prefetching of assets `{true | false}` (default `true`)
-- `work.tasks.source`: Task source system `{jira | github | linear | monday | asana | local | none | }` (default `local`)
-- `work.tasks.sync`: Task synchronization frequency `{hourly | daily | manual | none | }` (default `manual`)
-- `work.tasks.project_key`: Project key or identifier for tasks
-- `providers.jira.type`: Jira provider type `{jira}` (default `jira`)
-- `providers.jira.url`: Jira server URL
-- `providers.jira.email`: Jira user email for authentication
-- `providers.jira.api_token`: Jira API token for authentication
-- `providers.github.type`: GitHub provider type `{github}` (default `github`)
-- `providers.github.url`: GitHub API URL (default `https://api.github.com`)
-- `providers.linear.type`: Linear provider type `{linear}` (default `linear`)
-- `providers.linear.url`: Linear API URL (default `https://api.linear.app`)
-- `integrations.task_system`: Task system of record for external integration (deprecated: use work.tasks.source) `{jira | github | monday | asana | none | }`
-- `integrations.sync_enabled`: Enable task synchronization with external systems `{true | false}` (default `false`)
-- `integrations.sync_frequency`: Frequency of automatic synchronization `{hourly | daily | manual | }` (default `manual`)
 
 
 ```

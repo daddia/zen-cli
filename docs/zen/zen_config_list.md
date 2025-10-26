@@ -5,7 +5,7 @@ description: "CLI reference for zen config list"
 section: "CLI Reference"
 man_section: 1
 since: v0.0.0
-date: 2025-10-25
+date: 2025-10-26
 keywords:
   - zen
   - cli
@@ -22,6 +22,17 @@ List all configuration keys and their current values.
 
 This shows the effective configuration after loading from files,
 environment variables, and command-line flags.
+
+Configuration is organized by component:
+- Core: log_level, log_format
+- Assets: repository_url, branch, cache settings
+- Workspace: root, zen_path
+- CLI: no_color, verbose, output_format
+- Development: debug, profile
+- Task: source, sync, project_key
+- Auth: storage_type, validation_timeout
+- Cache: base_path, size_limit_mb
+- Templates: cache_enabled, cache_ttl
 
 ```
 zen config list [flags]

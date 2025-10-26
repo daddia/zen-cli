@@ -5,7 +5,7 @@ description: "CLI reference for zen config get"
 section: "CLI Reference"
 man_section: 1
 since: v0.0.0
-date: 2025-10-25
+date: 2025-10-26
 keywords:
   - zen
   - cli
@@ -20,16 +20,16 @@ Print the value of a given configuration key
 
 Print the value of a configuration key.
 
-Configuration keys use dot notation to access nested values:
-- log_level
-- log_format
-- cli.no_color
-- cli.verbose
-- cli.output_format
-- workspace.root
-- workspace.config_file
-- development.debug
-- development.profile
+Configuration keys use dot notation to access component values:
+- log_level, log_format (core config)
+- assets.repository_url, assets.branch
+- workspace.root, workspace.zen_path
+- cli.no_color, cli.verbose, cli.output_format
+- development.debug, development.profile
+- task.source, task.sync, task.project_key
+- auth.storage_type, auth.validation_timeout
+- cache.base_path, cache.size_limit_mb
+- templates.cache_enabled, templates.cache_ttl
 
 ```
 zen config get <key> [flags]
@@ -39,8 +39,9 @@ zen config get <key> [flags]
 
 ```
 $ zen config get log_level
-$ zen config get cli.output_format
+$ zen config get assets.repository_url
 $ zen config get workspace.root
+$ zen config get cli.output_format
 
 ```
 
