@@ -2,19 +2,9 @@
 
 ## Comprehensive Validation
 
-Run all validation checks with a single command:
-
-```bash
-make pre-push
-```
-
-This target runs all required validation steps in sequence and will fail fast if any step fails.
-
-## Individual Validation Requirements
-
 Run all validation checks.
 
-**MUST** Run in order.
+**MUST** Run in order
 
 **MUST** All dependencies must download (`make deps`)
 **MUST** All linting must pass (`make lint`)
