@@ -38,7 +38,7 @@ func TestGetRun_CoreConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create test streams
 			streams := iostreams.Test()
-			
+
 			// Create options
 			opts := &GetOptions{
 				IO: streams,
@@ -55,7 +55,7 @@ func TestGetRun_CoreConfig(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				
+
 				// Check that output was written
 				output := streams.Out.(*bytes.Buffer).String()
 				assert.NotEmpty(t, output)
@@ -98,7 +98,7 @@ func TestParseConfigKey(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			comp, field, err := parseConfigKey(tt.key)
-			
+
 			if tt.wantError {
 				require.Error(t, err)
 			} else {

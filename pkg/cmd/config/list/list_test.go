@@ -14,7 +14,7 @@ import (
 func TestListRun(t *testing.T) {
 	// Create test streams
 	streams := iostreams.Test()
-	
+
 	// Create options
 	opts := &ListOptions{
 		IO: streams,
@@ -32,7 +32,7 @@ func TestListRun(t *testing.T) {
 	assert.Contains(t, output, "[core]")
 	assert.Contains(t, output, "log_level")
 	assert.Contains(t, output, "log_format")
-	
+
 	// Check that output contains component configs
 	assert.Contains(t, output, "[assets]")
 	assert.Contains(t, output, "[workspace]")
