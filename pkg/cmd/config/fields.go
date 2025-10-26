@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/daddia/zen/internal/config"
+	"github.com/daddia/zen/pkg/iostreams"
 )
 
 // extractFieldValue extracts a field value from a configuration struct using reflection
@@ -16,19 +17,19 @@ func extractFieldValue(configStruct interface{}, fieldName string) (string, erro
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
-	
+
 	if v.Kind() != reflect.Struct {
 		return "", fmt.Errorf("config must be a struct, got %T", configStruct)
 	}
-	
+
 	// Convert field name to struct field name (snake_case to PascalCase)
 	structFieldName := toPascalCase(fieldName)
-	
+
 	field := v.FieldByName(structFieldName)
 	if !field.IsValid() {
 		return "", fmt.Errorf("field %s not found in config", fieldName)
 	}
-	
+
 	return formatFieldValue(field), nil
 }
 
@@ -39,32 +40,32 @@ func updateConfigField(configStruct interface{}, fieldName, value string) (inter
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
-	
+
 	if v.Kind() != reflect.Struct {
 		return nil, fmt.Errorf("config must be a struct, got %T", configStruct)
 	}
-	
+
 	// Create a new struct of the same type
 	newStruct := reflect.New(v.Type()).Elem()
 	newStruct.Set(v) // Copy all fields
-	
+
 	// Convert field name to struct field name
 	structFieldName := toPascalCase(fieldName)
-	
+
 	field := newStruct.FieldByName(structFieldName)
 	if !field.IsValid() {
 		return nil, fmt.Errorf("field %s not found in config", fieldName)
 	}
-	
+
 	if !field.CanSet() {
 		return nil, fmt.Errorf("field %s cannot be set", fieldName)
 	}
-	
+
 	// Set the field value based on its type
 	if err := setFieldValue(field, value); err != nil {
 		return nil, fmt.Errorf("failed to set field %s: %w", fieldName, err)
 	}
-	
+
 	return newStruct.Interface(), nil
 }
 
@@ -136,7 +137,7 @@ func setFieldValue(field reflect.Value, value string) error {
 	default:
 		return fmt.Errorf("unsupported field type: %s", field.Kind())
 	}
-	
+
 	return nil
 }
 
@@ -197,6 +198,39 @@ func setCoreConfigValue(cfg *config.Config, field, value string) error {
 	default:
 		return fmt.Errorf("unknown core config field: %s", field)
 	}
-	
+
 	return nil
+}
+
+// displayConfigStruct displays a configuration struct in a readable format
+func displayConfigStruct(configStruct interface{}, io *iostreams.IOStreams) {
+	v := reflect.ValueOf(configStruct)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	if v.Kind() != reflect.Struct {
+		fmt.Fprintf(io.Out, "%v\n", configStruct)
+		return
+	}
+
+	t := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldType := t.Field(i)
+
+		// Get the field name from yaml tag or use struct field name
+		fieldName := fieldType.Name
+		if yamlTag := fieldType.Tag.Get("yaml"); yamlTag != "" {
+			fieldName = strings.Split(yamlTag, ",")[0]
+		}
+
+		// Skip unexported fields
+		if !fieldType.IsExported() {
+			continue
+		}
+
+		value := formatFieldValue(field)
+		fmt.Fprintf(io.Out, "%s = %s\n", fieldName, value)
+	}
 }

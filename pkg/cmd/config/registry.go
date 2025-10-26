@@ -1,9 +1,5 @@
 package config
 
-import (
-	"fmt"
-)
-
 // ComponentRegistry manages available configuration components
 type ComponentRegistry struct {
 	components map[string]ComponentInfo
