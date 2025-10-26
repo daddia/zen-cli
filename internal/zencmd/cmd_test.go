@@ -175,7 +175,8 @@ func BenchmarkExecuteStatus(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		err := Execute(ctx, []string{"status"}, streams)
-		if err != nil {
+		// Status command returns silent error when workspace is not initialized - this is expected
+		if err != nil && err != cmdutil.ErrSilent {
 			b.Fatal(err)
 		}
 	}
