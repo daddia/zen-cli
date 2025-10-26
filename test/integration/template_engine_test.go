@@ -54,7 +54,7 @@ func TestTemplateEngine_GoTemplateSyntaxIntegration(t *testing.T) {
 	logger := logging.NewBasic()
 	mockAssetClient := &MockAssetClient{}
 
-	config := template.EngineConfig{
+	config := template.Config{
 		CacheEnabled:  true,
 		CacheTTL:      30 * time.Minute,
 		CacheSize:     100,
@@ -254,7 +254,7 @@ func TestTemplateEngine_GoTemplateAdvancedFeatures(t *testing.T) {
 	logger := logging.NewBasic()
 	mockAssetClient := &MockAssetClient{}
 
-	config := template.EngineConfig{
+	config := template.Config{
 		CacheEnabled:  false,
 		StrictMode:    false,
 		WorkspaceRoot: "/test",
@@ -382,7 +382,7 @@ func TestTemplateEngine_ErrorHandling(t *testing.T) {
 	logger := logging.NewBasic()
 	mockAssetClient := &MockAssetClient{}
 
-	config := template.EngineConfig{
+	config := template.Config{
 		CacheEnabled:  false,
 		StrictMode:    true, // Strict mode for error testing
 		WorkspaceRoot: "/test",
