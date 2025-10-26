@@ -1,4 +1,7 @@
-# Generated documentation
+# Build documentation
+_build/
+
+# Build artifacts
 build/
 *.tmp
 *.temp

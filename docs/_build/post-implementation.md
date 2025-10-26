@@ -5,6 +5,7 @@
 Run all validation checks.
 
 **MUST** Run in order
+**MUST** All validation must pass 100%
 
 **MUST** All dependencies must download (`make deps`)
 **MUST** All linting must pass (`make lint`)
