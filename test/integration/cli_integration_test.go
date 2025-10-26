@@ -34,16 +34,17 @@ func TestCLIIntegration_WorkspaceLifecycle(t *testing.T) {
 
 	// Test 1: Status before initialization
 	t.Run("status_before_init", func(t *testing.T) {
-		var stdout bytes.Buffer
+		var stdout, stderr bytes.Buffer
 		streams := iostreams.Test()
 		streams.Out = &stdout
+		streams.ErrOut = &stderr
 
 		err := zencmd.Execute(ctx, []string{"status"}, streams)
-		require.NoError(t, err)
+		require.Error(t, err)
 
-		output := stdout.String()
-		// Status should show not ready since no .zen directory exists
-		assert.Contains(t, output, "Zen CLI Status")
+		errorOutput := stderr.String()
+		// Status should show not initialized error since no .zen directory exists
+		assert.Contains(t, errorOutput, "Not Initialized: Not a zen workspace")
 	})
 
 	// Test 2: Initialize workspace
@@ -248,8 +249,9 @@ func TestCLIIntegration_GlobalFlags(t *testing.T) {
 	defer cancel()
 
 	tests := []struct {
-		name string
-		args []string
+		name        string
+		args        []string
+		expectError bool
 	}{
 		{
 			name: "verbose_flag",
@@ -260,8 +262,9 @@ func TestCLIIntegration_GlobalFlags(t *testing.T) {
 			args: []string{"--no-color", "version"},
 		},
 		{
-			name: "dry_run_flag",
-			args: []string{"--dry-run", "status"},
+			name:        "dry_run_flag",
+			args:        []string{"--dry-run", "status"},
+			expectError: true,
 		},
 	}
 
@@ -271,11 +274,14 @@ func TestCLIIntegration_GlobalFlags(t *testing.T) {
 			streams.Out = &stdout
 
 			err := zencmd.Execute(ctx, tt.args, streams)
-			require.NoError(t, err)
-
-			// Should execute successfully with global flags
-			output := stdout.String()
-			assert.NotEmpty(t, output)
+			if tt.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				// Should execute successfully with global flags
+				output := stdout.String()
+				assert.NotEmpty(t, output)
+			}
 		})
 	}
 }
