@@ -95,6 +95,12 @@ func (e *Executor) Execute(ctx context.Context, args []string) (ExecuteResult, e
 		"workdir", e.workDir)
 
 	// Create command with context for timeout/cancellation support
+	// #nosec G204 - This is a secure CLI executor by design:
+	// - binaryPath is an absolute path from provider discovery
+	// - args are passed as array (no shell interpretation)
+	// - No shell usage (exec.CommandContext, not sh -c)
+	// - Minimal environment with explicit allowlist
+	// - Input sanitization applied via sanitizeArgs
 	cmd := exec.CommandContext(ctx, e.binaryPath, args...)
 
 	// Set working directory if specified
@@ -191,6 +197,12 @@ func (e *Executor) Stream(ctx context.Context, args []string) (io.ReadCloser, er
 		"workdir", e.workDir)
 
 	// Create command with context
+	// #nosec G204 - This is a secure CLI executor by design:
+	// - binaryPath is an absolute path from provider discovery
+	// - args are passed as array (no shell interpretation)
+	// - No shell usage (exec.CommandContext, not sh -c)
+	// - Minimal environment with explicit allowlist
+	// - Input sanitization applied via sanitizeArgs
 	cmd := exec.CommandContext(ctx, e.binaryPath, args...)
 
 	// Set working directory if specified
