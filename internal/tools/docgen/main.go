@@ -130,19 +130,15 @@ description: "CLI reference for %s"
 section: "CLI Reference"
 man_section: 1
 since: v0.0.0
-date: %s
 keywords:
   - zen
   - cli
-  - %s
 ---
 
 `,
 				title,
 				slug,
 				title,
-				time.Now().UTC().Format("2006-01-02"),
-				strings.ReplaceAll(strings.ToLower(title), " ", "-"),
 			)
 		}
 
@@ -192,7 +188,6 @@ title: "Zen CLI Reference"
 slug: "/cli"
 description: "Command-line reference documentation for Zen CLI"
 section: "CLI Reference"
-date: %s
 keywords:
   - zen
   - cli
@@ -200,7 +195,7 @@ keywords:
   - documentation
 ---
 
-`, time.Now().UTC().Format("2006-01-02"))
+`)
 	}
 
 	// Write header
@@ -276,7 +271,6 @@ keywords:
 	fmt.Fprintln(file, "---")
 	fmt.Fprintln(file)
 	fmt.Fprintln(file, "_This documentation is automatically generated from the Zen command definitions._")
-	fmt.Fprintf(file, "_Last updated: %s_\n", time.Now().UTC().Format("2006-01-02"))
 
 	return nil
 }

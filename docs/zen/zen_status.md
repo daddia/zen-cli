@@ -5,11 +5,9 @@ description: "CLI reference for zen status"
 section: "CLI Reference"
 man_section: 1
 since: v0.0.0
-date: 2025-10-27
 keywords:
   - zen
   - cli
-  - zen-status
 ---
 
 ## zen status
