@@ -25,12 +25,26 @@ import (
 // setupFileStorage forces file storage for CI environments where keychain is not available
 func setupFileStorage(t *testing.T) func() {
 	originalStorageType := os.Getenv("ZEN_AUTH_STORAGE_TYPE")
+	originalStoragePath := os.Getenv("ZEN_AUTH_STORAGE_PATH")
+
+	// Set storage type to file
 	os.Setenv("ZEN_AUTH_STORAGE_TYPE", "file")
+
+	// Set storage path to a temp directory
+	tempAuthDir := filepath.Join(t.TempDir(), ".zen", "auth")
+	os.Setenv("ZEN_AUTH_STORAGE_PATH", tempAuthDir)
+
 	return func() {
 		if originalStorageType == "" {
 			os.Unsetenv("ZEN_AUTH_STORAGE_TYPE")
 		} else {
 			os.Setenv("ZEN_AUTH_STORAGE_TYPE", originalStorageType)
+		}
+
+		if originalStoragePath == "" {
+			os.Unsetenv("ZEN_AUTH_STORAGE_PATH")
+		} else {
+			os.Setenv("ZEN_AUTH_STORAGE_PATH", originalStoragePath)
 		}
 	}
 }
@@ -670,6 +684,9 @@ func TestAssetsIntegration_ErrorHandling(t *testing.T) {
 
 // TestAssetsIntegration_ConfigurationPrecedence tests configuration handling
 func TestAssetsIntegration_ConfigurationPrecedence(t *testing.T) {
+	// Force file storage in CI environments where keychain is not available
+	defer setupFileStorage(t)()
+
 	tempDir := t.TempDir()
 	oldWd, err := os.Getwd()
 	require.NoError(t, err)
@@ -878,6 +895,9 @@ func TestAssetsIntegration_PerformanceAndConcurrency(t *testing.T) {
 
 // TestAssetsIntegration_SecurityAndCredentials tests security aspects
 func TestAssetsIntegration_SecurityAndCredentials(t *testing.T) {
+	// Force file storage in CI environments where keychain is not available
+	defer setupFileStorage(t)()
+
 	tempDir := t.TempDir()
 	oldWd, err := os.Getwd()
 	require.NoError(t, err)
@@ -968,6 +988,9 @@ func TestAssetsIntegration_SecurityAndCredentials(t *testing.T) {
 
 // TestAssetsIntegration_ComprehensiveErrorScenarios tests extensive error handling
 func TestAssetsIntegration_ComprehensiveErrorScenarios(t *testing.T) {
+	// Force file storage in CI environments where keychain is not available
+	defer setupFileStorage(t)()
+
 	tempDir := t.TempDir()
 	oldWd, err := os.Getwd()
 	require.NoError(t, err)
@@ -1093,6 +1116,9 @@ func TestAssetsIntegration_ComprehensiveErrorScenarios(t *testing.T) {
 
 // TestAssetsIntegration_EdgeCases tests edge cases and boundary conditions
 func TestAssetsIntegration_EdgeCases(t *testing.T) {
+	// Force file storage in CI environments where keychain is not available
+	defer setupFileStorage(t)()
+
 	tempDir := t.TempDir()
 	oldWd, err := os.Getwd()
 	require.NoError(t, err)
@@ -1201,6 +1227,9 @@ func TestAssetsIntegration_EdgeCases(t *testing.T) {
 
 // TestAssetsIntegration_ConfigurationVariations tests different configuration scenarios
 func TestAssetsIntegration_ConfigurationVariations(t *testing.T) {
+	// Force file storage in CI environments where keychain is not available
+	defer setupFileStorage(t)()
+
 	tempDir := t.TempDir()
 	oldWd, err := os.Getwd()
 	require.NoError(t, err)
@@ -1284,6 +1313,9 @@ func TestAssetsIntegration_ConfigurationVariations(t *testing.T) {
 
 // TestAssetsIntegration_UserExperience tests user experience aspects
 func TestAssetsIntegration_UserExperience(t *testing.T) {
+	// Force file storage in CI environments where keychain is not available
+	defer setupFileStorage(t)()
+
 	tempDir := t.TempDir()
 	oldWd, err := os.Getwd()
 	require.NoError(t, err)
@@ -1385,6 +1417,9 @@ func TestAssetsIntegration_UserExperience(t *testing.T) {
 
 // TestAssetsIntegration_RegressionTests tests for known issues and regressions
 func TestAssetsIntegration_RegressionTests(t *testing.T) {
+	// Force file storage in CI environments where keychain is not available
+	defer setupFileStorage(t)()
+
 	tempDir := t.TempDir()
 	oldWd, err := os.Getwd()
 	require.NoError(t, err)
