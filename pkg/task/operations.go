@@ -80,7 +80,7 @@ func (ops *Operations) initializeIntegrationComponents() error {
 	}
 
 	// Check if task source is configured for external integration
-	if config.Work.Tasks.Source == "" || config.Work.Tasks.Source == "none" || config.Work.Tasks.Source == "local" {
+	if config.Task.TaskSource == "" || config.Task.TaskSource == "none" || config.Task.TaskSource == "local" {
 		return fmt.Errorf("no external task system configured")
 	}
 

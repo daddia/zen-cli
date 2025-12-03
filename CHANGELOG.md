@@ -160,7 +160,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/), and this 
 ### Added
 - **Task Management System**: Complete task creation and workflow management with template-driven structure
   - `zen task create` command with support for multiple task types (story, bug, epic, spike, task)
-  - Structured task directory creation in `.zen/work/tasks/{TASK-ID}/`
+  - Structured task directory creation in `.zen/tasks/{TASK-ID}/`
   - Template-driven file generation with index.md, manifest.yaml, and .taskrc.yaml
   - Task ID validation with support for alphanumeric and hyphenated formats
   - Priority levels (P0-P3) with P2 as default

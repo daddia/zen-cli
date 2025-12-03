@@ -178,9 +178,9 @@ func parseConfigKey(key string) (component, field string, err error) {
 func getCoreConfigValue(cfg *config.Config, field string) (string, error) {
 	switch field {
 	case "log_level":
-		return cfg.LogLevel, nil
+		return cfg.Core.LogLevel, nil
 	case "log_format":
-		return cfg.LogFormat, nil
+		return cfg.Core.LogFormat, nil
 	default:
 		return "", fmt.Errorf("unknown core config field: %s", field)
 	}

@@ -35,8 +35,8 @@ func TestConfigFunc(t *testing.T) {
 	require.NotNil(t, cfg)
 
 	// Test core config fields
-	assert.NotEmpty(t, cfg.LogLevel)
-	assert.NotEmpty(t, cfg.LogFormat)
+	assert.NotEmpty(t, cfg.Core.LogLevel)
+	assert.NotEmpty(t, cfg.Core.LogFormat)
 }
 
 func TestAssetClientFunctionality(t *testing.T) {

@@ -28,7 +28,7 @@ For the technical implementation details, APIs, and component architecture that 
 Each task is organized in a logical work-type hierarchy:
 
 ```sh
-.zen/work/tasks/PROJ-123/
+.zen/tasks/PROJ-123/
 ├─ .zenflow/                  # Zenflow state and progression tracking
 ├─ index.md                   # Story brief (required)
 ├─ manifest.yaml              # Machine-readable metadata
@@ -111,7 +111,7 @@ Quality progression focuses on working software and user outcomes rather than do
 Templates support just-in-time artifact creation:
 
 ```bash
-.zen/work/tasks/_templates/
+.zen/tasks/_templates/
 ├─ .zenflow/                  # Zenflow state tracking templates
 ├─ index.md                   # Story brief template
 ├─ manifest.yaml              # Machine-readable metadata template
@@ -221,7 +221,7 @@ Templates support just-in-time artifact creation:
 Example of a comprehsive structure of a task - for reference only:
 
 ```sh
-.zen/work/tasks/PROJ-123/
+.zen/tasks/PROJ-123/
 ├─ .zenflow/                 # Zenflow state and progression tracking
 ├─ index.md                   # Story brief (required)
 ├─ manifest.yaml              # Machine-readable metadata (required)

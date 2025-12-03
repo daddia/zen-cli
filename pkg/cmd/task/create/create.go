@@ -77,7 +77,7 @@ func NewCmdTaskCreate(f *cmdutil.Factory) *cobra.Command {
 		Short: "Create a new task with structured workflow",
 		Long: `Create a new task with structured workflow directories and templates.
 
-This command creates a complete task structure in .zen/work/tasks/<task-id>/ including:
+This command creates a complete task structure in .zen/tasks/<task-id>/ including:
 - index.md: Human-readable task overview and status
 - manifest.yaml: Machine-readable metadata for automation
 - .taskrc.yaml: Task-specific configuration
@@ -344,7 +344,8 @@ func determineTaskSourceFromConfig(factory *cmdutil.Factory) (string, error) {
 	}
 
 	// Check for configured task source
-	taskSource := config.Work.Tasks.Source
+	taskSource := config.Task.TaskSource
+	
 	if taskSource == "" || taskSource == "none" {
 		return "local", nil
 	}

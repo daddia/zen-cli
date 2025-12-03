@@ -78,8 +78,8 @@ func listRun(opts *ListOptions) error {
 
 	// Display core configuration first
 	fmt.Fprintln(opts.IO.Out, "[core]")
-	fmt.Fprintf(opts.IO.Out, "log_level = %s\n", cfg.LogLevel)
-	fmt.Fprintf(opts.IO.Out, "log_format = %s\n", cfg.LogFormat)
+	fmt.Fprintf(opts.IO.Out, "log_level = %s\n", cfg.Core.LogLevel)
+	fmt.Fprintf(opts.IO.Out, "log_format = %s\n", cfg.Core.LogFormat)
 	fmt.Fprintln(opts.IO.Out)
 
 	// Display each component configuration

@@ -85,7 +85,7 @@ zen task create PROJ-123
 When you create a task, Zen generates this structure:
 
 ```
-.zen/work/tasks/PROJ-123/
+.zen/tasks/PROJ-123/
 ├── index.md              # Human-readable task overview
 ├── manifest.yaml         # Machine-readable metadata
 ├── .taskrc.yaml         # Task-specific configuration
@@ -752,7 +752,7 @@ zen status
 zen config list | grep work
 
 # Check permissions
-ls -la .zen/work/tasks/
+ls -la .zen/tasks/
 ```
 
 #### Sync Problems
@@ -765,7 +765,7 @@ zen auth status
 zen task sync PROJ-123 --force
 
 # Clear sync metadata
-rm .zen/work/tasks/PROJ-123/metadata/jira.json
+rm .zen/tasks/PROJ-123/metadata/jira.json
 ```
 
 #### Template Issues

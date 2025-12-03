@@ -16,7 +16,7 @@ func NewCmdTask(f *cmdutil.Factory) *cobra.Command {
 Tasks are the core unit of work in Zen, following the seven-stage Zenflow
 workflow: Align → Discover → Prioritize → Design → Build → Ship → Learn.
 
-Each task creates a minimal directory in .zen/work/tasks/ with:
+Each task creates a minimal directory in .zen/tasks/ with:
 - index.md: Human-readable task overview
 - manifest.yaml: Machine-readable metadata and workflow state
 - .taskrc.yaml: Task-specific configuration

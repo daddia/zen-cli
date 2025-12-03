@@ -105,7 +105,7 @@ and workspace, helping you troubleshoot issues and understand your environment.`
 					Source: getConfigSource(cfg),
 					LogLevel: func() string {
 						if cfg != nil {
-							return cfg.LogLevel
+							return cfg.Core.LogLevel
 						}
 						return "unknown"
 					}(),

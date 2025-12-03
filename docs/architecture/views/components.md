@@ -178,7 +178,7 @@ The Zenflow Engine represents Zen's 7-stage unified workflow methodology. Curren
 
 #### Task Directory Structure
 ```
-.zen/work/tasks/<task-id>/
+.zen/tasks/<task-id>/
 ├── index.md              # Human-readable overview
 ├── manifest.yaml         # Machine-readable metadata
 ├── .taskrc.yaml         # Task-specific configuration

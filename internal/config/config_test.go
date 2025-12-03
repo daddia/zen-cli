@@ -12,8 +12,9 @@ func TestLoadDefaults(t *testing.T) {
 	require.NotNil(t, cfg)
 
 	// Test core defaults
-	assert.Equal(t, "info", cfg.LogLevel)
-	assert.Equal(t, "text", cfg.LogFormat)
+	assert.Equal(t, "info", cfg.Core.LogLevel)
+	assert.Equal(t, "text", cfg.Core.LogFormat)
+	assert.Equal(t, false, cfg.Core.Debug)
 
 	// Test that defaults source is loaded
 	assert.Contains(t, cfg.GetLoadedSources(), "defaults")
@@ -26,8 +27,8 @@ func TestLoad(t *testing.T) {
 	require.NotNil(t, cfg)
 
 	// Test core configuration
-	assert.NotEmpty(t, cfg.LogLevel)
-	assert.NotEmpty(t, cfg.LogFormat)
+	assert.NotEmpty(t, cfg.Core.LogLevel)
+	assert.NotEmpty(t, cfg.Core.LogFormat)
 }
 
 func TestValidateCore(t *testing.T) {
@@ -40,28 +41,34 @@ func TestValidateCore(t *testing.T) {
 		{
 			name: "valid config",
 			config: &Config{
-				LogLevel:  "info",
-				LogFormat: "text",
+				Core: CoreConfig{
+					LogLevel:  "info",
+					LogFormat: "text",
+				},
 			},
 			wantError: false,
 		},
 		{
 			name: "invalid log level",
 			config: &Config{
-				LogLevel:  "invalid",
-				LogFormat: "text",
+				Core: CoreConfig{
+					LogLevel:  "invalid",
+					LogFormat: "text",
+				},
 			},
 			wantError: true,
-			errorMsg:  "invalid log_level",
+			errorMsg:  "invalid core.log_level",
 		},
 		{
 			name: "invalid log format",
 			config: &Config{
-				LogLevel:  "info",
-				LogFormat: "invalid",
+				Core: CoreConfig{
+					LogLevel:  "info",
+					LogFormat: "invalid",
+				},
 			},
 			wantError: true,
-			errorMsg:  "invalid log_format",
+			errorMsg:  "invalid core.log_format",
 		},
 	}
 
@@ -80,14 +87,19 @@ func TestValidateCore(t *testing.T) {
 
 func TestConfigRedacted(t *testing.T) {
 	cfg := &Config{
-		LogLevel:  "debug",
-		LogFormat: "json",
+		Core: CoreConfig{
+			LogLevel:  "debug",
+			LogFormat: "json",
+			Token:     "secret-token-12345",
+		},
 	}
 
 	redacted := cfg.Redacted()
 	require.NotNil(t, redacted)
 
 	// Test that core fields are preserved
-	assert.Equal(t, "debug", redacted.LogLevel)
-	assert.Equal(t, "json", redacted.LogFormat)
+	assert.Equal(t, "debug", redacted.Core.LogLevel)
+	assert.Equal(t, "json", redacted.Core.LogFormat)
+	// Token should be preserved in redacted copy (redaction happens at display layer)
+	assert.Equal(t, "secret-token-12345", redacted.Core.Token)
 }

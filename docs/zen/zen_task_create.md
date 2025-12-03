@@ -18,7 +18,7 @@ Create a new task with structured workflow
 
 Create a new task with structured workflow directories and templates.
 
-This command creates a complete task structure in .zen/work/tasks/<task-id>/ including:
+This command creates a complete task structure in .zen/tasks/<task-id>/ including:
 - index.md: Human-readable task overview and status
 - manifest.yaml: Machine-readable metadata for automation
 - .taskrc.yaml: Task-specific configuration
@@ -26,7 +26,7 @@ This command creates a complete task structure in .zen/work/tasks/<task-id>/ inc
 
 Source detection (in priority order):
 1. --from flag (jira, github, linear, local)
-2. config work.tasks.source setting
+2. config task.task_source setting
 3. local mode (no external sync)
 
 The task follows the seven-stage Zenflow workflow:
@@ -52,7 +52,7 @@ zen task create <task-id> [flags]
 ### Examples
 
 ```
-# Create a user story (uses config work.tasks.source or local)
+# Create a user story (uses config task.task_source or local)
 zen task create USER-123 --title "User login with SSO"
 
 # Create a bug fix task (auto-detects source from config)
@@ -74,7 +74,7 @@ zen task create PROJ-200 --title "Dashboard redesign" --owner "jane.doe" --team 
 ### Options
 
 ```
-      --from string       Fetch task details from external source system (jira, github, linear, local) or use config work.tasks.source
+      --from string       Fetch task details from external source system (jira, github, linear, local) or use config task.task_source
   -h, --help              help for create
       --owner string      Task owner (optional, defaults to current user)
       --priority string   Task priority (P0|P1|P2|P3) (default "P2")

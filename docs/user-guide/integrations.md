@@ -92,7 +92,7 @@ zen task sync --all
 When you create a task from Jira, Zen creates this structure:
 
 ```
-.zen/work/tasks/PROJ-123/
+.zen/tasks/PROJ-123/
 ├── index.md              # Human-readable overview
 ├── manifest.yaml         # Machine-readable metadata
 ├── .taskrc.yaml         # Task-specific configuration
@@ -378,7 +378,7 @@ export ZEN_INTEGRATION_SYNC_FREQUENCY="30m"
 #### Task-Specific Configuration
 
 ```yaml
-# .zen/work/tasks/PROJ-123/.taskrc.yaml
+# .zen/tasks/PROJ-123/.taskrc.yaml
 task:
   id: "PROJ-123"
   type: "story"
@@ -493,7 +493,7 @@ integrations:
 
 3. **Clear sync metadata**:
    ```bash
-   rm .zen/work/tasks/PROJ-123/metadata/jira.json
+   rm .zen/tasks/PROJ-123/metadata/jira.json
    zen task sync PROJ-123
    ```
 

@@ -210,7 +210,7 @@ func setCoreConfigValue(cfg *config.Config, field, value string) error {
 		if !valid {
 			return fmt.Errorf("invalid log_level: %s (must be one of: %s)", value, strings.Join(validLevels, ", "))
 		}
-		cfg.LogLevel = value
+		cfg.Core.LogLevel = value
 	case "log_format":
 		validFormats := []string{"text", "json"}
 		valid := false
@@ -223,7 +223,7 @@ func setCoreConfigValue(cfg *config.Config, field, value string) error {
 		if !valid {
 			return fmt.Errorf("invalid log_format: %s (must be one of: %s)", value, strings.Join(validFormats, ", "))
 		}
-		cfg.LogFormat = value
+		cfg.Core.LogFormat = value
 	default:
 		return fmt.Errorf("unknown core config field: %s", field)
 	}

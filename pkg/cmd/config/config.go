@@ -121,49 +121,56 @@ func displayTextConfig(out interface{ Write([]byte) (int, error) }, cfg interfac
 	fmt.Fprintln(out, iostreams.FormatSectionHeader("Zen Configuration"))
 	fmt.Fprintln(out)
 
-	// Display configuration sections with proper formatting and indentation
-	if logging, ok := configMap["LogLevel"]; ok {
-		fmt.Fprintln(out, iostreams.FormatBold("Logging:"))
-		fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Level:  %v\n", logging), 1))
-		if format, ok := configMap["LogFormat"]; ok {
-			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Format: %v\n", format), 1))
+	// Display Core section
+	if core, ok := configMap["core"].(map[string]interface{}); ok {
+		fmt.Fprintln(out, iostreams.FormatBold("Core:"))
+		if configDir, ok := core["config_dir"]; ok && configDir != "" {
+			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Config Dir: %v\n", configDir), 1))
+		}
+		if token, ok := core["token"]; ok && token != "" {
+			// Redact token for security
+			fmt.Fprint(out, iostreams.Indent("Token:      [REDACTED]\n", 1))
+		}
+		if debug, ok := core["debug"]; ok {
+			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Debug:      %v\n", debug), 1))
+		}
+		if logLevel, ok := core["log_level"]; ok {
+			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Log Level:  %v\n", logLevel), 1))
+		}
+		if logFormat, ok := core["log_format"]; ok {
+			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Log Format: %v\n", logFormat), 1))
 		}
 		fmt.Fprintln(out)
 	}
 
-	if cli, ok := configMap["CLI"].(map[string]interface{}); ok {
-		fmt.Fprintln(out, iostreams.FormatBold("CLI:"))
-		if noColor, ok := cli["NoColor"]; ok {
-			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("No Color:      %v\n", noColor), 1))
+	// Display Project section
+	if project, ok := configMap["project"].(map[string]interface{}); ok {
+		fmt.Fprintln(out, iostreams.FormatBold("Project:"))
+		if name, ok := project["name"]; ok && name != "" {
+			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Name: %v\n", name), 1))
+		} else {
+			fmt.Fprint(out, iostreams.Indent("Name: [auto-detected]\n", 1))
 		}
-		if verbose, ok := cli["Verbose"]; ok {
-			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Verbose:       %v\n", verbose), 1))
-		}
-		if outputFormat, ok := cli["OutputFormat"]; ok {
-			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Output Format: %v\n", outputFormat), 1))
-		}
-		fmt.Fprintln(out)
-	}
-
-	if workspace, ok := configMap["Workspace"].(map[string]interface{}); ok {
-		fmt.Fprintln(out, iostreams.FormatBold("Workspace:"))
-		if root, ok := workspace["Root"]; ok {
-			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Root:        %v\n", root), 1))
-		}
-		if configFile, ok := workspace["ConfigFile"]; ok {
-			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Config File: %v\n", configFile), 1))
+		if path, ok := project["path"]; ok && path != "" {
+			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Path: %v\n", path), 1))
 		}
 		fmt.Fprintln(out)
 	}
 
-	if dev, ok := configMap["Development"].(map[string]interface{}); ok {
-		fmt.Fprintln(out, iostreams.FormatBold("Development:"))
-		if debug, ok := dev["Debug"]; ok {
-			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Debug:   %v\n", debug), 1))
+	// Display Task section
+	if task, ok := configMap["task"].(map[string]interface{}); ok {
+		fmt.Fprintln(out, iostreams.FormatBold("Task:"))
+		if taskPath, ok := task["task_path"]; ok && taskPath != "" {
+			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Task Path:   %v\n", taskPath), 1))
+		} else {
+			fmt.Fprint(out, iostreams.Indent("Task Path:   .zen/tasks\n", 1))
 		}
-		if profile, ok := dev["Profile"]; ok {
-			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Profile: %v\n", profile), 1))
+		if taskSource, ok := task["task_source"]; ok && taskSource != "" {
+			fmt.Fprint(out, iostreams.Indent(fmt.Sprintf("Task Source: %v\n", taskSource), 1))
+		} else {
+			fmt.Fprint(out, iostreams.Indent("Task Source: local\n", 1))
 		}
+		fmt.Fprintln(out)
 	}
 
 	return nil

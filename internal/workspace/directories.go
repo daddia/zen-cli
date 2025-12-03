@@ -29,8 +29,8 @@ func DefaultWorkspaceDirectoryConfig() WorkspaceDirectoryConfig {
 				Permissions: 0755,
 			},
 			{
-				Name:        "work",
-				Description: "Work directory (tasks created here)",
+				Name:        "tasks",
+				Description: "Task directory (tasks created here)",
 				Permissions: 0755,
 			},
 		},

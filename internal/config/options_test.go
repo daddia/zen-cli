@@ -14,13 +14,18 @@ func TestFindOption(t *testing.T) {
 		found bool
 	}{
 		{
-			name:  "valid log_level",
-			key:   "log_level",
+			name:  "valid core.log_level",
+			key:   "core.log_level",
 			found: true,
 		},
 		{
-			name:  "valid log_format",
-			key:   "log_format",
+			name:  "valid core.log_format",
+			key:   "core.log_format",
+			found: true,
+		},
+		{
+			name:  "valid task.task_source",
+			key:   "task.task_source",
 			found: true,
 		},
 		{
@@ -49,13 +54,18 @@ func TestValidateKey(t *testing.T) {
 		wantError bool
 	}{
 		{
-			name:      "valid log_level",
-			key:       "log_level",
+			name:      "valid core.log_level",
+			key:       "core.log_level",
 			wantError: false,
 		},
 		{
-			name:      "valid log_format",
-			key:       "log_format",
+			name:      "valid core.log_format",
+			key:       "core.log_format",
+			wantError: false,
+		},
+		{
+			name:      "valid task.task_source",
+			key:       "task.task_source",
 			wantError: false,
 		},
 		{
@@ -85,26 +95,38 @@ func TestValidateValue(t *testing.T) {
 		wantError bool
 	}{
 		{
-			name:      "valid log_level",
-			key:       "log_level",
+			name:      "valid core.log_level",
+			key:       "core.log_level",
 			value:     "debug",
 			wantError: false,
 		},
 		{
-			name:      "invalid log_level",
-			key:       "log_level",
+			name:      "invalid core.log_level",
+			key:       "core.log_level",
 			value:     "invalid",
 			wantError: true,
 		},
 		{
-			name:      "valid log_format",
-			key:       "log_format",
+			name:      "valid core.log_format",
+			key:       "core.log_format",
 			value:     "json",
 			wantError: false,
 		},
 		{
-			name:      "invalid log_format",
-			key:       "log_format",
+			name:      "invalid core.log_format",
+			key:       "core.log_format",
+			value:     "invalid",
+			wantError: true,
+		},
+		{
+			name:      "valid task.task_source",
+			key:       "task.task_source",
+			value:     "jira",
+			wantError: false,
+		},
+		{
+			name:      "invalid task.task_source",
+			key:       "task.task_source",
 			value:     "invalid",
 			wantError: true,
 		},
@@ -124,8 +146,15 @@ func TestValidateValue(t *testing.T) {
 
 func TestGetCurrentValue(t *testing.T) {
 	cfg := &Config{
-		LogLevel:  "debug",
-		LogFormat: "json",
+		Core: CoreConfig{
+			LogLevel:  "debug",
+			LogFormat: "json",
+			Debug:     true,
+		},
+		Task: TaskConfig{
+			TaskPath:   ".zen/tasks",
+			TaskSource: "jira",
+		},
 	}
 
 	tests := []struct {
@@ -134,14 +163,29 @@ func TestGetCurrentValue(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "log_level",
-			key:      "log_level",
+			name:     "core.log_level",
+			key:      "core.log_level",
 			expected: "debug",
 		},
 		{
-			name:     "log_format",
-			key:      "log_format",
+			name:     "core.log_format",
+			key:      "core.log_format",
 			expected: "json",
+		},
+		{
+			name:     "core.debug",
+			key:      "core.debug",
+			expected: "true",
+		},
+		{
+			name:     "task.task_path",
+			key:      "task.task_path",
+			expected: ".zen/tasks",
+		},
+		{
+			name:     "task.task_source",
+			key:      "task.task_source",
+			expected: "jira",
 		},
 	}
 

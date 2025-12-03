@@ -161,13 +161,13 @@ func (s *Service) IsConfigured() bool {
 	}
 
 	// Check if a task source is configured for external integration
-	if s.config.Work.Tasks.Source == "" || s.config.Work.Tasks.Source == "none" || s.config.Work.Tasks.Source == "local" {
+	if s.config.Task.TaskSource == "" || s.config.Task.TaskSource == "none" || s.config.Task.TaskSource == "local" {
 		return false
 	}
 
 	// Check if the configured provider exists
 	s.mu.RLock()
-	_, exists := s.providers[s.config.Work.Tasks.Source]
+	_, exists := s.providers[s.config.Task.TaskSource]
 	s.mu.RUnlock()
 
 	return exists
@@ -178,7 +178,7 @@ func (s *Service) GetTaskSystem() string {
 	if s.config == nil {
 		return ""
 	}
-	return s.config.Work.Tasks.Source
+	return s.config.Task.TaskSource
 }
 
 // IsSyncEnabled returns true if sync is enabled
@@ -208,25 +208,25 @@ func (s *Service) SyncTask(ctx context.Context, taskID string, opts SyncOptions)
 	}
 
 	// Get the provider
-	provider, err := s.GetProvider(s.config.Work.Tasks.Source)
+	provider, err := s.GetProvider(s.config.Task.TaskSource)
 	if err != nil {
-		return nil, s.createIntegrationError(ErrCodeProviderError, fmt.Sprintf("failed to get provider: %v", err), s.config.Work.Tasks.Source, taskID)
+		return nil, s.createIntegrationError(ErrCodeProviderError, fmt.Sprintf("failed to get provider: %v", err), s.config.Task.TaskSource, taskID)
 	}
 
 	// Check circuit breaker
-	if !s.isCircuitBreakerClosed(s.config.Work.Tasks.Source) {
-		return nil, s.createIntegrationError(ErrCodeProviderError, "provider circuit breaker is open", s.config.Work.Tasks.Source, taskID)
+	if !s.isCircuitBreakerClosed(s.config.Task.TaskSource) {
+		return nil, s.createIntegrationError(ErrCodeProviderError, "provider circuit breaker is open", s.config.Task.TaskSource, taskID)
 	}
 
 	// Check rate limiting
-	if !s.checkRateLimit(s.config.Work.Tasks.Source) {
-		return nil, s.createIntegrationError(ErrCodeRateLimited, "rate limit exceeded", s.config.Work.Tasks.Source, taskID)
+	if !s.checkRateLimit(s.config.Task.TaskSource) {
+		return nil, s.createIntegrationError(ErrCodeRateLimited, "rate limit exceeded", s.config.Task.TaskSource, taskID)
 	}
 
 	// Get sync record
 	syncRecord, err := s.GetSyncRecord(ctx, taskID)
 	if err != nil {
-		return nil, s.createIntegrationError(ErrCodeInvalidData, fmt.Sprintf("sync record not found for task %s: %v", taskID, err), s.config.Work.Tasks.Source, taskID)
+		return nil, s.createIntegrationError(ErrCodeInvalidData, fmt.Sprintf("sync record not found for task %s: %v", taskID, err), s.config.Task.TaskSource, taskID)
 	}
 
 	result := &SyncResult{
@@ -270,7 +270,7 @@ func (s *Service) SyncTask(ctx context.Context, taskID string, opts SyncOptions)
 		}
 
 		// Record failure in circuit breaker
-		s.recordFailure(s.config.Work.Tasks.Source)
+		s.recordFailure(s.config.Task.TaskSource)
 
 		// Update sync record with error
 		syncRecord.Status = SyncStatusError
@@ -291,7 +291,7 @@ func (s *Service) SyncTask(ctx context.Context, taskID string, opts SyncOptions)
 	result.Duration = time.Since(start)
 
 	// Record success in circuit breaker
-	s.recordSuccess(s.config.Work.Tasks.Source)
+	s.recordSuccess(s.config.Task.TaskSource)
 
 	// Update sync record with success
 	syncRecord.Status = SyncStatusActive

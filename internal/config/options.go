@@ -14,21 +14,67 @@ type ConfigOption struct {
 	Type          string // "string", "bool", "int"
 }
 
-// Options contains core configuration options only
-// Component-specific options are now handled by each component
+// Options contains configuration options organized by section
 var Options = []ConfigOption{
+	// Core settings
 	{
-		Key:           "log_level",
+		Key:           "core.config_dir",
+		Description:   "Zen configuration directory",
+		DefaultValue:  ".zen",
+		Type:          "string",
+	},
+	{
+		Key:           "core.token",
+		Description:   "Zen authentication token",
+		DefaultValue:  "",
+		Type:          "string",
+	},
+	{
+		Key:           "core.debug",
+		Description:   "Enable debug mode",
+		AllowedValues: []string{"true", "false"},
+		DefaultValue:  "false",
+		Type:          "bool",
+	},
+	{
+		Key:           "core.log_level",
 		Description:   "Set the logging level",
 		AllowedValues: []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"},
 		DefaultValue:  "info",
 		Type:          "string",
 	},
 	{
-		Key:           "log_format",
+		Key:           "core.log_format",
 		Description:   "Set the logging format",
 		AllowedValues: []string{"text", "json"},
 		DefaultValue:  "text",
+		Type:          "string",
+	},
+	// Project settings
+	{
+		Key:          "project.name",
+		Description:  "Project name (defaults to directory name)",
+		DefaultValue: "",
+		Type:         "string",
+	},
+	{
+		Key:          "project.path",
+		Description:  "Project path",
+		DefaultValue: "",
+		Type:         "string",
+	},
+	// Task settings
+	{
+		Key:          "task.task_path",
+		Description:  "Tasks directory path",
+		DefaultValue: ".zen/tasks",
+		Type:         "string",
+	},
+	{
+		Key:           "task.task_source",
+		Description:   "Task source system",
+		AllowedValues: []string{"local", "jira", "github", "linear"},
+		DefaultValue:  "local",
 		Type:          "string",
 	},
 }
@@ -45,10 +91,27 @@ func (opt ConfigOption) GetCurrentValue(cfg *Config) string {
 // getValueFromConfig extracts the current value from the configuration
 func (opt ConfigOption) getValueFromConfig(cfg *Config) string {
 	switch opt.Key {
-	case "log_level":
-		return cfg.LogLevel
-	case "log_format":
-		return cfg.LogFormat
+	// Core settings
+	case "core.config_dir":
+		return cfg.Core.ConfigDir
+	case "core.token":
+		return cfg.Core.Token
+	case "core.debug":
+		return fmt.Sprintf("%t", cfg.Core.Debug)
+	case "core.log_level":
+		return cfg.Core.LogLevel
+	case "core.log_format":
+		return cfg.Core.LogFormat
+	// Project settings
+	case "project.name":
+		return cfg.Project.Name
+	case "project.path":
+		return cfg.Project.Path
+	// Task settings
+	case "task.task_path":
+		return cfg.Task.TaskPath
+	case "task.task_source":
+		return cfg.Task.TaskSource
 	default:
 		return ""
 	}

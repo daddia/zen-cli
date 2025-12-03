@@ -431,7 +431,7 @@ Task Management is embedded in CLI binary - rollback requires CLI version downgr
 ## Migration Plan
 
 No migration required for new installations. For existing Zen workspaces, migration will:
-1. Create task database schema in `.zen/work/tasks.db`
+1. Create task database schema in `.zen/tasks/tasks.db`
 2. Scan existing task directories and import metadata
 3. Initialize workflow state based on existing artifacts
 4. Preserve existing file structures and content

@@ -105,7 +105,7 @@ func loggerFunc(f *cmdutil.Factory) logging.Logger {
 		return logging.NewBasic()
 	}
 
-	return logging.New(cfg.LogLevel, cfg.LogFormat)
+	return logging.New(cfg.Core.LogLevel, cfg.Core.LogFormat)
 }
 
 func workspaceFunc(f *cmdutil.Factory) func() (cmdutil.WorkspaceManager, error) {

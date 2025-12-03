@@ -41,18 +41,43 @@ type Manager = Config
 
 // Config represents the core application configuration and implements Manager interface
 type Config struct {
-	// Core application configuration
-	LogLevel  string `mapstructure:"log_level" validate:"required,oneof=trace debug info warn error fatal panic"`
-	LogFormat string `mapstructure:"log_format" validate:"required,oneof=text json"`
+	// Core Zen settings
+	Core CoreConfig `mapstructure:"core" json:"core" yaml:"core"`
+
+	// Project-specific settings
+	Project ProjectConfig `mapstructure:"project" json:"project" yaml:"project"`
+
+	// Task settings
+	Task TaskConfig `mapstructure:"task" json:"task" yaml:"task"`
 
 	// Temporary fields - to be removed when components are fully migrated
 	Integrations IntegrationsConfig `mapstructure:"integrations"`
-	Work         WorkConfig         `mapstructure:"work"`
 
 	// Internal fields for configuration management
 	viper      *viper.Viper `mapstructure:"-" json:"-" yaml:"-"`
 	configFile string       `mapstructure:"-" json:"-" yaml:"-"`
 	loadedFrom []string     `mapstructure:"-" json:"-" yaml:"-"`
+}
+
+// CoreConfig contains core Zen settings
+type CoreConfig struct {
+	ConfigDir string `mapstructure:"config_dir" json:"config_dir" yaml:"config_dir"`
+	Token     string `mapstructure:"token" json:"token,omitempty" yaml:"token,omitempty"`
+	Debug     bool   `mapstructure:"debug" json:"debug" yaml:"debug"`
+	LogLevel  string `mapstructure:"log_level" json:"log_level" yaml:"log_level" validate:"required,oneof=trace debug info warn error fatal panic"`
+	LogFormat string `mapstructure:"log_format" json:"log_format" yaml:"log_format" validate:"required,oneof=text json"`
+}
+
+// ProjectConfig contains project-specific settings
+type ProjectConfig struct {
+	Name string `mapstructure:"name" json:"name" yaml:"name"`
+	Path string `mapstructure:"path" json:"path" yaml:"path"`
+}
+
+// TaskConfig contains task settings
+type TaskConfig struct {
+	TaskPath   string `mapstructure:"task_path" json:"task_path" yaml:"task_path"`
+	TaskSource string `mapstructure:"task_source" json:"task_source" yaml:"task_source"`
 }
 
 // Temporary types - to be removed when integration component is created
@@ -76,15 +101,6 @@ type IntegrationProviderConfig struct {
 	Settings      map[string]interface{} `mapstructure:"settings"`
 }
 
-type WorkConfig struct {
-	Tasks TasksConfig `mapstructure:"tasks"`
-}
-
-type TasksConfig struct {
-	Source     string `mapstructure:"source"`
-	Sync       string `mapstructure:"sync"`
-	ProjectKey string `mapstructure:"project_key"`
-}
 
 // Load loads configuration from various sources with precedence handling
 func Load() (*Config, error) {
@@ -280,7 +296,18 @@ func hasFlagOverrides(cmd *cobra.Command) bool {
 func applyEnvOverrides(config *Config) {
 	// Check ZEN_DEBUG for development mode (affects core log level)
 	if os.Getenv("ZEN_DEBUG") == "true" {
-		config.LogLevel = "debug"
+		config.Core.Debug = true
+		config.Core.LogLevel = "debug"
+	}
+
+	// ZEN_TOKEN for authentication
+	if token := os.Getenv("ZEN_TOKEN"); token != "" {
+		config.Core.Token = token
+	}
+
+	// ZEN_CONFIG_DIR for custom config location
+	if configDir := os.Getenv("ZEN_CONFIG_DIR"); configDir != "" {
+		config.Core.ConfigDir = configDir
 	}
 }
 
@@ -587,28 +614,28 @@ func validateCore(config *Config) error {
 	validLogLevels := []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
 	valid := false
 	for _, level := range validLogLevels {
-		if config.LogLevel == level {
+		if config.Core.LogLevel == level {
 			valid = true
 			break
 		}
 	}
 	if !valid {
-		return fmt.Errorf("invalid log_level: %s (must be one of: %s)",
-			config.LogLevel, strings.Join(validLogLevels, ", "))
+		return fmt.Errorf("invalid core.log_level: %s (must be one of: %s)",
+			config.Core.LogLevel, strings.Join(validLogLevels, ", "))
 	}
 
 	// Validate log format
 	validLogFormats := []string{"text", "json"}
 	valid = false
 	for _, format := range validLogFormats {
-		if config.LogFormat == format {
+		if config.Core.LogFormat == format {
 			valid = true
 			break
 		}
 	}
 	if !valid {
-		return fmt.Errorf("invalid log_format: %s (must be one of: %s)",
-			config.LogFormat, strings.Join(validLogFormats, ", "))
+		return fmt.Errorf("invalid core.log_format: %s (must be one of: %s)",
+			config.Core.LogFormat, strings.Join(validLogFormats, ", "))
 	}
 
 	return nil
